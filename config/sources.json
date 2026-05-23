@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "principle": "Configure free public sources first; add paid providers by config, not code rewrite.",
+  "sources": [
+    {
+      "id": "sec-edgar",
+      "layer": "cash",
+      "region": "us",
+      "type": "api",
+      "enabled": true,
+      "urlEnv": "SEC_EDGAR_BASE_URL"
+    },
+    {
+      "id": "ferc-elibrary",
+      "layer": "energy",
+      "region": "us",
+      "type": "public-web",
+      "enabled": true,
+      "urlEnv": "FERC_BASE_URL"
+    },
+    {
+      "id": "county-building-permits",
+      "layer": "land",
+      "region": "us",
+      "type": "public-web",
+      "enabled": false,
+      "urlEnv": "BUILDING_PERMITS_BASE_URL"
+    }
+  ]
+}
