@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
-import { alerts } from "@/lib/data";
+import { authorizeApiRequest } from "@/lib/auth/request";
+import { listSignals } from "@/lib/repositories/reality";
 
-export function GET() {
-  return NextResponse.json({ signals: alerts });
+export async function GET(request: Request) {
+  const auth = await authorizeApiRequest(request, "signals:read");
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+  return NextResponse.json(await listSignals(auth.context));
 }

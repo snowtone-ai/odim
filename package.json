@@ -10,6 +10,11 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/**/*.test.mjs",
+    "scrape": "node scrapers/run.ts",
+    "scrape:dry-run": "node scrapers/run.ts --dry-run",
+    "issue:bootstrap-api-key": "node scripts/issue-bootstrap-api-key.mjs",
+    "rls:staging": "node scripts/run-staging-rls-smoke.mjs",
+    "release:audit": "node scripts/release-audit.mjs",
     "verify": "node scripts/verify.mjs",
     "setup": "node scripts/setup.mjs"
   },

@@ -1,40 +1,50 @@
 import { Panel } from "@/components/ui/panel";
 import { Screen } from "@/components/ui/screen";
-import { alerts, entities, layers } from "@/lib/data";
+import { alerts, entities, layerActivity } from "@/lib/data";
+import { getMessages } from "@/lib/i18n/messages";
 
 export default function RealityMapPage() {
+  const messages = getMessages();
+  const screen = messages.screens.map;
+
   return (
-    <Screen eyebrow="Screen 01" title="Reality Map">
-      <div className="grid grid-cols-[1fr_360px] gap-5">
-        <Panel title="Capital Fixation Globe / Map">
-          <div className="relative h-[560px] overflow-hidden rounded-[var(--radius-md)] border border-[var(--line-faint)] bg-[radial-gradient(circle_at_50%_42%,rgba(94,143,181,0.24),transparent_18%),var(--ink-850)]">
+    <Screen eyebrow={`${messages.common.screen} 01`} title={screen.title}>
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_360px]">
+        <Panel title={screen.panels.globe}>
+          <div className="relative h-[560px] overflow-hidden rounded-[var(--radius-md)] border border-[var(--line-faint)] bg-[radial-gradient(circle_at_50%_42%,var(--layer-compute-wash),transparent_18%),var(--ink-850)]">
             <div className="absolute inset-12 rounded-full border border-[var(--line-soft)]" />
             <div className="absolute left-10 top-10 mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
-              Macro globe transitions to parcel map at zoom threshold
+              {screen.globeNote}
             </div>
-            {entities.map((entity, index) => (
+            {entities.slice(0, 4).map((entity, index) => (
               <div
                 className="absolute rounded-full border border-[var(--rune)] bg-[var(--rune-wash)] px-3 py-2 text-xs"
                 key={entity.name}
                 style={{ left: `${28 + index * 18}%`, top: `${38 + index * 9}%` }}
               >
                 <span className="mono text-[var(--rune)]">{entity.score}</span> {entity.name}
+                <span className="mono ml-2 text-[var(--text-tertiary)]">{Math.round(entity.confidence * 100)}%</span>
               </div>
             ))}
           </div>
         </Panel>
         <div className="grid gap-5">
-          <Panel title="Reality Layers">
+          <Panel title={screen.panels.layers}>
             <div className="grid gap-2">
-              {layers.map((layer) => (
-                <div className="flex items-center justify-between border-b border-[var(--line-faint)] py-2 text-sm" key={layer}>
-                  <span>{layer}</span>
-                  <span className="mono text-[var(--text-tertiary)]">on</span>
+              {layerActivity.map((layer) => (
+                <div className="border-b border-[var(--line-faint)] py-2 text-sm" key={layer.layer}>
+                  <div className="flex items-center justify-between">
+                    <span>{messages.layers[layerActivity.indexOf(layer)] ?? layer.layer}</span>
+                    <span className="mono text-[var(--text-tertiary)]">{layer.count} signals</span>
+                  </div>
+                  <div className="mono mt-1 text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                    {layer.source} / {Math.round(layer.confidence * 100)}%
+                  </div>
                 </div>
               ))}
             </div>
           </Panel>
-          <Panel title="Live Signal Feed">
+          <Panel title={screen.panels.liveFeed}>
             <div className="grid gap-3">
               {alerts.map((alert) => (
                 <div className="border-b border-[var(--line-faint)] pb-3" key={alert.title}>

@@ -8,23 +8,103 @@
       "region": "us",
       "type": "api",
       "enabled": true,
-      "urlEnv": "SEC_EDGAR_BASE_URL"
+      "urlEnv": "SEC_EDGAR_BASE_URL",
+      "requiredEnv": ["SEC_EDGAR_CIKS", "SEC_EDGAR_USER_AGENT"],
+      "adapter": "scrapers/sec-edgar.ts"
     },
     {
       "id": "ferc-elibrary",
       "layer": "energy",
       "region": "us",
-      "type": "public-web",
+      "type": "public-feed",
       "enabled": true,
-      "urlEnv": "FERC_BASE_URL"
+      "urlEnv": "FERC_FEED_URL",
+      "adapter": "scrapers/ferc.ts"
     },
     {
       "id": "county-building-permits",
       "layer": "land",
       "region": "us",
+      "type": "public-feed",
+      "enabled": true,
+      "urlEnv": "BUILDING_PERMITS_URL",
+      "adapter": "scrapers/building-permits.ts"
+    },
+    {
+      "id": "public-cloud-regions",
+      "layer": "compute",
+      "region": "global",
       "type": "public-web",
+      "enabled": true,
+      "urlEnv": "CLOUD_REGION_FEED_URL",
+      "adapter": "scrapers/cloud-regions.ts"
+    },
+    {
+      "id": "water-district-permits",
+      "layer": "water",
+      "region": "us",
+      "type": "public-feed",
+      "enabled": true,
+      "urlEnv": "WATER_DISTRICT_FEED_URL",
+      "adapter": "scrapers/water-districts.ts"
+    },
+    {
+      "id": "usgs-minerals",
+      "layer": "raw_materials",
+      "region": "us",
+      "type": "public-feed",
+      "enabled": true,
+      "urlEnv": "USGS_MINERALS_FEED_URL",
+      "adapter": "scrapers/usgs-minerals.ts"
+    },
+    {
+      "id": "port-statistics",
+      "layer": "logistics",
+      "region": "us",
+      "type": "public-feed",
+      "enabled": true,
+      "urlEnv": "PORT_STATISTICS_FEED_URL",
+      "adapter": "scrapers/port-statistics.ts"
+    },
+    {
+      "id": "narrative-rss",
+      "layer": "narrative",
+      "region": "global",
+      "type": "public-feed",
+      "enabled": true,
+      "urlEnv": "NARRATIVE_FEED_URL",
+      "adapter": "scrapers/narrative.ts"
+    },
+    {
+      "id": "paid-commercial-template",
+      "layer": "energy",
+      "region": "global",
+      "type": "paid-feed",
       "enabled": false,
-      "urlEnv": "BUILDING_PERMITS_BASE_URL"
+      "sourceTier": "paid",
+      "urlEnv": "PAID_SOURCE_URL",
+      "orgIdEnv": "PAID_SOURCE_ORG_ID",
+      "authHeaderEnv": "PAID_SOURCE_API_KEY",
+      "authHeaderName": "x-api-key",
+      "authHeaderPrefix": "",
+      "adapter": "configured-json-csv",
+      "confidence": 0.76,
+      "fieldMap": {
+        "externalId": ["id", "record_id", "external_id"],
+        "observedAt": ["observed_at", "date", "updated_at"],
+        "title": ["title", "project_name", "description"],
+        "url": ["url", "source_url", "document_url"],
+        "confidence": ["confidence"]
+      },
+      "payloadMap": {
+        "applicantRaw": ["applicant", "company", "owner"],
+        "projectName": ["project_name", "project", "facility"],
+        "description": ["description", "summary"],
+        "amountUsd": ["amount_usd", "capex_usd"],
+        "capacityMw": ["capacity_mw", "mw"],
+        "lat": ["lat", "latitude"],
+        "lng": ["lng", "longitude"]
+      }
     }
   ]
 }

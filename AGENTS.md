@@ -31,7 +31,11 @@
 - Every ready task includes owner, dependencies, write scope, acceptance, verification, and evidence.
 - CEO Agent updates tasks.md and docs/state.md as coordinator.
 
-## Scope Lock Rule
+## Agent Coordination
+- CEO Agent owns tasks.md and docs/state.md as coordinator.
+- CEO Agent decides whether to parallelize based on Write Scope separation.
+- Worker agents own only their assigned Write Scope.
+- Parallel implementation requires disjoint Write Scopes or isolated worktrees.
 - Same file -> serialize. Separate scope -> parallelize.
 - Maximum 3 concurrent agents including CEO.
 

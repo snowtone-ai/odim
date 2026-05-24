@@ -19,6 +19,7 @@
   --layer-cash: #6fa86f;
   --layer-land: #a78b5f;
   --layer-compute: #5e8fb5;
+  --layer-compute-wash: color-mix(in srgb, var(--layer-compute) 24%, transparent);
   --layer-water: #4f9da6;
   --layer-material: #9b6fa0;
   --layer-logistics: #8a93a3;

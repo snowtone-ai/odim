@@ -1,21 +1,34 @@
 import { Panel } from "@/components/ui/panel";
 import { Screen } from "@/components/ui/screen";
-import { entities } from "@/lib/data";
+import { watchlistBriefs } from "@/lib/data";
+import { getMessages } from "@/lib/i18n/messages";
 
 export default function WatchlistPage() {
+  const messages = getMessages();
+  const screen = messages.screens.watchlist;
+
   return (
-    <Screen eyebrow="Screen 06" title="Watchlist & Briefs">
+    <Screen eyebrow={`${messages.common.screen} 06`} title={screen.title}>
       <div className="grid grid-cols-2 gap-5">
-        <Panel title="Watchlist">
-          {entities.map((entity) => (
-            <div className="flex justify-between border-b border-[var(--line-faint)] py-3 text-sm" key={entity.name}>
-              <span>{entity.name}</span>
-              <span className="mono text-[var(--text-tertiary)]">tracked</span>
+        <Panel title={screen.panels.watchlist}>
+          {watchlistBriefs.map((item) => (
+            <div className="border-b border-[var(--line-faint)] py-3 text-sm" key={item.name}>
+              <div className="flex justify-between">
+                <span>{item.name}</span>
+                <span className="mono text-[var(--text-tertiary)]">{messages.common.tracked}</span>
+              </div>
+              <div className="mono mt-2 text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">{item.source}</div>
             </div>
           ))}
         </Panel>
-        <Panel title="Daily Brief Preview">
-          Reality-layer changes are summarized with source links, confidence, and narrative gap.
+        <Panel title={screen.panels.brief}>
+          <div className="grid gap-3">
+            {watchlistBriefs.map((item) => (
+              <div className="border-b border-[var(--line-faint)] pb-3 text-sm" key={item.brief}>
+                {item.brief}
+              </div>
+            ))}
+          </div>
         </Panel>
       </div>
     </Screen>
