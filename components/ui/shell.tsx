@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { getMessages } from "@/lib/i18n/messages";
+import { getLocale } from "@/lib/i18n/locale";
 
-export function Shell({ children }: Readonly<{ children: React.ReactNode }>) {
-  const messages = getMessages();
+export async function Shell({ children }: Readonly<{ children: React.ReactNode }>) {
+  const locale = await getLocale();
+  const messages = getMessages(locale);
   const nav = [
     [messages.shell.nav.map, "/map"],
     [messages.shell.nav.capitalFlow, "/capital-flow"],

@@ -36,6 +36,7 @@ export const entities = fixturePlan.ontologyObjects
   .filter((object) => object.objectType === "decision_maker")
   .slice(0, 6)
   .map((object, index) => ({
+    id: object.id,
     name: String(object.attributes.name ?? "Unknown entity"),
     score: Number(object.attributes.reality_score) > 0 ? Number(object.attributes.reality_score) : 62 + index * 4,
     committed: formatCommitted(object.attributes.amount_usd),
@@ -53,6 +54,7 @@ export const alerts = fixturePlan.alerts.map((alert) => ({
 }));
 
 export const auditEvents = fixturePlan.auditEvents.slice(0, 12).map((event) => ({
+  id: event.id,
   event: event.eventType,
   actor: event.actor,
   confidence: event.confidence,

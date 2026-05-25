@@ -94,6 +94,7 @@ export async function listEntities(context: OrgContext = {}) {
     entities: (data ?? []).map((row: JsonRecord, index: number) => {
       const attributes = (row.attributes ?? {}) as JsonRecord;
       return {
+        id: String(row.id),
         name: String(attributes.name ?? row.id),
         score: Number(attributes.reality_score ?? 60 + index),
         committed: "Source-backed",
@@ -120,6 +121,7 @@ export async function listAuditEvents(context: OrgContext = {}) {
   }
   return {
     auditEvents: (data ?? []).map((row: JsonRecord) => ({
+      id: String(row.id),
       event: String(row.event_type),
       actor: String(row.actor),
       confidence: confidence(row.confidence),

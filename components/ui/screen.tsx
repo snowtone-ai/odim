@@ -1,11 +1,13 @@
 import { getMessages } from "@/lib/i18n/messages";
+import { getLocale } from "@/lib/i18n/locale";
 
-export function Screen({
+export async function Screen({
   title,
   eyebrow,
   children
 }: Readonly<{ title: string; eyebrow: string; children: React.ReactNode }>) {
-  const messages = getMessages();
+  const locale = await getLocale();
+  const messages = getMessages(locale);
 
   return (
     <section className="px-4 py-5 sm:px-6 md:px-8 md:py-7">

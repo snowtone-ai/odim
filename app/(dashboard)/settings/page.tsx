@@ -1,14 +1,17 @@
 import { Panel } from "@/components/ui/panel";
 import { Screen } from "@/components/ui/screen";
 import { SeedMemoryManager } from "@/components/ui/seed-memory-manager";
+import { LocaleSwitcher } from "@/components/ui/locale-switcher";
 import { getMessages } from "@/lib/i18n/messages";
+import { getLocale } from "@/lib/i18n/locale";
 import { getAdminSettings } from "@/lib/repositories/admin";
 import { listSeedMemories } from "@/lib/munin/seed";
 
 const defaultSettingsOrgId = process.env.PAID_SOURCE_ORG_ID || "11111111-1111-4111-8111-111111111111";
 
 export default async function SettingsPage() {
-  const messages = getMessages();
+  const locale = await getLocale();
+  const messages = getMessages(locale);
   const screen = messages.screens.settings;
   const settings = await getAdminSettings({ orgId: defaultSettingsOrgId });
   const seeds = await listSeedMemories(defaultSettingsOrgId);
@@ -79,6 +82,12 @@ export default async function SettingsPage() {
             orgId={defaultSettingsOrgId}
           />
           <div className="mt-4 text-xs text-[var(--text-tertiary)]">{screen.copy.seedMemory}</div>
+        </Panel>
+        <Panel title={screen.language.panel}>
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-[var(--text-secondary)]">{screen.language.description}</div>
+            <LocaleSwitcher current={locale} />
+          </div>
         </Panel>
       </div>
     </Screen>

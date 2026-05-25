@@ -13,7 +13,9 @@
 - Failures: docs/issues.md
 - Repository map: docs/repo-map.md
 - Report template: HANDOFF-JA.md
-- Original product source material: context/source-*.md
+
+## On-Demand Only
+- Original product source material: context/source-*.md — read only when a specific screen, feature, or domain question cannot be answered from the sources above.
 
 ## Startup Read
 - Read this file.

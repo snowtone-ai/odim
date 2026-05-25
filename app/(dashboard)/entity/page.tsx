@@ -3,9 +3,11 @@ import { Screen } from "@/components/ui/screen";
 import { Confidence } from "@/components/ui/confidence";
 import { entities, ontologyLinks, timelineEvents } from "@/lib/data";
 import { getMessages } from "@/lib/i18n/messages";
+import { getLocale } from "@/lib/i18n/locale";
 
-export default function EntityPage() {
-  const messages = getMessages();
+export default async function EntityPage() {
+  const locale = await getLocale();
+  const messages = getMessages(locale);
   const screen = messages.screens.entity;
   const selected = entities[0];
   return (
@@ -13,7 +15,7 @@ export default function EntityPage() {
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[280px_1fr_360px]">
         <Panel title={screen.panels.entities}>
           {entities.map((entity) => (
-            <div className="border-b border-[var(--line-faint)] py-3 text-sm" key={entity.name}>
+            <div className="border-b border-[var(--line-faint)] py-3 text-sm" key={entity.id}>
               <div>{entity.name}</div>
               <div className="mono text-[11px] text-[var(--text-tertiary)]">Reality Score {entity.score}</div>
               <div className="mono text-[11px] text-[var(--text-tertiary)]">{Math.round(entity.confidence * 100)}% confidence</div>

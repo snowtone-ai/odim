@@ -4,13 +4,15 @@ import { Confidence } from "@/components/ui/confidence";
 import { EvalButton } from "@/components/ui/eval-button";
 import { answerHuginnQuestion } from "@/lib/huginn/query";
 import { getMessages } from "@/lib/i18n/messages";
+import { getLocale } from "@/lib/i18n/locale";
 
 const defaultHuginnOrgId = process.env.PAID_SOURCE_ORG_ID || "11111111-1111-4111-8111-111111111111";
 
 export const dynamic = "force-dynamic";
 
 export default async function HuginnPage() {
-  const messages = getMessages();
+  const locale = await getLocale();
+  const messages = getMessages(locale);
   const screen = messages.screens.huginn;
   const response = await answerHuginnQuestion({
     orgId: defaultHuginnOrgId,

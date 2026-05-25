@@ -149,6 +149,10 @@ export const messages = {
           content: "Add source-backed seed memory or a separated opinion seed",
           empty: "No active seed memories.",
           error: "Seed memory request failed"
+        },
+        language: {
+          panel: "Language",
+          description: "Interface language for all screens."
         }
       }
     }
@@ -300,6 +304,10 @@ export const messages = {
           content: "出典付きの seed memory または分離する opinion seed を追加",
           empty: "有効な Seed Memory はありません。",
           error: "Seed Memory 操作に失敗しました"
+        },
+        language: {
+          panel: "言語",
+          description: "全画面のインターフェース言語を切り替えます。"
         }
       }
     }

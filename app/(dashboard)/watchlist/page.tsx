@@ -2,9 +2,11 @@ import { Panel } from "@/components/ui/panel";
 import { Screen } from "@/components/ui/screen";
 import { watchlistBriefs } from "@/lib/data";
 import { getMessages } from "@/lib/i18n/messages";
+import { getLocale } from "@/lib/i18n/locale";
 
-export default function WatchlistPage() {
-  const messages = getMessages();
+export default async function WatchlistPage() {
+  const locale = await getLocale();
+  const messages = getMessages(locale);
   const screen = messages.screens.watchlist;
 
   return (

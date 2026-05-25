@@ -2,9 +2,11 @@ import { Panel } from "@/components/ui/panel";
 import { Screen } from "@/components/ui/screen";
 import { alerts, entities, layerActivity } from "@/lib/data";
 import { getMessages } from "@/lib/i18n/messages";
+import { getLocale } from "@/lib/i18n/locale";
 
-export default function RealityMapPage() {
-  const messages = getMessages();
+export default async function RealityMapPage() {
+  const locale = await getLocale();
+  const messages = getMessages(locale);
   const screen = messages.screens.map;
 
   return (

@@ -3,9 +3,11 @@ import { Screen } from "@/components/ui/screen";
 import { Confidence } from "@/components/ui/confidence";
 import { alerts } from "@/lib/data";
 import { getMessages } from "@/lib/i18n/messages";
+import { getLocale } from "@/lib/i18n/locale";
 
-export default function AlertsPage() {
-  const messages = getMessages();
+export default async function AlertsPage() {
+  const locale = await getLocale();
+  const messages = getMessages(locale);
   const screen = messages.screens.alerts;
 
   return (

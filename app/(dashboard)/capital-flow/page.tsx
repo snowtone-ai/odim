@@ -3,9 +3,11 @@ import { Screen } from "@/components/ui/screen";
 import { Confidence } from "@/components/ui/confidence";
 import { capitalFlows, entities, layerActivity } from "@/lib/data";
 import { getMessages } from "@/lib/i18n/messages";
+import { getLocale } from "@/lib/i18n/locale";
 
-export default function CapitalFlowPage() {
-  const messages = getMessages();
+export default async function CapitalFlowPage() {
+  const locale = await getLocale();
+  const messages = getMessages(locale);
   const screen = messages.screens.capitalFlow;
 
   return (
@@ -44,7 +46,7 @@ export default function CapitalFlowPage() {
           </Panel>
           <Panel title={screen.panels.gap}>
             {entities.map((entity) => (
-              <div className="border-b border-[var(--line-faint)] py-3 text-sm" key={entity.name}>
+              <div className="border-b border-[var(--line-faint)] py-3 text-sm" key={entity.id}>
                 <div className="mb-3 flex justify-between">
                   <span>{entity.name}</span>
                   <span className="mono text-[var(--rune)]">{entity.lead}d</span>
