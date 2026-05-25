@@ -1,0 +1,25 @@
+name: Staging RLS Smoke
+
+on:
+  workflow_dispatch:
+
+jobs:
+  rls-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.9"
+          cache: pnpm
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run staging RLS smoke
+        env:
+          SUPABASE_STAGING_DATABASE_URL: ${{ secrets.SUPABASE_STAGING_DATABASE_URL }}
+        run: pnpm rls:staging

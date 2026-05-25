@@ -75,3 +75,19 @@
 ## D-019: raw_signals uses both RLS and app-layer visibility filters
 - Decision: Add `raw_signals.org_id`, enable RLS, and allow reads only when `is_proprietary=false` or the authenticated user's org matches; repository reads apply the same filter before relying on Supabase RLS.
 - Reason: Raw proprietary source payloads are the highest-leakage tenant boundary and service-role reads can bypass RLS.
+
+## D-020: Huginn/Munin v2 uses structural separation instead of prompt-only safeguards
+- Decision: Add writeGate, physically separate `munin_memory` facts/procedures/seeds from `munin_opinions`, keep `web_narrative` out of memory, and route Huginn through self-assessment plus cascade retrieval.
+- Reason: The v2.0 spec treats narrative contamination and past-opinion sycophancy as architectural safety issues; prompt instructions alone are not sufficient for investment-grade reasoning.
+
+## D-021: Canonicalize Huginn/Munin v2 in context
+- Decision: Merge the former additional Huginn/Munin v2 spec into `context/source-05-huginn-munin.md` and remove `追加file` as a second source of truth.
+- Reason: Implementation agents should read one canonical context folder; split spec locations caused stale v1/v2 references and repo-map ambiguity.
+
+## D-022: Use optional shared AI rate limiting for multi-instance production
+- Decision: Keep the in-process limiter as the local/default fail-safe, and add Supabase-backed `consume_ai_rate_limit` for deployments that set `AI_RATE_LIMIT_BACKEND=supabase`.
+- Reason: Local verification must remain zero-config, but multi-instance production needs a shared quota counter to preserve Gemini free-tier ceilings across instances.
+
+## D-023: Operate as a single Supabase environment for now
+- Decision: Current deployment uses one Supabase project/branch (`main`, production-tagged). `SUPABASE_STAGING_DATABASE_URL` and `SUPABASE_PRODUCTION_DATABASE_URL` may intentionally point to the same database until a dedicated staging project exists.
+- Reason: Team currently runs a single-environment operation; documenting this prevents false assumptions about staging/production separation during migrations and smoke tests.

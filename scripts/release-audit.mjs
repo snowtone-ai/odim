@@ -77,8 +77,12 @@ check(
 );
 
 const migration = file("supabase/migrations/0001_initial.sql");
+const muninV2Migration = file("supabase/migrations/0002_huginn_munin_v2.sql");
+const sleepMigration = file("supabase/migrations/0003_sleep_time_compute.sql");
+const rateLimitMigration = file("supabase/migrations/0004_ai_rate_limit_usage.sql");
 const rlsSmoke = file("supabase/tests/rls-cross-org-smoke.sql");
 const rlsSmokeRunner = file("scripts/run-staging-rls-smoke.mjs");
+const migrationRunner = file("scripts/apply-db-migrations.mjs");
 const packageJson = JSON.parse(file("package.json"));
 const rlsPolicies = [
   ["munin_memory", "munin_org_isolation", ["org_id = current_request_org_id()"]],
@@ -117,7 +121,11 @@ check(
 check(
   "rls:staging-smoke-command",
   packageJson.scripts?.["rls:staging"] === "node scripts/run-staging-rls-smoke.mjs" &&
+    packageJson.scripts?.["db:migrate:staging"] === "node scripts/apply-db-migrations.mjs staging" &&
     rlsSmokeRunner.includes("SUPABASE_STAGING_DATABASE_URL") &&
+    rlsSmokeRunner.includes(".env.local") &&
+    migrationRunner.includes("SUPABASE_STAGING_DATABASE_URL") &&
+    migrationRunner.includes("SUPABASE_PRODUCTION_DATABASE_URL") &&
     rlsSmokeRunner.includes("ON_ERROR_STOP=1") &&
     rlsSmokeRunner.includes("cross_org_raw_signals") &&
     rlsSmokeRunner.includes("cross_org_api_keys"),
@@ -135,13 +143,114 @@ check(
     compactSql(migration).includes("grant all privileges on orgs, users, api_keys, alert_rules, raw_signals, ontology_objects, ontology_links, alerts, audit_log, munin_memory to service_role"),
   "Supabase service role can perform commercial write operations without permission-denied failures"
 );
+for (const table of ["munin_opinions", "munin_dream_runs", "huginn_eval_log"]) {
+  check(`v2-schema:${table}`, compactSql(muninV2Migration).includes(`create table if not exists ${table}`), "Huginn/Munin v2 migration creates required table");
+  check(`v2-rls:${table}`, hasTableRls(muninV2Migration, table), "Huginn/Munin v2 table has RLS enabled");
+}
+for (const column of ["memory_class", "source_type", "is_seed", "status", "salience_score", "valid_from", "valid_to"]) {
+  check(`v2-munin-memory:${column}`, compactSql(muninV2Migration).includes(`add column if not exists ${column}`), "munin_memory is expanded in v2 migration");
+}
+check(
+  "v2:sleep-time-compute-schema",
+  compactSql(sleepMigration).includes("create table if not exists pre_computed_answers") &&
+    hasTableRls(sleepMigration, "pre_computed_answers") &&
+    compactSql(sleepMigration).includes("grant all privileges on pre_computed_answers to service_role"),
+  "Sleep-time Compute pre_computed_answers table is present and org-scoped"
+);
+check(
+  "v2:sleep-time-compute-persistence",
+  file("lib/huginn/precompute.ts").includes("pre_computed_answers") &&
+    file("lib/huginn/precompute.ts").includes("createServiceSupabaseClient") &&
+    file("lib/huginn/cascade.ts").includes("await findPrecomputedAnswer"),
+  "Sleep-time Compute reads/writes the Supabase pre_computed_answers table when configured"
+);
+check(
+  "ai:shared-rate-limit-schema",
+  compactSql(rateLimitMigration).includes("create table if not exists ai_rate_limit_usage") &&
+    compactSql(rateLimitMigration).includes("create or replace function consume_ai_rate_limit") &&
+    compactSql(rateLimitMigration).includes("pg_advisory_xact_lock"),
+  "Optional Supabase-backed shared AI rate limiter exists for multi-instance operation"
+);
+check(
+  "v2:staging-smoke-new-tables",
+  ["cross_org_munin_opinions", "cross_org_huginn_eval_log", "with check (org_id = current_request_org_id())"].every((marker) =>
+    rlsSmoke.toLowerCase().includes(marker)
+  ),
+  "Staging RLS smoke includes Huginn/Munin v2 cross-org probes"
+);
 
 const huginnRoute = file("app/api/huginn/route.ts");
 const huginnQuery = file("lib/huginn/query.ts");
 const munin = file("lib/munin/memory.ts");
+const writeGate = file("lib/munin/write-gate.ts");
+const cascade = file("lib/huginn/cascade.ts");
+const biasTest = file("lib/huginn/bias-test.ts");
+const gapfill = file("lib/huginn/gapfill.ts");
+const narrativeCapture = file("lib/huginn/narrative-capture.ts");
+const huginnPage = file("app/(dashboard)/huginn/page.tsx");
+const seedMemoryManager = file("components/ui/seed-memory-manager.tsx");
+const evalButton = file("components/ui/eval-button.tsx");
 check("huginn:org-required", huginnRoute.includes("orgId is required") && huginnQuery.includes("orgId is required"), "Huginn requires org scope");
 check("huginn:reasoning-trace", huginnQuery.includes("reasoningTrace") && huginnQuery.includes("source-backed"), "Huginn returns trace and source-backed context");
 check("munin:org-isolation", munin.includes("Munin memory org isolation violation") && munin.includes("toMuninMemoryRow"), "Munin org isolation and persistence mapping exist");
+check(
+  "v2:write-gate-structural-rules",
+  writeGate.includes("web_narrative") &&
+    writeGate.includes("REJECTED_FROM_MEMORY") &&
+    writeGate.includes("WRITTEN_TO_OPINIONS") &&
+    writeGate.includes("MUNIN_SALIENCE_THRESHOLD"),
+  "Write gate blocks narrative, separates opinions, and uses env threshold"
+);
+check(
+  "v2:cascade-retrieval",
+  cascade.includes("searchLayer1Munin") &&
+    cascade.includes("searchLayer2OdimCache") &&
+    cascade.includes("realityGapfillSearch") &&
+    cascade.includes("narrativeCaptureSearch") &&
+    huginnQuery.includes("retrieval_layers_used"),
+  "Huginn uses adaptive retrieval cascade with separate Reality/Narrative paths"
+);
+check(
+  "v2:gapfill-narrative-persistence",
+  gapfill.includes("upsert(toMuninMemoryRow") &&
+    narrativeCapture.includes(".from(\"raw_signals\")") &&
+    narrativeCapture.includes("source_type: input.result.sourceType") &&
+    narrativeCapture.includes("is_proprietary: true"),
+  "Reality gapfill persists source-backed memory and narrative capture persists tenant-scoped raw signals"
+);
+check(
+  "v2:bias-test-framework",
+  biasTest.includes("reverseArgumentTest") &&
+    biasTest.includes("balancedBiasTest") &&
+    biasTest.includes("confirmationBiasTest") &&
+    biasTest.includes("answerHuginnQuestion") &&
+    file("scripts/bias-test.mjs").includes("runBiasTestSuite"),
+  "Investment bias testing framework runs through Huginn query flow and has a CLI runner"
+);
+check(
+  "ui:seed-memory-actions",
+  seedMemoryManager.includes("requestSeedMemory(\"/api/seed-memory\"") &&
+    seedMemoryManager.includes("method: \"PUT\"") &&
+    seedMemoryManager.includes("method: \"DELETE\"") &&
+    file("app/(dashboard)/settings/page.tsx").includes("SeedMemoryManager"),
+  "Settings Seed Memory UI wires create/edit/retire actions to the CRUD API"
+);
+check(
+  "ui:huginn-console-runtime",
+  huginnPage.includes("answerHuginnQuestion") &&
+    huginnPage.includes("response.eval_log_id") &&
+    huginnPage.includes("response.reasoningTrace") &&
+    huginnPage.includes("force-dynamic"),
+  "Huginn Console renders runtime Huginn response, trace, sources, counts, and eval_log_id"
+);
+check(
+  "ui:eval-error-handling",
+  evalButton.includes("try") &&
+    evalButton.includes("!response.ok") &&
+    evalButton.includes("setError") &&
+    evalButton.includes("disabled={pending || sent}"),
+  "EvalButton surfaces network/API failures and prevents duplicate submits"
+);
 
 const i18n = file("lib/i18n/messages.ts");
 check("i18n:en-ja", i18n.includes("en:") && i18n.includes("ja:") && i18n.includes("NEXT_PUBLIC_DEFAULT_LOCALE"), "English/Japanese messages configured");
@@ -156,13 +265,27 @@ const rateLimit = file("lib/ai/rate-limit.ts");
 check("ai:retry", provider.includes("AI_RETRY_ATTEMPTS") && provider.includes("429"), "AI retry handles Gemini rate limiting");
 check(
   "ai:free-tier-limits",
-  provider.includes("assertAiRateLimitAvailable") &&
+  provider.includes("assertAiRateLimitAvailableForRequest") &&
     provider.includes("orgId: request.orgId") &&
     rateLimit.includes("usageByTenantModel") &&
+    rateLimit.includes("consume_ai_rate_limit") &&
     rateLimit.includes("\"gemini-2.5-flash\": { rpm: 10, rpd: 250, tpm: 250000 }") &&
+    file(".env.example").includes("AI_RATE_LIMIT_BACKEND=memory") &&
     file(".env.example").includes("AI_RATE_LIMIT_TIER=free"),
   "Gemini Flash free-tier RPM/RPD/TPM guard exists per org"
 );
+for (const key of [
+  "MUNIN_SALIENCE_THRESHOLD",
+  "GAPFILL_ENABLED",
+  "NARRATIVE_CAPTURE_ENABLED",
+  "DREAM_ENABLED",
+  "GRADER_ENABLED",
+  "SLEEP_COMPUTE_ENABLED",
+  "AI_RATE_LIMIT_BACKEND",
+  "AI_RATE_LIMIT_SHARED_REQUIRED"
+]) {
+  check(`env:${key}`, file(".env.example").includes(`${key}=`), "Huginn/Munin v2 feature flag is documented");
+}
 
 const apiKeys = file("lib/auth/api-keys.ts");
 const requestAuth = file("lib/auth/request.ts");
@@ -256,6 +379,35 @@ check(
     readinessDoc.includes("Cloudflare WAF") &&
     readinessDoc.includes("in-process limiter is a fail-safe"),
   "Commercial readiness requires infrastructure-level auth rate limiting"
+);
+
+const { writeGate: runtimeWriteGate } = await import("../lib/munin/write-gate.ts");
+const { isAllowedGapfillUrl } = await import("../lib/huginn/gapfill.ts");
+const { resolveAiRateLimits } = await import("../lib/ai/rate-limit.ts");
+
+check(
+  "runtime:write-gate-routes",
+  runtimeWriteGate({ orgId: "audit-org", content: "narrative", sourceType: "web_narrative", memoryClass: "fact" }).action ===
+    "REJECTED_FROM_MEMORY" &&
+    runtimeWriteGate({ orgId: "audit-org", content: "opinion", sourceType: "user_seed", memoryClass: "opinion" }).table ===
+      "munin_opinions",
+  "Release audit executes writeGate routing instead of only checking source text"
+);
+check(
+  "runtime:gapfill-domain-filter",
+  isAllowedGapfillUrl("https://elibrary.ferc.gov/eLibrary/search", ["ferc.gov"]) &&
+    !isAllowedGapfillUrl("https://example.com/market-narrative", ["ferc.gov"]),
+  "Release audit executes Reality gapfill domain allow-list logic"
+);
+check(
+  "runtime:ai-free-tier-clamp",
+  resolveAiRateLimits("gemini-2.5-flash", {
+    AI_RATE_LIMIT_TIER: "free",
+    AI_MAX_RPM: "1000",
+    AI_MAX_RPD: "1000",
+    AI_MAX_TPM: "1000000"
+  }).rpm === 10,
+  "Release audit executes Gemini free-tier clamp logic"
 );
 
 const failed = checks.filter((item) => !item.pass);

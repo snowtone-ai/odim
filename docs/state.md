@@ -2,16 +2,17 @@
 
 ## Current
 - Branch: main (local repository may need initialization/remote binding)
-- Active task: none
+- Active task: review-result.md remediation and environment handoff
 - Current executor: Codex CLI
 - Write lock: Codex CLI
 - Coordinator: CEO Agent / Codex CLI
-- Latest verification pointer: tasks.md T001-T016 evidence
+- Latest verification pointer: tasks.md Review Remediation Tasks (R001-R009)
 - Verification mode: standard
 
 ## Current Blocker
-- None.
+- Dev server background launch still fails in this sandbox with Node/Windows `spawn EINVAL`; production build is the verified fallback.
 
 ## Next
-- Pre-release review remediation is locally verified through T016, and staging RLS evidence is recorded as complete in `docs/commercial-readiness.md`.
-- Remaining launch actions are production deployment/credential operations: enforce production env values, infrastructure API rate limits, apply `service_role` write grants if the staging database lacks them, issue the initial admin API key, and final release approval.
+- Huginn/Munin review remediation is locally implemented and verified through `pnpm test`, `pnpm typecheck`, `pnpm release:audit`, `pnpm verify`, and `pnpm build`.
+- `psql` was installed and migrations `0002/0003` were executed for both configured targets; staging RLS smoke passed with all cross-org probes `0`.
+- Current Supabase operation is single-environment (`main`/production-tagged); staging and production URLs may be identical until a dedicated staging project is created.

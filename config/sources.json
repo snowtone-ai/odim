@@ -1,6 +1,15 @@
 {
   "version": 1,
   "principle": "Configure free public sources first; add paid providers by config, not code rewrite.",
+  "allowedGapfillDomains": [
+    "elibrary.ferc.gov",
+    "ferc.gov",
+    "sec.gov",
+    "data.sec.gov",
+    "puc.texas.gov",
+    "cpuc.ca.gov",
+    "dps.ny.gov"
+  ],
   "sources": [
     {
       "id": "sec-edgar",

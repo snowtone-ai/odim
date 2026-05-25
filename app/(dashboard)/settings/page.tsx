@@ -1,7 +1,9 @@
 import { Panel } from "@/components/ui/panel";
 import { Screen } from "@/components/ui/screen";
+import { SeedMemoryManager } from "@/components/ui/seed-memory-manager";
 import { getMessages } from "@/lib/i18n/messages";
 import { getAdminSettings } from "@/lib/repositories/admin";
+import { listSeedMemories } from "@/lib/munin/seed";
 
 const defaultSettingsOrgId = process.env.PAID_SOURCE_ORG_ID || "11111111-1111-4111-8111-111111111111";
 
@@ -9,6 +11,7 @@ export default async function SettingsPage() {
   const messages = getMessages();
   const screen = messages.screens.settings;
   const settings = await getAdminSettings({ orgId: defaultSettingsOrgId });
+  const seeds = await listSeedMemories(defaultSettingsOrgId);
   const orgLabel = settings.org ? `${settings.org.name} / ${settings.org.tier}` : "org not configured / fallback";
 
   return (
@@ -63,6 +66,19 @@ export default async function SettingsPage() {
           <div className="mt-3 text-sm">Ontology, alert, audit, API key, and Munin data paths are scoped by org_id or public visibility.</div>
           <div className="mono mt-4 text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">source-backed control / rls-backed</div>
           <div className="mt-4 text-xs text-[var(--text-tertiary)]">{screen.copy.ontology}</div>
+        </Panel>
+        <Panel title={screen.panels.seedMemory}>
+          <SeedMemoryManager
+            initialSeeds={seeds.map((seed) => ({
+              id: seed.id,
+              kind: seed.kind,
+              content: seed.content,
+              orgId: seed.orgId
+            }))}
+            labels={screen.seed}
+            orgId={defaultSettingsOrgId}
+          />
+          <div className="mt-4 text-xs text-[var(--text-tertiary)]">{screen.copy.seedMemory}</div>
         </Panel>
       </div>
     </Screen>

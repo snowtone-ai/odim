@@ -2,6 +2,7 @@
 
 Scope: `context/source-08-roadmap.md` Phase F §4, plus Phase F common gates.
 Status authority: `tasks.md` verification evidence. This document records the requirement-to-evidence map; it is not a substitute for passing commands.
+Current environment model: single Supabase project/branch (`main`, production-tagged). Staging/production URLs may be intentionally identical until a dedicated staging project is created.
 
 ## Phase F §4 Matrix
 
@@ -31,7 +32,7 @@ Status authority: `tasks.md` verification evidence. This document records the re
 
 These are deployment operations, not code changes:
 
-- Apply `supabase/migrations/0001_initial.sql` to the target Supabase project.
+- Apply `supabase/migrations/0001_initial.sql`, `0002_huginn_munin_v2.sql`, and `0003_sleep_time_compute.sql` to the target Supabase project. If `AI_RATE_LIMIT_BACKEND=supabase` is enabled, also apply `0004_ai_rate_limit_usage.sql`.
 - Set `.env` values in Vercel/Supabase/GitHub Actions from `.env.example`, including `AUTH_REQUIRED=true` for commercial API routes.
 - Set a high-entropy `API_KEY_PEPPER`; API key auth returns 503 when auth is enforced without it.
 - Configure infrastructure-level API auth rate limiting for production, such as Vercel Edge Middleware, Vercel Firewall, Cloudflare WAF, API Gateway, or Redis-backed shared throttling. The in-process limiter is a fail-safe, not the only commercial control.
@@ -39,28 +40,30 @@ These are deployment operations, not code changes:
 - Issue an initial admin API key with `pnpm issue:bootstrap-api-key` or seed an admin user in Supabase.
 - Replace or add production source URLs/API keys in `config/sources.json` and environment variables.
 - For every paid configured source, set its `orgIdEnv` value so proprietary `raw_signals` are visible only to the owning org.
-- In Supabase staging, run `pnpm rls:staging` with `SUPABASE_STAGING_DATABASE_URL` and verify cross-org SELECT counts are all `0`; paste the result in Staging RLS Evidence below.
+- In Supabase staging, run `pnpm db:migrate:staging` and `pnpm rls:staging` with `SUPABASE_STAGING_DATABASE_URL` and verify cross-org SELECT counts are all `0`; paste the result in Staging RLS Evidence below.
 - Approve production deployment, billing settings, privacy terms, and any handling of personal or regulated data.
 
 ## Final Verification Snapshot
 
-Recorded after T016 pre-release review remediation:
+Recorded after Huginn/Munin v2 review remediation:
 
 | Gate | Result |
 |---|---|
-| `pnpm test` | 38 tests passed |
+| `pnpm test` | 49 tests passed |
 | `pnpm typecheck` | passed |
-| `pnpm release:audit` | 59 checks passed |
-| `pnpm scrape:dry-run` | 8 raw / 20 objects / 12 links / 5 alerts / 45 audit events |
+| `pnpm release:audit` | 94 checks passed |
 | `pnpm verify` | structural checks passed |
-| `pnpm build` | production build passed |
-| Browser/API smoke | `/settings` desktop, `/alerts` mobile, `/api/alerts`, and `/api/huginn` passed with no console errors |
+| `pnpm db:migrate:staging` | executed via `psql` wrapper (0002/0003 applied) |
+| `pnpm rls:staging` | passed (all cross-org probes `0`) |
+| `pnpm db:migrate:production` | executed via `psql` wrapper (0002/0003 applied; existing objects skipped safely) |
+| `pnpm build` | production build passed; `/huginn` is dynamic server-rendered on demand |
+| Browser/API smoke | pending because dev server background start still needs a working local server process |
 
 ## Staging RLS Evidence
 
-Status: completed on 2026-05-24 (manual SQL Editor execution, because local `psql` was unavailable).
+Status: v2 remediation smoke completed on 2026-05-25.
 
-Run after applying `supabase/migrations/0001_initial.sql` to the staging Supabase project.
+Run after applying `supabase/migrations/0001_initial.sql`, `0002_huginn_munin_v2.sql`, and `0003_sleep_time_compute.sql` to the staging Supabase project.
 
 Preferred command:
 
@@ -83,18 +86,22 @@ Required result:
 | `cross_org_api_keys` | `0` |
 | `cross_org_audit_log` | `0` |
 | `cross_org_munin_memory` | `0` |
+| `cross_org_munin_opinions` | `0` |
+| `cross_org_huginn_eval_log` | `0` |
 
 Evidence to record before commercial release:
 
 | Field | Value |
 |---|---|
 | Staging project | `xyvioekqwmbgrwlinzxe` |
-| Migration applied at | `2026-05-24 21:33:40 +09:00` |
-| Smoke test run at | `2026-05-24 21:33:40 +09:00` |
+| Migration applied at | `2026-05-25` |
+| Smoke test run at | `2026-05-25` |
 | Operator | `chidj` |
 | `cross_org_raw_signals` | `0` |
 | `cross_org_alerts` | `0` |
 | `cross_org_api_keys` | `0` |
 | `cross_org_audit_log` | `0` |
 | `cross_org_munin_memory` | `0` |
-| Result artifact | Supabase SQL Editor run of `supabase/tests/rls-cross-org-smoke.sql` |
+| `cross_org_munin_opinions` | `0` |
+| `cross_org_huginn_eval_log` | `0` |
+| Result artifact | `pnpm rls:staging` JSON output or Supabase SQL Editor run of `supabase/tests/rls-cross-org-smoke.sql` |

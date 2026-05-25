@@ -199,7 +199,7 @@ odim/
 │   ├── ai/
 │   │   └── provider.ts         # AI抽象化（Gemini⇄Claude⇄GPT）
 │   ├── huginn/                 # Huginnエージェントロジック
-│   ├── munin/                  # Munin記憶ロジック（05-HUGINN-MUNIN.md）
+│   ├── munin/                  # Munin記憶ロジック（source-05-huginn-munin.md）
 │   ├── ontology/               # Ontology操作
 │   ├── resolvers/              # SPVResolver, RDS, Triangulation
 │   └── supabase/               # Supabaseクライアント

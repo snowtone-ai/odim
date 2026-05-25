@@ -1,3 +1,6 @@
+import { isProductionRuntime } from "../env/runtime.ts";
+import { createServiceSupabaseClient, hasSupabaseWriteEnv } from "../supabase/client.ts";
+
 export type AiRateLimits = {
   rpm: number;
   rpd: number;
@@ -56,6 +59,16 @@ function dayKeyFor(now: Date) {
   return now.toISOString().slice(0, 10);
 }
 
+function minuteKeyFor(now: Date) {
+  return now.toISOString().slice(0, 16);
+}
+
+function shouldFallbackFromSupabaseError(message: string) {
+  if (isProductionRuntime()) return false;
+  if (process.env.REPOSITORY_SUPABASE_STRICT === "true") return false;
+  return /schema cache|does not exist|Could not find the function|Could not find the table|relation .* does not exist|column .* does not exist/i.test(message);
+}
+
 export function resetAiRateLimitUsage() {
   usageByTenantModel.clear();
 }
@@ -91,4 +104,49 @@ export function assertAiRateLimitAvailable(input: {
   bucket.minuteTokens += input.estimatedTokens;
   bucket.dayRequests += 1;
   usageByTenantModel.set(key, bucket);
+}
+
+export async function assertAiRateLimitAvailableForRequest(input: {
+  model: string;
+  estimatedTokens: number;
+  orgId?: string;
+  now?: Date;
+  env?: NodeJS.ProcessEnv;
+}) {
+  const env = input.env ?? process.env;
+  const useShared = env.AI_RATE_LIMIT_BACKEND === "supabase";
+  if (!useShared) {
+    assertAiRateLimitAvailable(input);
+    return;
+  }
+
+  if (!hasSupabaseWriteEnv()) {
+    if (env.AI_RATE_LIMIT_SHARED_REQUIRED === "true" || isProductionRuntime()) {
+      throw new Error("AI_RATE_LIMIT_BACKEND=supabase requires Supabase service-role write env");
+    }
+    assertAiRateLimitAvailable(input);
+    return;
+  }
+
+  const now = input.now ?? new Date();
+  const limits = resolveAiRateLimits(input.model, env);
+  const { data, error } = await createServiceSupabaseClient().rpc("consume_ai_rate_limit", {
+    p_org_id: input.orgId ?? "public",
+    p_model: input.model.toLowerCase(),
+    p_minute_key: minuteKeyFor(now),
+    p_day_key: dayKeyFor(now),
+    p_estimated_tokens: input.estimatedTokens,
+    p_rpm: limits.rpm,
+    p_rpd: limits.rpd,
+    p_tpm: limits.tpm
+  });
+
+  if (error) {
+    if (shouldFallbackFromSupabaseError(error.message)) {
+      assertAiRateLimitAvailable(input);
+      return;
+    }
+    throw new Error(`AI shared rate limit failed: ${error.message}`);
+  }
+  if (data !== true) throw new Error(`AI free-tier shared rate limit reached for ${input.model}`);
 }

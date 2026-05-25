@@ -120,7 +120,7 @@ SPVを選択した場合、親会社候補と確率（"Meta 88% / xAI 42%"）、
 ## Screen 5: 🤖 Huginn Console
 
 ### 目的
-自然言語でOntologyに質問するAIエージェント画面（`05-HUGINN-MUNIN.md`）。
+自然言語でOntologyに質問するAIエージェント画面（`source-05-huginn-munin.md`）。
 
 ### 構成（2カラム）
 1. **左：対話エリア**: 質問入力 + 回答表示。回答にはReasoning Trace（Huginnが辿った因果鎖）と出典を埋め込む。下部に入力欄。

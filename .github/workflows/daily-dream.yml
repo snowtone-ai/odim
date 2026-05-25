@@ -1,0 +1,30 @@
+name: Daily Munin Dream
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  dream:
+    runs-on: ubuntu-latest
+    if: ${{ vars.DREAM_ENABLED == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.9
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: node -e "import('./lib/munin/dream.ts').then((m)=>m.dreamJob({orgId:process.env.PAID_SOURCE_ORG_ID||'demo-org'}).then((r)=>console.log(JSON.stringify(r))))"
+        env:
+          DREAM_ENABLED: "true"
+          AI_PROVIDER: ${{ vars.AI_PROVIDER || 'mock' }}
+          AI_MODEL: gemini-2.5-flash
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PAID_SOURCE_ORG_ID: ${{ vars.PAID_SOURCE_ORG_ID }}

@@ -246,7 +246,9 @@ create table alerts (
   created_at timestamptz default now()
 );
 
--- ===== Munin（AI記憶）→ 詳細は 05-HUGINN-MUNIN.md =====
+-- ===== Munin（AI記憶）→ 詳細は source-05-huginn-munin.md =====
+-- v2.0 note: canonical munin_memory schema is superseded by context/source-05-huginn-munin.md §9
+-- and migration supabase/migrations/0002_huginn_munin_v2.sql.
 create table munin_memory (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references orgs(id),     -- ★組織分離の要
