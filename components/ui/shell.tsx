@@ -4,11 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Globe,
-  TrendingUp,
   Building2,
   Bell,
   Bird,
-  Bookmark,
   Settings,
   Languages
 } from "lucide-react";
@@ -69,13 +67,11 @@ export function Shell({
   locale
 }: Readonly<{ children: React.ReactNode; messages: Messages; locale: string }>) {
   const nav: NavItem[] = [
-    { icon: Globe,      label: messages.shell.nav.map,          href: "/map" },
-    { icon: TrendingUp, label: messages.shell.nav.capitalFlow,  href: "/capital-flow" },
-    { icon: Building2,  label: messages.shell.nav.entity,       href: "/entity" },
-    { icon: Bell,       label: messages.shell.nav.alerts,       href: "/alerts" },
-    { icon: Bird,       label: messages.shell.nav.huginn,       href: "/huginn" },
-    { icon: Bookmark,   label: messages.shell.nav.watchlist,    href: "/watchlist" },
-    { icon: Settings,   label: messages.shell.nav.settings,     href: "/settings" }
+    { icon: Globe,      label: messages.shell.nav.map,     href: "/map" },
+    { icon: Building2,  label: messages.shell.nav.entity,  href: "/entity" },
+    { icon: Bell,       label: messages.shell.nav.alerts,  href: "/alerts" },
+    { icon: Bird,       label: messages.shell.nav.huginn,  href: "/huginn" },
+    { icon: Settings,   label: messages.shell.nav.settings, href: "/settings" }
   ];
 
   return (

@@ -15,7 +15,9 @@ test("default messages resolve from environment locale", () => {
   const previous = process.env.NEXT_PUBLIC_DEFAULT_LOCALE;
   process.env.NEXT_PUBLIC_DEFAULT_LOCALE = "ja";
   try {
-    assert.equal(getMessages().common.screen, "画面");
+    assert.equal(getMessages().common.live, "ライブ / 出典付き");
+    assert.equal(getMessages().screens.entity.filterAll, "全て");
+    assert.equal(getMessages().screens.entity.narrativeGap, "ナラティブ乖離");
   } finally {
     if (previous === undefined) delete process.env.NEXT_PUBLIC_DEFAULT_LOCALE;
     else process.env.NEXT_PUBLIC_DEFAULT_LOCALE = previous;

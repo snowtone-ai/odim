@@ -15,20 +15,12 @@ export default async function RealityMapPage() {
         className="flex shrink-0 items-center justify-between px-5 py-2"
         style={{ borderBottom: "1px solid var(--line-faint)" }}
       >
-        <div className="flex items-baseline gap-3">
-          <span
-            className="mono text-[10px] uppercase tracking-[0.16em]"
-            style={{ color: "var(--rune-dim)" }}
-          >
-            {messages.common.screen} 01
-          </span>
-          <h1
-            className="font-[var(--font-spectral)] text-[18px] leading-tight tracking-wide"
-            style={{ color: "var(--text-primary)" }}
-          >
-            {screen.title}
-          </h1>
-        </div>
+        <h1
+          className="font-[var(--font-spectral)] text-[18px] leading-tight tracking-wide"
+          style={{ color: "var(--text-primary)" }}
+        >
+          {screen.title}
+        </h1>
         <div
           className="mono flex shrink-0 items-center gap-2 rounded-[var(--radius-sm)] px-2.5 py-1 text-[10px] uppercase tracking-[0.14em]"
           style={{
@@ -53,6 +45,7 @@ export default async function RealityMapPage() {
           <RealityMap
             layerLabels={[...messages.layers]}
             selectLabel={screen.panels.layers}
+            searchHint={screen.searchHint}
           />
         </div>
 

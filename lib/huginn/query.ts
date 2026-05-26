@@ -53,6 +53,8 @@ export type HuginnQuestionInput = {
   memories?: MuninMemory[];
   opinions?: MuninOpinion[];
   generate?: typeof generateAnswer;
+  /** Internal flag: prevent recursive sycophancy suppression */
+  suppressSycophancy?: boolean;
 };
 
 function unique(values: string[]) {
@@ -140,6 +142,10 @@ export async function answerHuginnQuestion(input: HuginnQuestionInput): Promise<
     plan
   });
 
+  const antiSycophancyPrefix = input.suppressSycophancy
+    ? "SYSTEM: Be direct and honest. Do not tell the user what they want to hear. Prioritize accuracy and completeness over agreeableness. If evidence is absent, say so.\n\n"
+    : "";
+
   const generated = precomputedAnswer
     ? {
         answer: precomputedAnswer,
@@ -149,7 +155,7 @@ export async function answerHuginnQuestion(input: HuginnQuestionInput): Promise<
       }
     : await (input.generate ?? generateAnswer)({
         question: input.question,
-        context,
+        context: antiSycophancyPrefix + context,
         orgId: input.orgId
       });
   const sourceRefs = buildSourceRefs(evidence);
@@ -203,6 +209,12 @@ export async function answerHuginnQuestion(input: HuginnQuestionInput): Promise<
     answer: generated.answer,
     flags: grader.flags
   });
+
+  // Sycophancy suppression: if detected and not already suppressed, re-generate silently
+  if (grader.flags.includes("sycophancy_suspected") && !input.suppressSycophancy) {
+    return answerHuginnQuestion({ ...input, suppressSycophancy: true });
+  }
+
   const evalLogId = await logHuginnEval({
     orgId: input.orgId,
     question: input.question,

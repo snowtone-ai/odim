@@ -10,8 +10,21 @@ export default async function AlertsPage() {
   const messages = getMessages(locale);
   const screen = messages.screens.alerts;
 
+  // Signal chain derived from the highest-priority alert's evidence
+  const primaryAlert = alerts[0];
+  const chainSteps: string[] = primaryAlert?.evidence.length
+    ? primaryAlert.evidence.map((ev: { sourceId?: string; title?: string }) =>
+        String(ev.title ?? ev.sourceId ?? "Source-backed evidence")
+      )
+    : [
+        "Raw filing observed",
+        "Entity resolution matched",
+        "SPV confidence threshold exceeded",
+        "Alert emitted"
+      ];
+
   return (
-    <Screen eyebrow={`${messages.common.screen} 04`} title={screen.title}>
+    <Screen title={screen.title}>
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[420px_1fr]">
         <Panel title={screen.panels.queue}>
           {alerts.map((alert) => (
@@ -41,11 +54,11 @@ export default async function AlertsPage() {
 
         <Panel title={screen.panels.chain} accent>
           <div className="grid gap-4">
-            {screen.chainSteps.map((step, index) => (
+            {chainSteps.map((step, index) => (
               <div
                 className="flex gap-4 pb-4"
                 style={{ borderBottom: "1px solid var(--line-faint)" }}
-                key={step}
+                key={`${index}-${step}`}
               >
                 <div
                   className="mono flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--radius-sm)] text-[12px] font-medium"
@@ -64,6 +77,14 @@ export default async function AlertsPage() {
               </div>
             ))}
           </div>
+          {primaryAlert && (
+            <div
+              className="mono mt-3 text-[10px] uppercase tracking-[0.12em]"
+              style={{ color: "var(--text-tertiary)" }}
+            >
+              {primaryAlert.source} · {Math.round(primaryAlert.confidence * 100)}% conf.
+            </div>
+          )}
         </Panel>
       </div>
     </Screen>

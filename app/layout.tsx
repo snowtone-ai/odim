@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans, Spectral } from "next/font/google";
 import "./globals.css";
 import { Shell } from "@/components/ui/shell";
+import { CommandPalette } from "@/components/ui/command-palette";
 import { getMessages } from "@/lib/i18n/messages";
 import { getLocale } from "@/lib/i18n/locale";
+import { entities, alerts } from "@/lib/data";
 
 const spectral = Spectral({
   subsets: ["latin"],
@@ -32,10 +34,18 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const locale = await getLocale();
   const messages = getMessages(locale);
 
+  const paletteEntities = entities.map((e) => ({ id: e.id, name: e.name }));
+  const paletteAlerts = alerts.map((a) => ({ title: a.title }));
+
   return (
     <html lang={locale} className={`${spectral.variable} ${plexSans.variable} ${plexMono.variable}`}>
       <body>
         <Shell messages={messages} locale={locale}>{children}</Shell>
+        <CommandPalette
+          entities={paletteEntities}
+          alerts={paletteAlerts}
+          labels={messages.shell.commandPalette}
+        />
       </body>
     </html>
   );

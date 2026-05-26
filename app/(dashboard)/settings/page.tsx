@@ -21,7 +21,7 @@ export default async function SettingsPage() {
     : locale === "ja" ? "組織未設定 / フォールバック" : "org not configured / fallback";
 
   return (
-    <Screen eyebrow={`${messages.common.screen} 08`} title={screen.title}>
+    <Screen title={screen.title}>
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
 
         <Panel title={screen.panels.alertRules}>
@@ -47,9 +47,6 @@ export default async function SettingsPage() {
               </div>
             ))}
           </div>
-          <div className="mt-4 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
-            {screen.copy.alertRules}
-          </div>
         </Panel>
 
         <Panel title={screen.panels.apiKeys}>
@@ -73,9 +70,6 @@ export default async function SettingsPage() {
               </div>
             ))}
           </div>
-          <div className="mt-4 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
-            {screen.copy.apiKeys}
-          </div>
         </Panel>
 
         <Panel title={screen.panels.permissions}>
@@ -98,9 +92,6 @@ export default async function SettingsPage() {
               </div>
             ))}
           </div>
-          <div className="mt-4 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
-            {screen.copy.permissions}
-          </div>
         </Panel>
 
         <Panel title={screen.panels.seedMemory}>
@@ -114,22 +105,20 @@ export default async function SettingsPage() {
             labels={screen.seed}
             orgId={defaultSettingsOrgId}
           />
-          <div className="mt-4 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
-            {screen.copy.seedMemory}
-          </div>
         </Panel>
 
         <Panel title={screen.panels.auditLog}>
-          <div className="overflow-x-auto">
-            {auditEvents.slice(0, 6).map((event) => (
+          <div className="max-h-[400px] overflow-y-auto">
+            {auditEvents.map((event) => (
               <div
-                className="grid grid-cols-[1fr_1fr_auto] gap-3 py-2.5 text-[13px]"
+                className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3 py-2.5 text-[13px] transition-colors duration-[var(--dur-fast)] hover:bg-[var(--ink-750)]"
                 style={{ borderBottom: "1px solid var(--line-faint)" }}
                 key={event.id}
               >
-                <span className="mono truncate" style={{ color: "var(--text-primary)" }}>{event.event}</span>
+                <span className="mono truncate text-[12px]" style={{ color: "var(--text-primary)" }}>{event.event}</span>
                 <span className="truncate" style={{ color: "var(--text-secondary)" }}>{event.actor}</span>
-                <span className="mono text-right" style={{ color: "var(--rune)" }}>{event.confidence}</span>
+                <span className="mono truncate text-[12px]" style={{ color: "var(--text-secondary)" }}>{event.source}</span>
+                <span className="mono text-right text-[12px]" style={{ color: "var(--rune)" }}>{event.confidence}</span>
               </div>
             ))}
           </div>
@@ -146,9 +135,6 @@ export default async function SettingsPage() {
           </div>
           <div className="mono mt-4 text-[10px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
             {locale === "ja" ? "出典バックドコントロール / RLS適用" : "source-backed control / rls-backed"}
-          </div>
-          <div className="mt-4 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
-            {screen.copy.ontology}
           </div>
         </Panel>
 

@@ -4,20 +4,21 @@ export type Locale = (typeof locales)[number];
 export const messages = {
   en: {
     common: {
-      live: "Live · Source-backed",
-      screen: "Screen",
-      tracked: "tracked",
-      on: "on"
+      live: "Live · Source-backed"
     },
     shell: {
       productCategory: "Reality Intelligence OS",
       nav: {
         map: "Reality Map",
-        capitalFlow: "Capital Flow",
         entity: "Entity Intelligence",
         alerts: "Signal Alerts",
         huginn: "Huginn",
-        watchlist: "Watchlist",
+        settings: "Settings"
+      },
+      commandPalette: {
+        hint: "Search entities, alerts, settings…",
+        entities: "Entities",
+        alerts: "Alerts",
         settings: "Settings"
       }
     },
@@ -30,16 +31,8 @@ export const messages = {
           layers: "Substrate Layers",
           liveFeed: "Live Signal Feed"
         },
-        globeNote: "Zoom to explore substrate signals from macro to parcel level"
-      },
-      capitalFlow: {
-        title: "Capital Flow",
-        panels: {
-          sectorHeat: "Sector Heat",
-          sankey: "Entity Flow",
-          gap: "Narrative–Reality Gap"
-        },
-        sankeyNote: "Microsoft → Grid → Utility → Data Center"
+        globeNote: "Zoom to explore substrate signals from macro to parcel level",
+        searchHint: "Search entities…"
       },
       entity: {
         title: "Entity Intelligence",
@@ -52,20 +45,18 @@ export const messages = {
           committed: "Committed",
           leadTime: "Lead Time"
         },
-        timeline: "Capital Commitment Timeline"
+        timeline: "Capital Commitment Timeline",
+        filterAll: "All",
+        filterWatched: "Watched",
+        dailyBrief: "Daily Brief",
+        narrativeGap: "Narrative–Reality Gap"
       },
       alerts: {
         title: "Signal Alerts",
         panels: {
           queue: "Alert Queue",
           chain: "Signal Chain"
-        },
-        chainSteps: [
-          "Raw filing observed",
-          "Entity resolution matched",
-          "SPV confidence increased",
-          "Alert emitted"
-        ]
+        }
       },
       huginn: {
         title: "Huginn",
@@ -78,17 +69,16 @@ export const messages = {
         },
         prompt: "Which entities are committing capital before narrative confirmation?",
         traceNote: "Trace covers org scope, Munin retrieval, ontology context, and source attachment.",
-        memoryRecords: "Org memory records",
-        muninCounts: {
-          fact: "fact",
-          procedure: "procedure",
-          seed: "seed",
-          opinion: "opinion"
+        memoryRecords: "org memory records",
+        input: {
+          hint: "Ask Huginn…",
+          submit: "Ask",
+          thinking: "Thinking…",
+          prompt: ""
         },
         badges: {
           reality: "Reality evidence",
-          narrative: "Contrast only",
-          sycophancy: "Sycophancy warning"
+          narrative: "Contrast only"
         },
         cascadeLayers: {
           munin_core: "Layer 1 · Core Munin",
@@ -105,34 +95,6 @@ export const messages = {
           submit: "Submit eval",
           sent: "Eval saved",
           error: "Eval request failed"
-        },
-        biasTest: {
-          reversal: "Reversal Test",
-          balanced: "Balanced Presentation",
-          confirmation: "Confirmation Bias"
-        }
-      },
-      watchlist: {
-        title: "Watchlist",
-        panels: {
-          watchlist: "Watchlist",
-          brief: "Daily Brief"
-        },
-        briefNote: "Reality-layer changes summarized with source links, confidence scores, and narrative gap.",
-        favorites: {
-          entity: "Entities",
-          sector: "Sectors",
-          region: "Regions",
-          empty: "No items tracked.",
-          add: "Add",
-          addHint: "Search entities, sectors, regions…",
-          tracked: "tracked"
-        }
-      },
-      audit: {
-        title: "Audit Trail",
-        panels: {
-          log: "Event Log"
         }
       },
       settings: {
@@ -173,20 +135,21 @@ export const messages = {
   },
   ja: {
     common: {
-      live: "ライブ / 出典付き",
-      screen: "画面",
-      tracked: "監視中",
-      on: "表示"
+      live: "ライブ / 出典付き"
     },
     shell: {
       productCategory: "Reality Intelligence OS",
       nav: {
         map: "リアリティマップ",
-        capitalFlow: "資本フロー",
         entity: "エンティティ分析",
         alerts: "アラート",
         huginn: "Huginn",
-        watchlist: "ウォッチリスト",
+        settings: "設定"
+      },
+      commandPalette: {
+        hint: "エンティティ・アラート・設定を検索…",
+        entities: "エンティティ",
+        alerts: "アラート",
         settings: "設定"
       }
     },
@@ -199,16 +162,8 @@ export const messages = {
           layers: "レイヤー",
           liveFeed: "ライブフィード"
         },
-        globeNote: "ズームで基盤層シグナルをマクロから用地レベルまで探索"
-      },
-      capitalFlow: {
-        title: "資本フロー",
-        panels: {
-          sectorHeat: "セクターヒート",
-          sankey: "フロー図",
-          gap: "ナラティブ乖離"
-        },
-        sankeyNote: "Microsoft → 送電網 → 電力会社 → データセンター"
+        globeNote: "ズームで基盤層シグナルをマクロから用地レベルまで探索",
+        searchHint: "エンティティを検索…"
       },
       entity: {
         title: "エンティティ分析",
@@ -221,20 +176,18 @@ export const messages = {
           committed: "確定額",
           leadTime: "先行日数"
         },
-        timeline: "資本コミットメント履歴"
+        timeline: "資本コミットメント履歴",
+        filterAll: "全て",
+        filterWatched: "ウォッチ中",
+        dailyBrief: "デイリーブリーフ",
+        narrativeGap: "ナラティブ乖離"
       },
       alerts: {
         title: "アラート",
         panels: {
           queue: "アラートキュー",
           chain: "シグナルチェーン"
-        },
-        chainSteps: [
-          "申請書類を検出",
-          "エンティティ照合が一致",
-          "SPV信頼度が上昇",
-          "アラートを発報"
-        ]
+        }
       },
       huginn: {
         title: "Huginn",
@@ -248,16 +201,15 @@ export const messages = {
         prompt: "ナラティブが確認される前に資本を固定しているエンティティはどれか？",
         traceNote: "組織スコープ、Munin検索、オントロジーコンテキスト、出典添付に基づく推論トレースです。",
         memoryRecords: "組織メモリ件数",
-        muninCounts: {
-          fact: "ファクト",
-          procedure: "手順",
-          seed: "シード",
-          opinion: "意見"
+        input: {
+          hint: "Huginnに質問する…",
+          submit: "送信",
+          thinking: "処理中…",
+          prompt: ""
         },
         badges: {
           reality: "根拠あり",
-          narrative: "対比のみ",
-          sycophancy: "同調バイアス警告"
+          narrative: "対比のみ"
         },
         cascadeLayers: {
           munin_core: "Layer 1 · コアMunin",
@@ -274,34 +226,6 @@ export const messages = {
           submit: "評価を送信",
           sent: "保存しました",
           error: "送信に失敗しました"
-        },
-        biasTest: {
-          reversal: "反転テスト",
-          balanced: "バランス提示",
-          confirmation: "確証バイアス"
-        }
-      },
-      watchlist: {
-        title: "ウォッチリスト",
-        panels: {
-          watchlist: "ウォッチリスト",
-          brief: "デイリーブリーフ"
-        },
-        briefNote: "Reality Layerの変化を出典リンク・信頼度・ナラティブ乖離とともに要約します。",
-        favorites: {
-          entity: "エンティティ",
-          sector: "セクター",
-          region: "地域",
-          empty: "監視項目がありません。",
-          add: "追加",
-          addHint: "エンティティ・セクター・地域を検索…",
-          tracked: "監視中"
-        }
-      },
-      audit: {
-        title: "監査ログ",
-        panels: {
-          log: "イベントログ"
         }
       },
       settings: {
