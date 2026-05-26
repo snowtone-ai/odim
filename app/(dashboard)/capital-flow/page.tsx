@@ -14,42 +14,101 @@ export default async function CapitalFlowPage() {
     <Screen eyebrow={`${messages.common.screen} 02`} title={screen.title}>
       <div className="grid gap-5">
         <Panel title={screen.panels.sectorHeat}>
-          <div className="grid grid-cols-7 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
             {layerActivity.map((layer, index) => (
-              <div className="rounded-[var(--radius-md)] border border-[var(--line-faint)] bg-[var(--ink-850)] p-4" key={layer.layer}>
-                <div className="mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+              <div
+                className="rounded-[var(--radius-md)] p-3.5 transition-all duration-[var(--dur-fast)] hover:translate-y-[-1px]"
+                style={{
+                  background: "var(--ink-850)",
+                  border: "1px solid var(--line-faint)",
+                  boxShadow: "var(--shadow-inset), var(--shadow-sm)"
+                }}
+                key={layer.layer}
+              >
+                <div
+                  className="mono text-[10px] uppercase tracking-[0.12em]"
+                  style={{ color: "var(--text-tertiary)" }}
+                >
                   {messages.layers[index] ?? layer.layer}
                 </div>
-                <div className="mono mt-6 text-xl text-[var(--rune)]">{layer.count}</div>
-                <div className="mono mt-1 text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">{layer.source}</div>
+                <div
+                  className="mono mt-4 text-xl font-medium"
+                  style={{ color: "var(--rune)" }}
+                >
+                  {layer.count}
+                </div>
+                <div
+                  className="mono mt-0.5 text-[10px] uppercase tracking-[0.11em]"
+                  style={{ color: "var(--text-tertiary)" }}
+                >
+                  {layer.source}
+                </div>
               </div>
             ))}
           </div>
         </Panel>
-        <div className="grid grid-cols-[1fr_380px] gap-5">
-          <Panel title={screen.panels.sankey}>
-            <div className="grid gap-4 rounded-[var(--radius-md)] border border-[var(--line-faint)] bg-[linear-gradient(90deg,var(--ink-850),var(--ink-800))] p-6">
+
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_340px]">
+          <Panel title={screen.panels.sankey} accent>
+            <div
+              className="grid gap-5 rounded-[var(--radius-md)] p-5"
+              style={{
+                background: "linear-gradient(135deg, var(--ink-850), var(--ink-800))",
+                border: "1px solid var(--line-faint)",
+                boxShadow: "var(--shadow-inset)"
+              }}
+            >
               {capitalFlows.map((flow) => (
                 <div className="grid gap-2" key={flow.id}>
-                  <div className="flex items-center justify-between gap-3 text-sm">
-                    <span>{flow.from}</span>
-                    <span className="mono text-[10px] uppercase tracking-[0.14em] text-[var(--rune)]">{flow.type}</span>
-                    <span>{flow.to}</span>
+                  <div className="flex items-center justify-between gap-3 text-[13px]">
+                    <span className="min-w-0 truncate" style={{ color: "var(--text-primary)" }}>
+                      {flow.from}
+                    </span>
+                    <span
+                      className="mono shrink-0 text-[10px] uppercase tracking-[0.12em]"
+                      style={{ color: "var(--rune)" }}
+                    >
+                      {flow.type}
+                    </span>
+                    <span
+                      className="min-w-0 truncate text-right"
+                      style={{ color: "var(--text-primary)" }}
+                    >
+                      {flow.to}
+                    </span>
                   </div>
-                  <div className="h-1.5 rounded-[var(--radius-sm)] bg-[var(--ink-700)]">
-                    <div className="h-full rounded-[var(--radius-sm)] bg-[var(--layer-energy)]" style={{ width: `${flow.width}%` }} />
+                  <div className="h-[3px] overflow-hidden rounded-full bg-[var(--ink-700)]">
+                    <div
+                      className="h-full rounded-full bg-[var(--layer-energy)]"
+                      style={{
+                        width: `${flow.width}%`,
+                        boxShadow: "0 0 6px rgba(224,144,74,0.3)",
+                        transformOrigin: "left",
+                        animation: "bar-fill 800ms var(--ease-out-expo) both"
+                      }}
+                    />
                   </div>
-                  <div className="mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">{flow.source}</div>
+                  <div
+                    className="mono text-[10px] uppercase tracking-[0.11em]"
+                    style={{ color: "var(--text-tertiary)" }}
+                  >
+                    {flow.source}
+                  </div>
                 </div>
               ))}
             </div>
           </Panel>
+
           <Panel title={screen.panels.gap}>
             {entities.map((entity) => (
-              <div className="border-b border-[var(--line-faint)] py-3 text-sm" key={entity.id}>
-                <div className="mb-3 flex justify-between">
-                  <span>{entity.name}</span>
-                  <span className="mono text-[var(--rune)]">{entity.lead}d</span>
+              <div
+                className="py-3"
+                style={{ borderBottom: "1px solid var(--line-faint)" }}
+                key={entity.id}
+              >
+                <div className="mb-2.5 flex justify-between text-[13px]">
+                  <span style={{ color: "var(--text-primary)" }}>{entity.name}</span>
+                  <span className="mono" style={{ color: "var(--rune)" }}>{entity.lead}d</span>
                 </div>
                 <Confidence value={entity.confidence} />
               </div>

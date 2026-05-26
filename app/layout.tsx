@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans, Spectral } from "next/font/google";
 import "./globals.css";
 import { Shell } from "@/components/ui/shell";
+import { getMessages } from "@/lib/i18n/messages";
+import { getLocale } from "@/lib/i18n/locale";
 
 const spectral = Spectral({
   subsets: ["latin"],
@@ -22,15 +24,18 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Odim",
-  description: "Reality Intelligence OS"
+  title: "Odim — Substrate Intelligence",
+  description: "Reality Intelligence OS — Substrate layer detection before narrative confirmation"
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const locale = await getLocale();
+  const messages = getMessages(locale);
+
   return (
-    <html lang="en" className={`${spectral.variable} ${plexSans.variable} ${plexMono.variable}`}>
+    <html lang={locale} className={`${spectral.variable} ${plexSans.variable} ${plexMono.variable}`}>
       <body>
-        <Shell>{children}</Shell>
+        <Shell messages={messages} locale={locale}>{children}</Shell>
       </body>
     </html>
   );

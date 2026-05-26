@@ -93,9 +93,20 @@ export function SeedMemoryManager({
 
   return (
     <div className="grid gap-4">
-      <div className="grid gap-3 rounded-[var(--radius-md)] border border-[var(--line-faint)] p-3">
+      <div
+        className="grid gap-3 rounded-[var(--radius-md)] p-3.5"
+        style={{
+          background: "var(--ink-850)",
+          border: "1px solid var(--line-faint)",
+          boxShadow: "var(--shadow-inset)"
+        }}
+      >
         <textarea
-          className="min-h-20 rounded-[var(--radius-sm)] border border-[var(--line-faint)] bg-[var(--ink-900)] p-3 text-sm outline-none"
+          className="min-h-20 rounded-[var(--radius-md)] bg-[var(--ink-900)] p-3 text-sm text-[var(--text-primary)] outline-none transition-all duration-[var(--dur-fast)] placeholder:text-[var(--text-quaternary)] focus:shadow-[0_0_0_1px_var(--rune-dim)]"
+          style={{
+            border: "1px solid var(--line-faint)",
+            boxShadow: "inset 0 1px 0 rgba(0,0,0,0.2)"
+          }}
           onChange={(event) => setNewContent(event.target.value)}
           placeholder={labels.content}
           value={newContent}
@@ -103,9 +114,16 @@ export function SeedMemoryManager({
         <div className="flex flex-wrap items-center gap-2">
           {(["fact", "opinion"] as const).map((kind) => (
             <button
-              className={`rounded-[var(--radius-sm)] border px-3 py-1 text-xs ${
-                newKind === kind ? "border-[var(--rune)] text-[var(--rune)]" : "border-[var(--line-faint)] text-[var(--text-tertiary)]"
+              className={`rounded-[var(--radius-sm)] px-3 py-1.5 text-[11px] transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] ${
+                newKind === kind
+                  ? "text-[var(--rune)] shadow-[0_0_6px_rgba(201,169,97,0.1)]"
+                  : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
               }`}
+              style={{
+                background: newKind === kind ? "var(--rune-wash)" : "var(--ink-750)",
+                border: newKind === kind ? "1px solid rgba(201,169,97,0.15)" : "1px solid var(--line-faint)",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)"
+              }}
               key={kind}
               onClick={() => setNewKind(kind)}
               type="button"
@@ -114,7 +132,12 @@ export function SeedMemoryManager({
             </button>
           ))}
           <button
-            className="rounded-[var(--radius-sm)] border border-[var(--line-faint)] px-3 py-1 text-xs text-[var(--text-primary)] disabled:opacity-50"
+            className="rounded-[var(--radius-sm)] px-3 py-1.5 text-[11px] font-medium text-[var(--text-primary)] transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] disabled:opacity-40"
+            style={{
+              background: "linear-gradient(180deg, var(--ink-700) 0%, var(--ink-750) 100%)",
+              border: "1px solid var(--line-soft)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), var(--shadow-sm)"
+            }}
             disabled={pending || !newContent.trim()}
             onClick={createSeed}
             type="button"
@@ -128,63 +151,37 @@ export function SeedMemoryManager({
       {seeds.length ? (
         <div className="grid gap-3">
           {seeds.map((seed) => (
-            <div className="border-b border-[var(--line-faint)] pb-3 text-sm" key={seed.id}>
+            <div
+              className="pb-3.5 text-sm"
+              style={{ borderBottom: "1px solid var(--line-faint)" }}
+              key={seed.id}
+            >
               {editingId === seed.id ? (
                 <textarea
-                  className="min-h-20 w-full rounded-[var(--radius-sm)] border border-[var(--line-faint)] bg-[var(--ink-900)] p-3 text-sm outline-none"
+                  className="min-h-20 w-full rounded-[var(--radius-md)] bg-[var(--ink-900)] p-3 text-sm text-[var(--text-primary)] outline-none transition-all duration-[var(--dur-fast)] focus:shadow-[0_0_0_1px_var(--rune-dim)]"
+                  style={{
+                    border: "1px solid var(--line-faint)",
+                    boxShadow: "inset 0 1px 0 rgba(0,0,0,0.2)"
+                  }}
                   onChange={(event) => setEditingContent(event.target.value)}
                   value={editingContent}
                 />
               ) : (
-                <div>{seed.content}</div>
+                <div className="text-[13px] leading-relaxed">{seed.content}</div>
               )}
-              <div className="mono mt-2 text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+              <div className="mono mt-2 text-[10px] uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
                 {seed.kind === "opinion" ? labels.opinion : labels.fact} / MVCC
               </div>
               <div className="mt-3 flex gap-2">
                 {editingId === seed.id ? (
                   <>
-                    <button
-                      className="rounded-[var(--radius-sm)] border border-[var(--line-faint)] px-3 py-1 text-xs"
-                      disabled={pending}
-                      onClick={() => updateSeed(seed.id)}
-                      type="button"
-                    >
-                      {labels.save}
-                    </button>
-                    <button
-                      className="rounded-[var(--radius-sm)] border border-[var(--line-faint)] px-3 py-1 text-xs"
-                      disabled={pending}
-                      onClick={() => {
-                        setEditingId(null);
-                        setEditingContent("");
-                      }}
-                      type="button"
-                    >
-                      {labels.cancel}
-                    </button>
+                    <SeedButton disabled={pending} onClick={() => updateSeed(seed.id)} label={labels.save} />
+                    <SeedButton disabled={pending} onClick={() => { setEditingId(null); setEditingContent(""); }} label={labels.cancel} />
                   </>
                 ) : (
                   <>
-                    <button
-                      className="rounded-[var(--radius-sm)] border border-[var(--line-faint)] px-3 py-1 text-xs"
-                      disabled={pending}
-                      onClick={() => {
-                        setEditingId(seed.id);
-                        setEditingContent(seed.content);
-                      }}
-                      type="button"
-                    >
-                      {labels.edit}
-                    </button>
-                    <button
-                      className="rounded-[var(--radius-sm)] border border-[var(--line-faint)] px-3 py-1 text-xs"
-                      disabled={pending}
-                      onClick={() => retireSeed(seed.id)}
-                      type="button"
-                    >
-                      {labels.delete}
-                    </button>
+                    <SeedButton disabled={pending} onClick={() => { setEditingId(seed.id); setEditingContent(seed.content); }} label={labels.edit} />
+                    <SeedButton disabled={pending} onClick={() => retireSeed(seed.id)} label={labels.delete} />
                   </>
                 )}
               </div>
@@ -192,8 +189,26 @@ export function SeedMemoryManager({
           ))}
         </div>
       ) : (
-        <div className="text-sm text-[var(--text-tertiary)]">{labels.empty}</div>
+        <div className="text-[13px] text-[var(--text-tertiary)]">{labels.empty}</div>
       )}
     </div>
+  );
+}
+
+function SeedButton({ disabled, onClick, label }: Readonly<{ disabled: boolean; onClick: () => void; label: string }>) {
+  return (
+    <button
+      className="rounded-[var(--radius-sm)] px-3 py-1.5 text-[11px] text-[var(--text-secondary)] transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] disabled:opacity-40 hover:text-[var(--text-primary)]"
+      style={{
+        background: "var(--ink-750)",
+        border: "1px solid var(--line-faint)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)"
+      }}
+      disabled={disabled}
+      onClick={onClick}
+      type="button"
+    >
+      {label}
+    </button>
   );
 }

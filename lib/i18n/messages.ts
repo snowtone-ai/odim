@@ -4,7 +4,7 @@ export type Locale = (typeof locales)[number];
 export const messages = {
   en: {
     common: {
-      live: "Live / source-backed",
+      live: "Live · Source-backed",
       screen: "Screen",
       tracked: "tracked",
       on: "on"
@@ -16,9 +16,8 @@ export const messages = {
         capitalFlow: "Capital Flow",
         entity: "Entity Intelligence",
         alerts: "Signal Alerts",
-        huginn: "Huginn Console",
-        watchlist: "Watchlist & Briefs",
-        audit: "Audit Trail",
+        huginn: "Huginn",
+        watchlist: "Watchlist",
         settings: "Settings"
       }
     },
@@ -27,20 +26,20 @@ export const messages = {
       map: {
         title: "Reality Map",
         panels: {
-          globe: "Capital Fixation Globe / Map",
-          layers: "Reality Layers",
+          globe: "Substrate Map",
+          layers: "Substrate Layers",
           liveFeed: "Live Signal Feed"
         },
-        globeNote: "Macro globe transitions to parcel map at zoom threshold"
+        globeNote: "Zoom to explore substrate signals from macro to parcel level"
       },
       capitalFlow: {
         title: "Capital Flow",
         panels: {
           sectorHeat: "Sector Heat",
-          sankey: "Entity Sankey",
-          gap: "Narrative to Reality Gap"
+          sankey: "Entity Flow",
+          gap: "Narrative–Reality Gap"
         },
-        sankeyNote: "Microsoft -> Grid -> Utility -> Data Center"
+        sankeyNote: "Microsoft → Grid → Utility → Data Center"
       },
       entity: {
         title: "Entity Intelligence",
@@ -53,7 +52,7 @@ export const messages = {
           committed: "Committed",
           leadTime: "Lead Time"
         },
-        timeline: "Source-backed Capital Commitment Timeline"
+        timeline: "Capital Commitment Timeline"
       },
       alerts: {
         title: "Signal Alerts",
@@ -61,10 +60,15 @@ export const messages = {
           queue: "Alert Queue",
           chain: "Signal Chain"
         },
-        chainSteps: ["Raw filing observed", "Entity resolution matched", "SPV confidence increased", "Alert emitted"]
+        chainSteps: [
+          "Raw filing observed",
+          "Entity resolution matched",
+          "SPV confidence increased",
+          "Alert emitted"
+        ]
       },
       huginn: {
-        title: "Huginn Console",
+        title: "Huginn",
         panels: {
           dialogue: "Dialogue",
           trace: "Reasoning Trace",
@@ -73,7 +77,7 @@ export const messages = {
           eval: "Answer Eval"
         },
         prompt: "Which entities are committing capital before narrative confirmation?",
-        traceNote: "Reasoning trace from org scope, Munin retrieval, ontology context, and source attachment.",
+        traceNote: "Trace covers org scope, Munin retrieval, ontology context, and source attachment.",
         memoryRecords: "Org memory records",
         muninCounts: {
           fact: "fact",
@@ -87,10 +91,10 @@ export const messages = {
           sycophancy: "Sycophancy warning"
         },
         cascadeLayers: {
-          munin_core: "Layer 1 Core Munin",
-          munin_archival: "Layer 1 Archival Munin",
-          odim_cache: "Layer 2 Odim Cache",
-          reality_gapfill: "Layer 3A Reality Gapfill",
+          munin_core: "Layer 1 · Core Munin",
+          munin_archival: "Layer 1 · Archival Munin",
+          odim_cache: "Layer 2 · Odim Cache",
+          reality_gapfill: "Layer 3A · Reality Gapfill",
           narrative_capture: "Narrative Capture",
           opinion_search: "Opinion Search",
           precomputed: "Sleep-time Cache"
@@ -109,17 +113,26 @@ export const messages = {
         }
       },
       watchlist: {
-        title: "Watchlist & Briefs",
+        title: "Watchlist",
         panels: {
           watchlist: "Watchlist",
-          brief: "Daily Brief Preview"
+          brief: "Daily Brief"
         },
-        briefNote: "Reality-layer changes are summarized with source links, confidence, and narrative gap."
+        briefNote: "Reality-layer changes summarized with source links, confidence scores, and narrative gap.",
+        favorites: {
+          entity: "Entities",
+          sector: "Sectors",
+          region: "Regions",
+          empty: "No items tracked.",
+          add: "Add",
+          addHint: "Search entities, sectors, regions…",
+          tracked: "tracked"
+        }
       },
       audit: {
         title: "Audit Trail",
         panels: {
-          log: "Transparent Event Log"
+          log: "Event Log"
         }
       },
       settings: {
@@ -129,24 +142,25 @@ export const messages = {
           apiKeys: "API Keys",
           permissions: "Team Permissions",
           ontology: "Ontology Explorer",
-          seedMemory: "Seed Memory"
+          seedMemory: "Seed Memory",
+          auditLog: "Audit Trail"
         },
         copy: {
-          alertRules: "Watchlist, layer, and confidence thresholds are backed by deterministic alert evidence.",
-          apiKeys: "External AI Agent access uses org-scoped API routes and can be extended to MCP without rewriting the core API.",
+          alertRules: "Watchlist, layer, and confidence thresholds backed by deterministic alert evidence.",
+          apiKeys: "External AI agent access uses org-scoped API routes, extendable to MCP.",
           permissions: "Org roles: analyst / admin.",
           ontology: "Advanced object, link, and action type inspection.",
           seedMemory: "Seed memories are MVCC records. Fact seeds enter Munin core; opinion seeds stay physically separate."
         },
         seed: {
-          fact: "fact seed",
-          opinion: "opinion seed",
+          fact: "Fact seed",
+          opinion: "Opinion seed",
           create: "Create",
           edit: "Edit",
           delete: "Retire",
           save: "Save",
           cancel: "Cancel",
-          content: "Add source-backed seed memory or a separated opinion seed",
+          content: "Add a source-backed fact seed or a separated opinion seed",
           empty: "No active seed memories.",
           error: "Seed memory request failed"
         },
@@ -167,95 +181,99 @@ export const messages = {
     shell: {
       productCategory: "Reality Intelligence OS",
       nav: {
-        map: "Reality Map",
-        capitalFlow: "Capital Flow",
-        entity: "Entity Intelligence",
-        alerts: "Signal Alerts",
-        huginn: "Huginn Console",
-        watchlist: "Watchlist & Briefs",
-        audit: "Audit Trail",
-        settings: "Settings"
+        map: "リアリティマップ",
+        capitalFlow: "資本フロー",
+        entity: "エンティティ分析",
+        alerts: "アラート",
+        huginn: "Huginn",
+        watchlist: "ウォッチリスト",
+        settings: "設定"
       }
     },
-    layers: ["電力", "資本", "土地", "計算資源", "水", "原材料", "物流"],
+    layers: ["エネルギー", "資本", "土地", "計算資源", "水", "原材料", "物流"],
     screens: {
       map: {
-        title: "Reality Map",
+        title: "リアリティマップ",
         panels: {
-          globe: "資本固定化 Globe / Map",
-          layers: "Reality Layer",
-          liveFeed: "ライブシグナル"
+          globe: "サブストレートマップ",
+          layers: "レイヤー",
+          liveFeed: "ライブフィード"
         },
-        globeNote: "マクロの地球儀から用地レベルの地図へズーム閾値で遷移"
+        globeNote: "ズームで基盤層シグナルをマクロから用地レベルまで探索"
       },
       capitalFlow: {
-        title: "Capital Flow",
+        title: "資本フロー",
         panels: {
-          sectorHeat: "セクター・ヒート",
-          sankey: "エンティティ・サンキー",
-          gap: "Narrative と Reality の差分"
+          sectorHeat: "セクターヒート",
+          sankey: "フロー図",
+          gap: "ナラティブ乖離"
         },
-        sankeyNote: "Microsoft -> Grid -> Utility -> Data Center"
+        sankeyNote: "Microsoft → 送電網 → 電力会社 → データセンター"
       },
       entity: {
-        title: "Entity Intelligence",
+        title: "エンティティ分析",
         panels: {
-          entities: "エンティティ",
-          links: "Ontology Links"
+          entities: "エンティティ一覧",
+          links: "関係リンク"
         },
         metrics: {
-          score: "Reality Score",
-          committed: "コミット額",
+          score: "リアリティスコア",
+          committed: "確定額",
           leadTime: "先行日数"
         },
-        timeline: "出典付き Capital Commitment Timeline"
+        timeline: "資本コミットメント履歴"
       },
       alerts: {
-        title: "Signal Alerts",
+        title: "アラート",
         panels: {
           queue: "アラートキュー",
           chain: "シグナルチェーン"
         },
-        chainSteps: ["生 filing を観測", "Entity Resolution が一致", "SPV 信頼度が上昇", "アラート生成"]
+        chainSteps: [
+          "申請書類を検出",
+          "エンティティ照合が一致",
+          "SPV信頼度が上昇",
+          "アラートを発報"
+        ]
       },
       huginn: {
-        title: "Huginn Console",
+        title: "Huginn",
         panels: {
           dialogue: "対話",
-          trace: "Reasoning Trace",
+          trace: "推論トレース",
           munin: "Munin",
           sources: "出典",
           eval: "回答評価"
         },
-        prompt: "質問: Narrative 確認前に資本を固定しているエンティティは？",
-        traceNote: "org scope、Munin retrieval、ontology context、source attachment に基づく Reasoning Trace。",
+        prompt: "ナラティブが確認される前に資本を固定しているエンティティはどれか？",
+        traceNote: "組織スコープ、Munin検索、オントロジーコンテキスト、出典添付に基づく推論トレースです。",
         memoryRecords: "組織メモリ件数",
         muninCounts: {
-          fact: "fact",
-          procedure: "procedure",
-          seed: "seed",
-          opinion: "opinion"
+          fact: "ファクト",
+          procedure: "手順",
+          seed: "シード",
+          opinion: "意見"
         },
         badges: {
-          reality: "判断根拠",
-          narrative: "対比用・判断根拠外",
-          sycophancy: "同調警告"
+          reality: "根拠あり",
+          narrative: "対比のみ",
+          sycophancy: "同調バイアス警告"
         },
         cascadeLayers: {
-          munin_core: "Layer 1 Core Munin",
-          munin_archival: "Layer 1 Archival Munin",
-          odim_cache: "Layer 2 Odim Cache",
-          reality_gapfill: "Layer 3A Reality Gapfill",
-          narrative_capture: "Narrative Capture",
-          opinion_search: "Opinion Search",
-          precomputed: "Sleep-time Cache"
+          munin_core: "Layer 1 · コアMunin",
+          munin_archival: "Layer 1 · アーカイブMunin",
+          odim_cache: "Layer 2 · Odimキャッシュ",
+          reality_gapfill: "Layer 3A · リアリティ補完",
+          narrative_capture: "ナラティブキャプチャ",
+          opinion_search: "意見検索",
+          precomputed: "事前計算キャッシュ"
         },
         eval: {
           rating: "評価",
-          note: "評価メモ",
+          note: "評価メモ（任意）",
           submit: "評価を送信",
-          sent: "保存済み",
-          error: "評価送信に失敗しました"
+          sent: "保存しました",
+          error: "送信に失敗しました"
         },
         biasTest: {
           reversal: "反転テスト",
@@ -264,50 +282,60 @@ export const messages = {
         }
       },
       watchlist: {
-        title: "Watchlist & Briefs",
+        title: "ウォッチリスト",
         panels: {
-          watchlist: "Watchlist",
-          brief: "Daily Brief プレビュー"
+          watchlist: "ウォッチリスト",
+          brief: "デイリーブリーフ"
         },
-        briefNote: "Reality Layer の変化を、出典リンク・信頼度・Narrative gap とともに要約。"
+        briefNote: "Reality Layerの変化を出典リンク・信頼度・ナラティブ乖離とともに要約します。",
+        favorites: {
+          entity: "エンティティ",
+          sector: "セクター",
+          region: "地域",
+          empty: "監視項目がありません。",
+          add: "追加",
+          addHint: "エンティティ・セクター・地域を検索…",
+          tracked: "監視中"
+        }
       },
       audit: {
-        title: "Audit Trail",
+        title: "監査ログ",
         panels: {
-          log: "透明性イベントログ"
+          log: "イベントログ"
         }
       },
       settings: {
-        title: "Settings",
+        title: "設定",
         panels: {
-          alertRules: "Alert Rules",
-          apiKeys: "API Keys",
-          permissions: "Team Permissions",
-          ontology: "Ontology Explorer",
-          seedMemory: "Seed Memory"
+          alertRules: "アラートルール",
+          apiKeys: "APIキー",
+          permissions: "チーム権限",
+          ontology: "オントロジー",
+          seedMemory: "シードメモリ",
+          auditLog: "監査ログ"
         },
         copy: {
-          alertRules: "Watchlist、Layer、信頼度閾値に基づくルールビルダー。",
-          apiKeys: "外部 AI Agent のアクセスは API-first 設計。MCP は将来拡張。",
-          permissions: "組織ロール: analyst / admin。",
-          ontology: "Object、Link、Action type の上級者向け検査。",
-          seedMemory: "Seed memory は MVCC で管理。fact seed は Munin core、opinion seed は別テーブルに分離。"
+          alertRules: "ウォッチリスト・レイヤー・信頼度のしきい値に基づくルール設定です。",
+          apiKeys: "外部AIエージェントのアクセスはAPIファーストで設計されており、MCPへの拡張にも対応しています。",
+          permissions: "組織ロール：アナリスト / 管理者",
+          ontology: "オブジェクト・リンク・アクションタイプの高度な検査機能です。",
+          seedMemory: "シードメモリはMVCCで管理されます。ファクトシードはMuninコアに、意見シードは別テーブルに分離されます。"
         },
         seed: {
-          fact: "fact seed",
-          opinion: "opinion seed",
+          fact: "ファクトシード",
+          opinion: "意見シード",
           create: "作成",
           edit: "編集",
-          delete: "退役",
+          delete: "削除",
           save: "保存",
           cancel: "キャンセル",
-          content: "出典付きの seed memory または分離する opinion seed を追加",
-          empty: "有効な Seed Memory はありません。",
-          error: "Seed Memory 操作に失敗しました"
+          content: "出典付きのファクトシード、または意見シードを追加してください",
+          empty: "シードメモリがありません。",
+          error: "シードメモリの操作に失敗しました"
         },
         language: {
-          panel: "言語",
-          description: "全画面のインターフェース言語を切り替えます。"
+          panel: "言語設定",
+          description: "全画面の表示言語を切り替えます。"
         }
       }
     }

@@ -6,6 +6,7 @@ import { getMessages } from "@/lib/i18n/messages";
 import { getLocale } from "@/lib/i18n/locale";
 import { getAdminSettings } from "@/lib/repositories/admin";
 import { listSeedMemories } from "@/lib/munin/seed";
+import { auditEvents } from "@/lib/data";
 
 const defaultSettingsOrgId = process.env.PAID_SOURCE_ORG_ID || "11111111-1111-4111-8111-111111111111";
 
@@ -15,61 +16,93 @@ export default async function SettingsPage() {
   const screen = messages.screens.settings;
   const settings = await getAdminSettings({ orgId: defaultSettingsOrgId });
   const seeds = await listSeedMemories(defaultSettingsOrgId);
-  const orgLabel = settings.org ? `${settings.org.name} / ${settings.org.tier}` : "org not configured / fallback";
+  const orgLabel = settings.org
+    ? `${settings.org.name} / ${settings.org.tier}`
+    : locale === "ja" ? "組織未設定 / フォールバック" : "org not configured / fallback";
 
   return (
     <Screen eyebrow={`${messages.common.screen} 08`} title={screen.title}>
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+
         <Panel title={screen.panels.alertRules}>
-          <div className="mono text-[10px] uppercase tracking-[0.14em] text-[var(--rune)]">{settings.source} / source-backed rules</div>
-          <div className="mt-4 grid gap-3">
+          <div className="mono text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
+            {settings.source} · {locale === "ja" ? "出典バックドルール" : "source-backed rules"}
+          </div>
+          <div className="mt-4 grid gap-2.5">
             {settings.alertRules.map((rule) => (
-              <div className="border-b border-[var(--line-faint)] pb-3 text-sm" key={rule.id}>
-                <div className="flex items-center justify-between">
-                  <span>{rule.name}</span>
-                  <span className="mono text-[var(--rune)]">{Math.round(rule.minConfidence * 100)}%</span>
+              <div
+                className="pb-3"
+                style={{ borderBottom: "1px solid var(--line-faint)" }}
+                key={rule.id}
+              >
+                <div className="flex items-center justify-between text-[13px]">
+                  <span style={{ color: "var(--text-primary)" }} className="truncate">{rule.name}</span>
+                  <span className="mono shrink-0" style={{ color: "var(--rune)" }}>
+                    {Math.round(rule.minConfidence * 100)}%
+                  </span>
                 </div>
-                <div className="mono mt-2 text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
-                  {rule.layer} / {rule.destination} / {rule.enabled ? "enabled" : "disabled"}
+                <div className="mono mt-1 text-[10px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
+                  {rule.layer} · {rule.destination} · {rule.enabled ? (locale === "ja" ? "有効" : "enabled") : (locale === "ja" ? "無効" : "disabled")}
                 </div>
               </div>
             ))}
           </div>
-          <div className="mt-4 text-xs text-[var(--text-tertiary)]">{screen.copy.alertRules}</div>
+          <div className="mt-4 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
+            {screen.copy.alertRules}
+          </div>
         </Panel>
+
         <Panel title={screen.panels.apiKeys}>
-          <div className="mono text-[10px] uppercase tracking-[0.14em] text-[var(--rune)]">hashed keys / one-time token issue</div>
-          <div className="mt-4 grid gap-3">
+          <div className="mono text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
+            {locale === "ja" ? "ハッシュ済みキー / ワンタイム発行" : "hashed keys / one-time token issue"}
+          </div>
+          <div className="mt-4 grid gap-2.5">
             {settings.apiKeys.map((key) => (
-              <div className="border-b border-[var(--line-faint)] pb-3 text-sm" key={key.id}>
-                <div className="flex items-center justify-between">
-                  <span>{key.name}</span>
-                  <span className="mono text-[var(--rune)]">{key.prefix}...</span>
+              <div
+                className="pb-3"
+                style={{ borderBottom: "1px solid var(--line-faint)" }}
+                key={key.id}
+              >
+                <div className="flex items-center justify-between text-[13px]">
+                  <span style={{ color: "var(--text-primary)" }} className="truncate">{key.name}</span>
+                  <span className="mono shrink-0" style={{ color: "var(--rune)" }}>{key.prefix}…</span>
                 </div>
-                <div className="mono mt-2 text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">{key.scopes.join(" / ")}</div>
+                <div className="mono mt-1 text-[10px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
+                  {key.scopes.join(" · ")}
+                </div>
               </div>
             ))}
           </div>
-          <div className="mt-4 text-xs text-[var(--text-tertiary)]">{screen.copy.apiKeys}</div>
+          <div className="mt-4 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
+            {screen.copy.apiKeys}
+          </div>
         </Panel>
+
         <Panel title={screen.panels.permissions}>
-          <div className="mono text-[10px] uppercase tracking-[0.14em] text-[var(--rune)]">{orgLabel}</div>
-          <div className="mt-4 grid gap-3">
+          <div className="mono text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
+            {orgLabel}
+          </div>
+          <div className="mt-4 grid gap-2.5">
             {settings.members.map((member) => (
-              <div className="flex items-center justify-between border-b border-[var(--line-faint)] pb-3 text-sm" key={member.id}>
-                <span>{member.displayName}</span>
-                <span className="mono text-[var(--text-tertiary)]">{member.role}</span>
+              <div
+                className="flex items-center justify-between pb-3"
+                style={{ borderBottom: "1px solid var(--line-faint)" }}
+                key={member.id}
+              >
+                <span className="truncate text-[13px]" style={{ color: "var(--text-primary)" }}>
+                  {member.displayName}
+                </span>
+                <span className="mono shrink-0 text-[11px]" style={{ color: "var(--text-tertiary)" }}>
+                  {member.role}
+                </span>
               </div>
             ))}
           </div>
-          <div className="mt-4 text-xs text-[var(--text-tertiary)]">{screen.copy.permissions}</div>
+          <div className="mt-4 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
+            {screen.copy.permissions}
+          </div>
         </Panel>
-        <Panel title={screen.panels.ontology}>
-          <div className="mono text-[10px] uppercase tracking-[0.14em] text-[var(--rune)]">public-or-org isolation</div>
-          <div className="mt-3 text-sm">Ontology, alert, audit, API key, and Munin data paths are scoped by org_id or public visibility.</div>
-          <div className="mono mt-4 text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">source-backed control / rls-backed</div>
-          <div className="mt-4 text-xs text-[var(--text-tertiary)]">{screen.copy.ontology}</div>
-        </Panel>
+
         <Panel title={screen.panels.seedMemory}>
           <SeedMemoryManager
             initialSeeds={seeds.map((seed) => ({
@@ -81,14 +114,53 @@ export default async function SettingsPage() {
             labels={screen.seed}
             orgId={defaultSettingsOrgId}
           />
-          <div className="mt-4 text-xs text-[var(--text-tertiary)]">{screen.copy.seedMemory}</div>
+          <div className="mt-4 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
+            {screen.copy.seedMemory}
+          </div>
         </Panel>
+
+        <Panel title={screen.panels.auditLog}>
+          <div className="overflow-x-auto">
+            {auditEvents.slice(0, 6).map((event) => (
+              <div
+                className="grid grid-cols-[1fr_1fr_auto] gap-3 py-2.5 text-[13px]"
+                style={{ borderBottom: "1px solid var(--line-faint)" }}
+                key={event.id}
+              >
+                <span className="mono truncate" style={{ color: "var(--text-primary)" }}>{event.event}</span>
+                <span className="truncate" style={{ color: "var(--text-secondary)" }}>{event.actor}</span>
+                <span className="mono text-right" style={{ color: "var(--rune)" }}>{event.confidence}</span>
+              </div>
+            ))}
+          </div>
+        </Panel>
+
+        <Panel title={screen.panels.ontology}>
+          <div className="mono text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
+            {locale === "ja" ? "公開・組織別分離" : "public-or-org isolation"}
+          </div>
+          <div className="mt-3 text-[13px]" style={{ color: "var(--text-secondary)" }}>
+            {locale === "ja"
+              ? "オントロジー・アラート・監査・APIキー・Muninのデータパスは、org_idまたは公開可視性でスコープ管理されています。"
+              : "Ontology, alert, audit, API key, and Munin data paths are scoped by org_id or public visibility."}
+          </div>
+          <div className="mono mt-4 text-[10px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
+            {locale === "ja" ? "出典バックドコントロール / RLS適用" : "source-backed control / rls-backed"}
+          </div>
+          <div className="mt-4 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
+            {screen.copy.ontology}
+          </div>
+        </Panel>
+
         <Panel title={screen.language.panel}>
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-[var(--text-secondary)]">{screen.language.description}</div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
+              {screen.language.description}
+            </div>
             <LocaleSwitcher current={locale} />
           </div>
         </Panel>
+
       </div>
     </Screen>
   );

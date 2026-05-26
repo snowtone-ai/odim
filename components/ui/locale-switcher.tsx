@@ -13,14 +13,17 @@ export function LocaleSwitcher({ current }: Readonly<{ current: string }>) {
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-1.5">
       {(["en", "ja"] as const).map((locale) => (
         <button
-          className={`mono rounded-[var(--radius-sm)] border px-3 py-1.5 text-[10px] uppercase tracking-[0.14em] transition-colors duration-150 disabled:opacity-50 ${
+          className={`mono rounded-[var(--radius-sm)] px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] disabled:opacity-40 ${
             current === locale
-              ? "border-[var(--rune)] text-[var(--rune)]"
-              : "border-[var(--line-faint)] text-[var(--text-tertiary)] hover:border-[var(--line-soft)] hover:text-[var(--text-secondary)]"
+              ? "bg-[var(--rune-wash)] text-[var(--rune)] shadow-[0_0_8px_rgba(201,169,97,0.1)]"
+              : "text-[var(--text-quaternary)] hover:bg-[var(--ink-650)] hover:text-[var(--text-tertiary)]"
           }`}
+          style={{
+            border: current === locale ? "1px solid rgba(201,169,97,0.2)" : "1px solid var(--line-faint)"
+          }}
           disabled={pending}
           key={locale}
           onClick={() => handleSelect(locale)}

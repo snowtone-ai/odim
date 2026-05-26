@@ -40,27 +40,45 @@ export function EvalButton({
 
   return (
     <div className="grid gap-3">
-      <div className="flex items-center gap-2" aria-label={labels.rating}>
+      <div className="flex items-center gap-1.5" aria-label={labels.rating}>
         {[1, 2, 3, 4, 5].map((value) => (
           <button
             aria-label={`${labels.rating} ${value}`}
-            className="grid size-8 place-items-center rounded-[var(--radius-sm)] border border-[var(--line-faint)] text-[var(--rune)]"
+            className={`grid size-8 place-items-center rounded-[var(--radius-sm)] transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] ${
+              value <= rating
+                ? "text-[var(--rune)] shadow-[0_0_6px_rgba(201,169,97,0.12)]"
+                : "text-[var(--text-quaternary)] hover:text-[var(--rune-dim)]"
+            }`}
+            style={{
+              background: value <= rating ? "var(--rune-wash)" : "var(--ink-750)",
+              border: value <= rating ? "1px solid rgba(201,169,97,0.15)" : "1px solid var(--line-faint)",
+              boxShadow: value <= rating ? "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 6px rgba(201,169,97,0.12)" : "inset 0 1px 0 rgba(255,255,255,0.03)"
+            }}
             key={value}
             onClick={() => setRating(value)}
             type="button"
           >
-            <Star fill={value <= rating ? "currentColor" : "none"} size={15} />
+            <Star fill={value <= rating ? "currentColor" : "none"} size={14} strokeWidth={1.5} />
           </button>
         ))}
       </div>
       <textarea
-        className="min-h-20 rounded-[var(--radius-sm)] border border-[var(--line-faint)] bg-[var(--ink-900)] p-3 text-sm outline-none"
+        className="min-h-20 rounded-[var(--radius-md)] bg-[var(--ink-850)] p-3 text-sm text-[var(--text-primary)] outline-none transition-all duration-[var(--dur-fast)] placeholder:text-[var(--text-quaternary)] focus:shadow-[0_0_0_1px_var(--rune-dim)]"
+        style={{
+          border: "1px solid var(--line-faint)",
+          boxShadow: "inset 0 1px 0 rgba(0,0,0,0.2)"
+        }}
         onChange={(event) => setNote(event.target.value)}
         placeholder={labels.note}
         value={note}
       />
       <button
-        className="rounded-[var(--radius-sm)] border border-[var(--line-faint)] px-3 py-2 text-sm text-[var(--text-primary)] disabled:opacity-50"
+        className="rounded-[var(--radius-md)] px-4 py-2.5 text-[13px] font-medium text-[var(--text-primary)] transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] disabled:opacity-40"
+        style={{
+          background: "linear-gradient(180deg, var(--ink-700) 0%, var(--ink-750) 100%)",
+          border: "1px solid var(--line-soft)",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), var(--shadow-sm)"
+        }}
         disabled={pending || sent}
         onClick={submit}
         type="button"

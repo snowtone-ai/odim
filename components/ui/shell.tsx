@@ -1,40 +1,161 @@
-import Link from "next/link";
-import { getMessages } from "@/lib/i18n/messages";
-import { getLocale } from "@/lib/i18n/locale";
+"use client";
 
-export async function Shell({ children }: Readonly<{ children: React.ReactNode }>) {
-  const locale = await getLocale();
-  const messages = getMessages(locale);
-  const nav = [
-    [messages.shell.nav.map, "/map"],
-    [messages.shell.nav.capitalFlow, "/capital-flow"],
-    [messages.shell.nav.entity, "/entity"],
-    [messages.shell.nav.alerts, "/alerts"],
-    [messages.shell.nav.huginn, "/huginn"],
-    [messages.shell.nav.watchlist, "/watchlist"],
-    [messages.shell.nav.audit, "/audit"],
-    [messages.shell.nav.settings, "/settings"]
-  ] as const;
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  Globe,
+  TrendingUp,
+  Building2,
+  Bell,
+  Bird,
+  Bookmark,
+  Settings,
+  Languages
+} from "lucide-react";
+import { LocaleSwitcher } from "@/components/ui/locale-switcher";
+import type { Messages } from "@/lib/i18n/messages";
+
+type NavItem = {
+  icon: React.ElementType;
+  label: string;
+  href: string;
+};
+
+function SidebarLink({ item }: Readonly<{ item: NavItem }>) {
+  const pathname = usePathname();
+  const active = pathname === item.href;
+  const Icon = item.icon;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_20%_0%,var(--rune-wash),transparent_28%),var(--ink-900)]">
-      <aside className="border-b border-[var(--line-faint)] bg-[var(--ink-850)] px-4 py-4 md:fixed md:inset-y-0 md:left-0 md:w-64 md:border-b-0 md:border-r md:px-5 md:py-6">
-        <div className="font-[var(--font-spectral)] text-2xl tracking-[0.08em]">ØDIM</div>
-        <div className="mono mt-2 text-[10px] uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-          {messages.shell.productCategory}
+    <Link href={item.href} className="group relative flex items-center justify-center">
+      <span
+        className={`relative flex h-[38px] w-[38px] items-center justify-center rounded-[var(--radius-md)] transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] ${
+          active
+            ? "text-[var(--rune)]"
+            : "text-[var(--text-tertiary)] hover:bg-[var(--ink-700)] hover:text-[var(--text-secondary)]"
+        }`}
+        style={
+          active
+            ? {
+                background: "linear-gradient(180deg, var(--rune-active-bg) 0%, var(--rune-active-fade) 100%)",
+                boxShadow: "inset 0 1px 0 var(--line-faint), 0 0 14px var(--rune-active-glow)"
+              }
+            : undefined
+        }
+      >
+        <Icon size={18} strokeWidth={1.4} />
+        {active && (
+          <span className="absolute -left-[13px] h-[18px] w-[2px] rounded-r-full bg-[var(--rune)]" />
+        )}
+      </span>
+      {/* Tooltip */}
+      <span
+        className="pointer-events-none absolute left-[calc(100%+10px)] z-50 -translate-x-1 whitespace-nowrap rounded-[var(--radius-sm)] px-3 py-1.5 text-[12px] font-medium text-[var(--text-primary)] opacity-0 transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100"
+        style={{
+          background: "var(--ink-700)",
+          border: "1px solid var(--line-soft)",
+          boxShadow: "var(--shadow-lg)"
+        }}
+      >
+        {item.label}
+      </span>
+    </Link>
+  );
+}
+
+export function Shell({
+  children,
+  messages,
+  locale
+}: Readonly<{ children: React.ReactNode; messages: Messages; locale: string }>) {
+  const nav: NavItem[] = [
+    { icon: Globe,      label: messages.shell.nav.map,          href: "/map" },
+    { icon: TrendingUp, label: messages.shell.nav.capitalFlow,  href: "/capital-flow" },
+    { icon: Building2,  label: messages.shell.nav.entity,       href: "/entity" },
+    { icon: Bell,       label: messages.shell.nav.alerts,       href: "/alerts" },
+    { icon: Bird,       label: messages.shell.nav.huginn,       href: "/huginn" },
+    { icon: Bookmark,   label: messages.shell.nav.watchlist,    href: "/watchlist" },
+    { icon: Settings,   label: messages.shell.nav.settings,     href: "/settings" }
+  ];
+
+  return (
+    <div className="min-h-screen bg-[var(--ink-950)]">
+      {/* Desktop sidebar */}
+      <aside
+        className="md:fixed inset-y-0 left-0 z-40 hidden w-[var(--sidebar-w)] flex-col items-center py-5 md:flex"
+        style={{
+          background: "var(--ink-900)",
+          borderRight: "1px solid var(--line-faint)",
+          backgroundImage: "linear-gradient(180deg, var(--sidebar-sheen) 0%, transparent 40%)"
+        }}
+      >
+        {/* Logo mark */}
+        <div
+          className="relative flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)]"
+          style={{
+            border: "1px solid var(--line-faint)",
+            boxShadow: "inset 0 1px 0 var(--logo-sheen)"
+          }}
+        >
+          <span className="font-[var(--font-spectral)] text-[18px] font-semibold leading-none tracking-[0.04em] text-[var(--text-primary)]">
+            O
+          </span>
         </div>
-        <nav className="mt-4 flex gap-1 overflow-x-auto pb-1 md:mt-10 md:grid md:overflow-visible md:pb-0">
-          {nav.map(([label, href]) => (
-            <Link
-              className="whitespace-nowrap rounded-[var(--radius-md)] border border-transparent px-3 py-2 text-sm text-[var(--text-secondary)] transition-colors duration-150 hover:border-[var(--line-soft)] hover:text-[var(--text-primary)]"
-              href={href}
-              key={href}
-            >
-              {label}
-            </Link>
+
+        <nav className="mt-7 grid gap-0.5">
+          {nav.map((item) => (
+            <SidebarLink item={item} key={item.href} />
           ))}
         </nav>
+
+        {/* Language switcher */}
+        <div className="mt-auto">
+          <div className="group relative flex h-[38px] w-[38px] items-center justify-center">
+            <Languages
+              size={15}
+              strokeWidth={1.5}
+              className="text-[var(--text-quaternary)] transition-colors duration-[var(--dur-fast)] group-hover:text-[var(--text-tertiary)]"
+            />
+            <div
+              className="pointer-events-none absolute left-[calc(100%+10px)] z-50 -translate-x-1 whitespace-nowrap rounded-[var(--radius-md)] p-2.5 opacity-0 transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100"
+              style={{
+                background: "var(--ink-700)",
+                border: "1px solid var(--line-soft)",
+                boxShadow: "var(--shadow-lg)"
+              }}
+            >
+              <LocaleSwitcher current={locale} />
+            </div>
+          </div>
+        </div>
       </aside>
+
+      {/* Mobile top bar */}
+      <div
+        className="flex items-center gap-3 overflow-x-auto px-4 py-2.5 md:hidden"
+        style={{
+          background: "var(--ink-900)",
+          borderBottom: "1px solid var(--line-faint)"
+        }}
+      >
+        <span className="font-[var(--font-spectral)] text-[15px] font-semibold tracking-[0.08em]">ODIM</span>
+        <nav className="flex gap-0.5">
+          {nav.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                href={item.href}
+                key={item.href}
+                className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--text-tertiary)] transition-all duration-[var(--dur-fast)] hover:bg-[var(--ink-700)] hover:text-[var(--text-secondary)]"
+                title={item.label}
+              >
+                <Icon size={15} strokeWidth={1.5} />
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+
       <main className="min-h-screen md:ml-64">{children}</main>
     </div>
   );

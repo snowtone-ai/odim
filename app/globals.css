@@ -9,9 +9,16 @@ html,
 body {
   margin: 0;
   min-height: 100%;
-  background: var(--ink-900);
+  background: var(--ink-950);
   color: var(--text-primary);
   font-family: var(--font-plex-sans), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: rgba(201, 169, 97, 0.18);
+  color: var(--text-primary);
 }
 
 a {
@@ -28,4 +35,105 @@ textarea {
 .mono {
   font-family: var(--font-plex-mono), monospace;
   font-variant-numeric: tabular-nums;
+}
+
+/* ── Scrollbar (Webkit) ── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ink-650);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-600);
+}
+
+/* ── Page entrance ── */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes bar-fill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.animate-page-in {
+  animation: page-in var(--dur-page) var(--ease-out-expo) both;
+}
+
+.animate-fade-in {
+  animation: fade-in var(--dur-base) var(--ease-soft) both;
+}
+
+.animate-slide-up {
+  animation: slide-up var(--dur-slow) var(--ease-out-expo) both;
+}
+
+/* Stagger children animation */
+.stagger > * {
+  animation: slide-up var(--dur-slow) var(--ease-out-expo) both;
+}
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 60ms; }
+.stagger > *:nth-child(3) { animation-delay: 120ms; }
+.stagger > *:nth-child(4) { animation-delay: 180ms; }
+.stagger > *:nth-child(5) { animation-delay: 240ms; }
+.stagger > *:nth-child(6) { animation-delay: 300ms; }
+.stagger > *:nth-child(7) { animation-delay: 360ms; }
+.stagger > *:nth-child(8) { animation-delay: 420ms; }
+
+/* ── Glass panel ── */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-inset), var(--shadow-sm);
+}
+
+/* ── MapLibre overrides ── */
+.maplibregl-ctrl-attrib {
+  display: none !important;
+}
+.maplibregl-popup-content {
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+.maplibregl-popup-tip {
+  display: none !important;
 }

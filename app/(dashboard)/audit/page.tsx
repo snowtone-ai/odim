@@ -12,17 +12,34 @@ export default async function AuditPage() {
   return (
     <Screen eyebrow={`${messages.common.screen} 07`} title={screen.title}>
       <Panel title={screen.panels.log}>
-        {auditEvents.map((event) => (
-          <div className="grid grid-cols-4 border-b border-[var(--line-faint)] py-3 text-sm" key={event.id}>
-            <span className="mono">{event.event}</span>
-            <span>{event.actor}</span>
-            <span>{event.source}</span>
-            <span className="mono text-right text-[var(--rune)]">{event.confidence}</span>
-            <span className="col-span-4 mt-2 text-xs text-[var(--text-tertiary)]">
-              {Object.entries(event.detail).slice(0, 2).map(([key, value]) => `${key}: ${String(value)}`).join(" / ")}
-            </span>
-          </div>
-        ))}
+        <div className="overflow-x-auto">
+          {auditEvents.map((event) => (
+            <div
+              className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3 py-3 transition-colors duration-[var(--dur-fast)] hover:bg-[var(--ink-750)]"
+              style={{ borderBottom: "1px solid var(--line-faint)" }}
+              key={event.id}
+            >
+              <span className="mono truncate text-[12px]" style={{ color: "var(--text-primary)" }}>
+                {event.event}
+              </span>
+              <span className="truncate text-[13px]" style={{ color: "var(--text-secondary)" }}>
+                {event.actor}
+              </span>
+              <span className="truncate text-[12px]" style={{ color: "var(--text-secondary)" }}>
+                {event.source}
+              </span>
+              <span className="mono text-right text-[12px]" style={{ color: "var(--rune)" }}>
+                {event.confidence}
+              </span>
+              <span
+                className="col-span-4 mt-0.5 truncate text-[11px]"
+                style={{ color: "var(--text-tertiary)" }}
+              >
+                {Object.entries(event.detail).slice(0, 2).map(([key, value]) => `${key}: ${String(value)}`).join(" / ")}
+              </span>
+            </div>
+          ))}
+        </div>
       </Panel>
     </Screen>
   );

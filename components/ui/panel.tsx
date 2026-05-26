@@ -1,13 +1,37 @@
 export function Panel({
   title,
-  children
-}: Readonly<{ title: string; children: React.ReactNode }>) {
+  children,
+  noPad,
+  accent
+}: Readonly<{ title: string; children: React.ReactNode; noPad?: boolean; accent?: boolean }>) {
   return (
-    <div className="rounded-[var(--radius-md)] border border-[var(--line-faint)] bg-[var(--ink-800)]">
-      <div className="mono border-b border-[var(--line-faint)] px-4 py-3 text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
-        {title}
+    <div
+      className="overflow-hidden rounded-[var(--radius-lg)]"
+      style={{
+        background: "var(--ink-800)",
+        border: "1px solid var(--glass-border)",
+        boxShadow: accent
+          ? "var(--shadow-inset), var(--shadow-md), var(--shadow-glow)"
+          : "var(--shadow-inset), var(--shadow-sm)",
+        backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.016) 0%, transparent 64px)"
+      }}
+    >
+      {/* Panel header — 12px semi-bold, text-secondary for clear readability */}
+      <div
+        className="flex items-center px-5 py-3"
+        style={{
+          borderBottom: "1px solid var(--line-faint)",
+          backgroundImage: "linear-gradient(90deg, rgba(255,255,255,0.008) 0%, transparent 50%)"
+        }}
+      >
+        <span
+          className="mono text-[11px] font-medium uppercase tracking-[0.12em]"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          {title}
+        </span>
       </div>
-      <div className="p-4">{children}</div>
+      <div className={noPad ? "" : "p-5"}>{children}</div>
     </div>
   );
 }
