@@ -1,12 +1,11 @@
 # tasks.md -- pm-zero v9.5 Execution Ledger
 
 ## Goal Binding
-- Active goal: Huginn/Munin v2.0 upgrade (context/source-05-huginn-munin.md).
-- Canonical spec: context/source-05-huginn-munin.md (v2.0)
+- Active goal: Odim v3.0 — First-Principles Product Overhaul
 - Planning owner: Souma (Planner)
-- Implementation owner: Codex CLI
-- Review owner: Codex CLI
-- Scope: T017-T030 (v2.0 full implementation). No scope deferral.
+- Implementation owner: Sonnet (Claude Code)
+- Review owner: Souma
+- Scope: T031–T052 (full product overhaul). No scope deferral.
 
 ## Status Vocabulary
 - proposed: idea exists, not ready
@@ -17,7 +16,140 @@
 - done: accepted by reviewer
 - verified: evidence recorded
 
-## Tasks
+---
+
+## Architecture Decision: Map Approach (3-Skeleton Comparison)
+
+### Skeleton A: MapLibre Native Layers (GeoJSON Sources)
+- Entity markers as `symbol` layer with per-substrate SDF icons (SVG → SDF at build time)
+- Connection lines as `line` layer with GeoJSON LineString features from ontology links
+- Clustering via MapLibre's built-in cluster source property
+- Popups via MapLibre's native Popup class
+- **Pros**: Best performance (fully GPU-rendered), smallest bundle, zero marker drift, proper zoom behavior, built-in clustering
+- **Cons**: Less flexible than HTML for complex marker interiors; SDF icons limited to single-color tinting
+
+### Skeleton B: MapLibre + deck.gl Overlay
+- MapLibre for basemap; deck.gl ScatterplotLayer/IconLayer for entities, ArcLayer for connections
+- GPU-accelerated animation, ideal for 10K+ entities
+- **Pros**: Most visually striking arc animations, best for massive datasets, custom shaders
+- **Cons**: +500KB bundle, overkill for <100 entities, deck.gl triangulation on main thread causes jank, complex React integration
+
+### Skeleton C: MapLibre + Enhanced HTML Markers (Current Approach Extended)
+- Keep DOM-based markers but redesign with substrate-specific SVG icons inside HTML wrappers
+- Connection lines as a separate SVG/canvas overlay or GeoJSON line layer
+- **Pros**: Maximum HTML/CSS flexibility for marker interiors, familiar pattern
+- **Cons**: DOM rendering bottleneck at scale, marker drift risk if CSS fails to load, mixed DOM+WebGL for connections is fragile
+
+### Decision: **Skeleton A — MapLibre Native Layers**
+- **Why**: Odim's demo entity count is 10–50. Native symbol+line layers give correct geo-positioning (zero drift), GPU rendering, built-in clustering, and the smallest bundle. The "military software" aesthetic demands clean, crisp, performant rendering — not DOM manipulation. deck.gl's 500KB overhead and main-thread triangulation are unjustified for this scale. Research confirms MapLibre is 2x faster than deck.gl for tile rendering.
+- **Icon strategy**: Build 7 substrate SVG icons at design time, convert to SDF images via `map.addImage()` with `sdf: true` for runtime color tinting. Each substrate type gets a distinct silhouette (bolt, coin, mountain, chip, droplet, gem, truck) recognizable at 16px.
+- **Connection strategy**: GeoJSON LineString source with `line` layer; great-circle interpolation for long-distance connections; line color = source entity's substrate color; opacity/width driven by confidence.
+
+---
+
+## Phase 0: Pre-Flight (Uncommitted Map Fixes)
+
+The following changes are already implemented but uncommitted from the previous session. They form the foundation for Phase 1.
+
+| ID | Status | Owner | Depends On | Write Scope | Acceptance | Verification | Evidence |
+|---|---|---|---|---|---|---|---|
+| T031 | ready | Sonnet | none | (already modified) components/ui/reality-map.tsx, app/(dashboard)/map/page.tsx | Commit existing map fixes: CARTO Dark Matter tiles, top-level CSS import (drift fix), compact map page layout | pnpm typecheck; pnpm build | Build passes; changes committed |
+
+---
+
+## Phase 1: Map — Palantir Gotham Quality (Priority: P0)
+
+Reference: Palantir Gotham uses geospatial mapping + network analysis + entity-centric common operating picture. Goal: Odim's map must let an analyst understand substrate distribution, entity connections, and confidence levels in one glance.
+
+| ID | Status | Owner | Depends On | Write Scope | Acceptance | Verification | Evidence |
+|---|---|---|---|---|---|---|---|
+| T032 | ready | Sonnet | T031 | lib/map/types.ts, lib/map/entities.ts | Define MapEntity type with lat/lng/substrate/score/confidence/connections, export demo entities from fixture data with real coordinates, export connection edges from ontologyLinks | pnpm typecheck | Types compile; entities have valid coordinates and connections |
+| T033 | ready | Sonnet | T032 | public/icons/substrate-*.svg, components/ui/reality-map.tsx | Create 7 substrate SVG icons (energy=bolt, cash=coin, land=mountain, compute=chip, water=droplet, raw_materials=gem, logistics=truck). Each icon: 24×24, single-path, SDF-compatible silhouette. Register via `map.addImage(key, img, {sdf:true})` for runtime color tinting | pnpm typecheck; pnpm build; visual check | 7 SVG files exist; map renders icons per substrate type with correct colors |
+| T034 | ready | Sonnet | T033 | components/ui/reality-map.tsx | Replace HTML markers with MapLibre native `symbol` layer using GeoJSON source. Entity data as FeatureCollection. Icon = substrate SDF image, color = LAYER_COLORS[substrate]. Add `text-field` for entity name at zoom ≥ 5. Size scales with zoom via `interpolate` expression | pnpm typecheck; pnpm build; visual check | Markers render as native symbols, no DOM elements, proper geo-positioning at all zoom levels |
+| T035 | ready | Sonnet | T034 | components/ui/reality-map.tsx | Add MapLibre clustering: GeoJSON source with `cluster: true, clusterMaxZoom: 8, clusterRadius: 50`. Cluster circle layer with `circle-radius` stepped by point_count. Cluster count label as symbol layer. Click cluster → zoom to expand. Uncluster transition animation | pnpm typecheck; pnpm build; visual check | Clusters appear at low zoom; click to expand; individual entities at high zoom |
+| T036 | ready | Sonnet | T034 | components/ui/reality-map.tsx, lib/map/connections.ts | Add connection line layer: GeoJSON LineString source from ontology links. Line color = source entity substrate color. Line width = confidence × 3. Line opacity = 0.4–0.8 based on confidence. Dash array for low-confidence links. Great-circle interpolation for >1000km connections | pnpm typecheck; pnpm build; visual check | Connection lines visible between related entities; width/opacity reflect confidence |
+| T037 | ready | Sonnet | T036 | components/ui/reality-map.tsx | Entity interaction: (a) hover → highlight entity + connected lines + tooltip with name/score/confidence/substrate; (b) click → select entity, dim unrelated entities, highlight connected entities and lines, show detail in sidebar; (c) `mouseenter`/`mouseleave` cursor change. Use `queryRenderedFeatures` for hit testing | pnpm typecheck; pnpm build; visual check | Hover shows tooltip; click selects and highlights network; deselect on map click |
+| T038 | ready | Sonnet | T037 | app/(dashboard)/map/page.tsx, components/ui/reality-map.tsx | Map sidebar redesign: (a) Selected entity detail panel (name, score, confidence, substrate, connected entities list); (b) Layer toggles stay; (c) Live signal feed stays but compact (3 items); (d) Sidebar collapses to icon-only on smaller viewports. Total sidebar width: 300px | pnpm typecheck; pnpm build; visual check | Sidebar shows entity detail when selected; layer toggles work; live feed visible |
+| T039 | ready | Sonnet | T038 | components/ui/reality-map.tsx, app/(dashboard)/map/page.tsx | Map search bar: floating search input (top-left, glass background) that filters entities by name. Type-ahead dropdown showing matching entities. Select → fly to entity + select it. Empty state = "Search entities…" placeholder. Cmd+F or / to focus | pnpm typecheck; pnpm build; visual check | Search bar filters entities; select flies to location; keyboard shortcut works |
+| T040 | ready | Sonnet | T039 | components/ui/reality-map.tsx, styles/tokens.css | Map visual polish: (a) Subtle grid overlay at zoom < 3 (CSS-based, not tile); (b) Confidence ring around each entity icon (circle layer behind symbol, radius = score/10); (c) Animated pulse on high-priority entities (score > 75); (d) Selected entity glow effect; (e) Connection line animated dash for "active" links; (f) Smooth flyTo transitions with bearing/pitch tilt | pnpm typecheck; pnpm build; visual check | Visual effects render correctly; animations are smooth; no performance degradation |
+
+---
+
+## Phase 2: Navigation Consolidation — 8 Screens → 5 (Priority: P0)
+
+Rationale: Capital Flow, Watchlist, and Audit are either thin wrappers or belong inside other screens. Consolidation removes navigation overhead and creates focused workstations.
+
+**Target navigation**: Map · Entities · Alerts · Huginn · Settings
+
+| ID | Status | Owner | Depends On | Write Scope | Acceptance | Verification | Evidence |
+|---|---|---|---|---|---|---|---|
+| T041 | ready | Sonnet | T031 | components/ui/shell.tsx, lib/i18n/messages.ts | Update Shell nav from 7 items to 5: remove Capital Flow, Watchlist, Audit from nav array. Update i18n nav keys. Keep icon choices: Globe (Map), Building2 (Entities), Bell (Alerts), Bird (Huginn), Settings (Settings). Mobile top bar follows same 5-item structure | pnpm typecheck; pnpm build | Shell renders 5 nav items; mobile bar shows 5 icons |
+| T042 | ready | Sonnet | T041 | components/ui/screen.tsx, app/(dashboard)/*/page.tsx, lib/i18n/messages.ts | Remove Screen eyebrow numbers ("画面 01" etc.) from all pages. Remove `eyebrow` prop from Screen component. Screen component becomes: title + optional live badge. Update all page.tsx that use Screen to remove eyebrow. Map page already uses custom header (no Screen wrapper) | pnpm typecheck; pnpm build | No "Screen XX" text visible anywhere; Screen component has no eyebrow prop |
+| T043 | ready | Sonnet | T042 | app/(dashboard)/entity/page.tsx, lib/i18n/messages.ts, lib/data.ts | Merge Capital Flow content into Entity Intelligence page: (a) Add "Sector Heat" summary cards (7 substrate counts) as a compact row above entity list; (b) Add "Narrative–Reality Gap" as a column in the entity detail area; (c) Remove redundant "Entity Flow" (Sankey) — it duplicates ontology links. Entity page becomes the primary analytical workstation | pnpm typecheck; pnpm build; visual check | Entity page shows sector heat + gap data; no separate Capital Flow page needed |
+| T044 | ready | Sonnet | T043 | app/(dashboard)/entity/page.tsx, components/ui/watchlist-view.tsx, lib/i18n/messages.ts | Merge Watchlist into Entity page: (a) Add star/favorite toggle to entity list items (already exists as FavoriteButton); (b) Add "Watched" filter tab above entity list (All / Watched); (c) Move Daily Brief into entity detail panel as a collapsible section; (d) Watchlist presets (sectors/regions) become filter chips on entity list | pnpm typecheck; pnpm build; visual check | Entity page has favorite toggle, watched filter, brief section |
+| T045 | ready | Sonnet | T044 | app/(dashboard)/settings/page.tsx, lib/i18n/messages.ts | Merge Audit Trail into Settings page: Settings already has a truncated audit log panel. Expand it to show full audit events with pagination/scroll. Remove standalone Audit page route. Audit panel in Settings shows: event, actor, source, confidence, detail (expandable) | pnpm typecheck; pnpm build; visual check | Settings shows full audit log; /audit route removed |
+| T046 | ready | Sonnet | T045 | app/(dashboard)/capital-flow/, app/(dashboard)/watchlist/, app/(dashboard)/audit/, lib/i18n/messages.ts | Delete standalone pages: `capital-flow/page.tsx`, `watchlist/page.tsx`, `audit/page.tsx`. Clean up i18n messages: remove `screens.capitalFlow`, `screens.watchlist`, `screens.audit` top-level keys (content migrated to entity/settings). Remove unused imports in lib/data.ts if any | pnpm typecheck; pnpm build; pnpm test | No orphan routes; build succeeds; tests pass |
+
+---
+
+## Phase 3: Huginn Enhancement (Priority: P1)
+
+| ID | Status | Owner | Depends On | Write Scope | Acceptance | Verification | Evidence |
+|---|---|---|---|---|---|---|---|
+| T047 | ready | Sonnet | T041 | app/(dashboard)/huginn/page.tsx, components/ui/huginn-input.tsx, lib/i18n/messages.ts | Add interactive query input: (a) Create HuginnInput client component with text input + submit button; (b) On submit, POST to /api/huginn with orgId and question; (c) Display response in existing dialogue format; (d) Keep current server-rendered default query as initial state; (e) Loading state with animated "Thinking…" indicator; (f) Input placeholder: "Ask Huginn…" | pnpm typecheck; pnpm build; visual check | User can type and submit questions; response renders with sources and trace |
+| T048 | ready | Sonnet | T047 | app/(dashboard)/huginn/page.tsx, lib/huginn/grader.ts, lib/i18n/messages.ts | Sycophancy: internal suppression only. (a) Remove sycophancy badge/warning from Huginn UI entirely; (b) Keep grader's `sycophancy_suspected` flag detection and `writeSycophancyAuditEvent` in backend — these continue to fire silently; (c) Remove `badges.sycophancy` i18n key; (d) If sycophancy detected, grader re-invokes answer generation with anti-sycophancy system prompt injection (add `suppressSycophancy` option to `answerHuginnQuestion`) | pnpm typecheck; pnpm test; pnpm build | No sycophancy UI visible; audit events still fire; anti-sycophancy prompt injected when flag detected |
+| T049 | ready | Sonnet | T048 | app/(dashboard)/huginn/page.tsx, lib/i18n/messages.ts | Simplify Munin display: (a) Remove raw fact/procedure/seed/opinion count grid — internal implementation detail; (b) Keep only: confidence bar + "N memory records" label; (c) Remove biasTest i18n keys from UI (internal-only); (d) Keep Sources panel and Reasoning Trace panel | pnpm typecheck; pnpm build; visual check | No Munin count grid visible; confidence bar present; sources visible |
+
+---
+
+## Phase 4: Cross-Cutting Improvements (Priority: P1)
+
+| ID | Status | Owner | Depends On | Write Scope | Acceptance | Verification | Evidence |
+|---|---|---|---|---|---|---|---|
+| T050 | ready | Sonnet | T046 | components/ui/command-palette.tsx, components/ui/shell.tsx, lib/i18n/messages.ts | Global search (Cmd+K): (a) Create CommandPalette client component: modal overlay with search input; (b) Search across entities, alerts, settings sections; (c) Arrow keys to navigate, Enter to select, Esc to close; (d) Results grouped by type (Entity, Alert, Setting); (e) Select → navigate to relevant page with entity/item focused; (f) Register Cmd+K / Ctrl+K listener in Shell | pnpm typecheck; pnpm build; visual check | Cmd+K opens palette; search returns results; selection navigates correctly |
+| T051 | ready | Sonnet | T046 | app/(dashboard)/entity/page.tsx, app/(dashboard)/alerts/page.tsx, app/(dashboard)/huginn/page.tsx, components/ui/entity-link.tsx | Cross-screen entity linking: (a) Create EntityLink component (styled span, hover underline, click → navigate to /entity?id=X); (b) Replace plain entity name text in alerts page, Huginn sources, map popups with EntityLink; (c) Entity page reads `?id=` query param to auto-select entity | pnpm typecheck; pnpm build; visual check | Clicking entity name in alerts/huginn/map navigates to entity page with that entity selected |
+| T052 | ready | Sonnet | T046 | lib/i18n/messages.ts | i18n message overhaul for all changes: (a) Add new keys for merged screens, command palette, entity link tooltips, map search, Huginn input; (b) Remove deleted screen keys (capitalFlow, watchlist, audit at top level); (c) Audit all user-facing strings for precision: no vague labels, every word carries information; (d) Both en and ja locales updated in lockstep | pnpm typecheck; pnpm build | All i18n keys compile; no missing key runtime errors; ja/en parity |
+| T053 | ready | Sonnet | T052 | app/(dashboard)/*/page.tsx, components/ui/screen.tsx, lib/i18n/messages.ts | Text-level corrections: (a) Screen component: remove "Live · Source-backed" badge — redundant after Gotham-quality map; (b) Entity page: "Committed" metric → show actual amount not fallback "Source-backed" text; (c) Alerts: "Signal Chain" steps — make dynamic from actual alert evidence, not static i18n array; (d) Settings: remove verbose copy paragraphs under each panel — panel content speaks for itself | pnpm typecheck; pnpm build; visual check | No redundant badges; metric values are real; no placeholder copy |
+
+---
+
+## Phase 5: Verification & Cleanup (Priority: P0)
+
+| ID | Status | Owner | Depends On | Write Scope | Acceptance | Verification | Evidence |
+|---|---|---|---|---|---|---|---|
+| T054 | ready | Sonnet | T053 | docs/repo-map.md, docs/state.md | Update docs: (a) repo-map.md: update Architecture Overview to reflect 5 screens, new map components, command palette; (b) state.md: update current state to v3.0 overhaul; (c) Remove references to deleted pages | pnpm verify | Docs match actual codebase structure |
+| T055 | ready | Sonnet | T054 | all modified files | Full verification: `pnpm typecheck && pnpm test && pnpm build`. Fix any failures. Run `pnpm lint` if available. Confirm no orphan imports, no dead i18n keys, no type errors | pnpm typecheck; pnpm test; pnpm build | All checks green |
+
+---
+
+## Execution Order & Parallelization
+
+```
+Phase 0: T031 (commit existing fixes)
+  ↓
+Phase 1: T032 → T033 → T034 → T035 → T036 → T037 → T038 → T039 → T040
+  ↓ (T041 can start after T031, parallel with late Phase 1)
+Phase 2: T041 → T042 → T043 → T044 → T045 → T046
+  ↓
+Phase 3: T047 → T048 → T049 (depends on T041 for nav)
+Phase 4: T050 ∥ T051 ∥ T052 → T053 (T050/T051/T052 are parallelizable)
+  ↓
+Phase 5: T054 → T055
+```
+
+**Parallelization opportunities**:
+- Phase 1 (map) and Phase 2 (nav consolidation) share only shell.tsx and i18n. T041 can start after T031, but T043–T046 should wait until Phase 1 map is stable to avoid merge conflicts in page.tsx files.
+- T050 (command palette), T051 (entity links), T052 (i18n) are independent of each other.
+
+**Write scope conflicts**: Map work (Phase 1) and entity page merges (T043–T044) both touch page components but different files. Safe to parallelize with disjoint scopes.
+
+---
+
+## Historical Tasks (v1.0–v2.0)
+
+<details>
+<summary>T001–T030: Scaffold, Pipeline, Auth, i18n, Huginn/Munin v2 (all verified)</summary>
+
 | ID | Status | Owner | Depends On | Write Scope | Acceptance | Verification | Evidence |
 |---|---|---|---|---|---|---|---|
 | T001 | verified | Codex | none | AGENTS.md, CLAUDE.md, HANDOFF-JA.md, docs/**, tasks.md, scripts/**, .env.example, .gitignore | pm-zero v9.5 project memory exists and responsibilities are separated | pnpm verify | scripts/verify.mjs passes structural checks |
@@ -35,53 +167,37 @@
 | T013 | verified | Codex | T012 | app/(dashboard)/**, components/**, lib/data.ts, lib/repositories/**, tests/** | Replace remaining placeholder dashboard panels with source-backed product surfaces | pnpm test; pnpm typecheck; pnpm verify; pnpm release:audit; pnpm scrape:dry-run; pnpm build; browser smoke | Verified in T013 evidence; no-placeholder tests pass |
 | T014 | verified | Codex | T013 | app/api/**, app/(dashboard)/settings/page.tsx, lib/auth/**, lib/repositories/**, supabase/**, tests/** | Add commercial auth/org management surfaces and API key primitives | pnpm test; pnpm typecheck; pnpm verify; pnpm release:audit; pnpm scrape:dry-run; pnpm build | Verified in T014 evidence; auth/API key tests pass |
 | T015 | verified | Codex | T014 | docs/**, scripts/**, app/**, lib/**, supabase/**, .env.example, tests/** | Perform Phase F commercial-readiness audit and close locally solvable gaps | pnpm test; pnpm typecheck; pnpm verify; pnpm release:audit; pnpm scrape:dry-run; pnpm build; browser smoke | Verified in T015 evidence; commercial-readiness matrix exists |
-| T016 | verified | Codex | T015 | supabase/**, lib/api/**, lib/auth/**, lib/ai/**, lib/repositories/**, lib/pipeline/**, scrapers/**, config/**, scripts/**, tests/**, docs/**, .env.example, styles/**, components/**, app/(dashboard)/map/page.tsx | Remediate pre-release review findings around RLS, auth, rate limits, production no-fallback, paid-source org binding, staging smoke, grants, and design-token consistency | pnpm test; pnpm typecheck; pnpm release:audit; pnpm verify; pnpm scrape:dry-run; pnpm build | Verified in T016 evidence; pre-release remediation locally complete |
+| T016 | verified | Codex | T015 | supabase/**, lib/api/**, lib/auth/**, lib/ai/**, lib/repositories/**, lib/pipeline/**, scrapers/**, config/**, scripts/**, tests/**, docs/**, .env.example, styles/**, components/**, app/(dashboard)/map/page.tsx | Remediate pre-release review findings | pnpm test; pnpm typecheck; pnpm release:audit; pnpm verify; pnpm scrape:dry-run; pnpm build | Verified in T016 evidence |
+| T017–T030 | verified | Codex | T016 | (see v2.0 scope) | Huginn/Munin v2.0 full implementation | pnpm test; pnpm typecheck; pnpm release:audit; pnpm verify; pnpm build | 49/49 tests pass; release:audit 94 checks pass |
 
-## v2.0 Huginn/Munin Upgrade Tasks (Full - context/source-05-huginn-munin.md)
+</details>
 
-| ID | Status | Owner | Depends On | Write Scope | Acceptance | Verification | Evidence |
-|---|---|---|---|---|---|---|---|
-| T017 | done | Codex | T016 | supabase/migrations/0002_huginn_munin_v2.sql, scripts/release-audit.mjs, scripts/run-staging-rls-smoke.mjs, supabase/tests/rls-cross-org-smoke.sql | munin_memory expanded; munin_opinions, munin_dream_runs, huginn_eval_log created with org RLS and service_role grants; release audit and staging smoke include v2 tables | pnpm test; pnpm typecheck; pnpm release:audit; pnpm verify; pnpm build | 0002 migration exists; release:audit v2 schema/RLS checks pass; staging smoke includes munin_opinions and huginn_eval_log probes |
-| T018 | done | Codex | T017 | lib/munin/write-gate.ts, lib/munin/types.ts, .env.example, tests/huginn-munin-v2.test.mjs | WriteGateResult/types implemented; web_narrative structurally rejected; opinions route to munin_opinions; salience threshold env-configurable; seed stays active | pnpm test; pnpm typecheck; pnpm verify; pnpm build | v2 writeGate tests pass; MUNIN_SALIENCE_THRESHOLD documented |
-| T019 | done | Codex | T018 | lib/munin/memory.ts, tests/huginn-munin-v2.test.mjs | MuninMemory/MuninOpinion v2 types; fixture seed/opinion; active+validTo search filters; opinions excluded by default and available through searchOpinions | pnpm test; pnpm typecheck; pnpm verify; pnpm build | v2 Munin search tests pass; toMuninMemoryRow includes v2 columns |
-| T020 | done | Codex | T019 | app/(dashboard)/settings/page.tsx, app/api/seed-memory/route.ts, lib/munin/seed.ts, lib/i18n/messages.ts | Seed Memory panel and CRUD API; fact seeds enter munin_memory core; opinion seeds enter munin_opinions; update/delete use MVCC; admin:write gated | pnpm test; pnpm typecheck; pnpm verify; pnpm build | seed CRUD/MVCC tests pass; settings build passes with fallback when local DB lacks v2 schema |
-| T021 | done | Codex | T019 | lib/huginn/query.ts, lib/huginn/cascade.ts | Huginn uses cascadeSearch; Layer 1 Munin and Layer 2 Odim cache; core/seed always present; opinions only on explicit plan; retrieval_layers_used returned | pnpm test; pnpm typecheck; pnpm verify; pnpm build | cascade/self-assessment tests pass; Huginn response includes retrieval_layers_used |
-| T022 | done | Codex | T021 | lib/huginn/gapfill.ts, config/sources.json, .env.example | reality_gapfill_search uses allowlisted domains only; mock FERC fixture; results route through writeGate as primary/official evidence; cascade integration | pnpm test; pnpm typecheck; pnpm verify; pnpm build | gapfill tests pass; allowedGapfillDomains and GAPFILL_ENABLED documented |
-| T023 | done | Codex | T021 | lib/huginn/self-assessment.ts, lib/ai/provider.ts, lib/huginn/query.ts | SelfAssessmentPlan and assessQuery implemented; provider supports structured Gemini/mock plan; plan controls cascade/opinion/gapfill/narrative behavior | pnpm test; pnpm typecheck; pnpm verify; pnpm build | self-assessment tests pass; reasoning trace includes self_assessment step |
-| T024 | done | Codex | T023 | lib/huginn/eval-log.ts, app/api/huginn/eval/route.ts, lib/huginn/query.ts | Every Huginn query logs huginn_eval_log fallback/Supabase row; response returns eval_log_id; eval API accepts 1-5 rating and note org-scoped | pnpm test; pnpm typecheck; pnpm verify; pnpm build | Huginn tests pass with eval fallback logging; /api/huginn/eval builds |
-| T025 | done | Codex | T024 | app/(dashboard)/huginn/page.tsx, components/ui/eval-button.tsx, lib/i18n/messages.ts | Huginn Console displays eval button, Munin fact/procedure/seed/opinion counts, Reality/Narrative labels, cascade layers, sycophancy badge slot, en/ja keys | pnpm test; pnpm typecheck; pnpm verify; pnpm build | i18n/no-placeholder/build checks pass; /huginn prerenders successfully |
-| T026 | done | Codex | T025 | lib/huginn/narrative-capture.ts, lib/huginn/cascade.ts, lib/huginn/query.ts, .env.example | narrative_capture_search tags web_narrative; writeGate rejects memory; narrative stays out of answer evidence; computeRDS returns rds; response exposes narrativeContrast | pnpm test; pnpm typecheck; pnpm verify; pnpm build | narrative capture tests pass; NARRATIVE_CAPTURE_ENABLED documented |
-| T027 | done | Codex | T025 | lib/munin/dream.ts, lib/munin/dream-phases.ts, .github/workflows/daily-dream.yml, .env.example | Dream job excludes opinions/seeds, runs cluster/consolidate/contradict/promote, writes new rows through writeGate, records munin_dream_runs diff, scheduled daily workflow | pnpm test; pnpm typecheck; pnpm verify; pnpm build | dream modules typecheck/build; daily-dream workflow exists; DREAM_ENABLED documented |
-| T028 | done | Codex | T024 | lib/huginn/grader.ts, lib/huginn/query.ts, lib/ai/provider.ts, app/(dashboard)/huginn/page.tsx, .env.example | Outcomes grader receives only question+answer, returns score/flags, sycophancy writes audit event, grader_score/flags logged to eval, UI flag slot populated | pnpm test; pnpm typecheck; pnpm verify; pnpm build | grader tests pass; GRADER_ENABLED documented |
-| T029 | done | Codex | T028 | supabase/migrations/0003_sleep_time_compute.sql, lib/huginn/precompute.ts, lib/huginn/cascade.ts, lib/munin/dream.ts, .env.example | pre_computed_answers schema with org RLS; Dream phase seeds precompute rows; cascade cache hit can skip retrieval; expiration/invalidation helpers present | pnpm test; pnpm typecheck; pnpm release:audit; pnpm verify; pnpm build | 0003 migration exists; release:audit sleep-time schema check passes; SLEEP_COMPUTE_ENABLED documented |
-| T030 | done | Codex | T028 | lib/huginn/bias-test.ts, scripts/bias-test.mjs, tests/bias-*.test.ts, scripts/release-audit.mjs | 3-stage investment bias tests implemented; CLI runner emits JSON; audit_log event path wired; release audit checks framework | pnpm test; pnpm typecheck; pnpm release:audit; pnpm verify; pnpm build | bias tests pass; release:audit v2 bias framework check passes |
-
-## v2.0 Completion Evidence
-- Verification on 2026-05-25: `pnpm test` passed 49/49, `pnpm typecheck` passed, `pnpm release:audit` passed 94 checks, `pnpm verify` passed, and `pnpm build` passed after review remediation.
-- Staging RLS smoke is extended for `munin_opinions` and `huginn_eval_log`; scripts now load `.env.local` and include `db:migrate:staging` / `db:migrate:production`.
-
-## Review Remediation Tasks (review-result.md)
+<details>
+<summary>R001–R009: Review Remediation (all verified)</summary>
 
 | ID | Status | Owner | Depends On | Write Scope | Acceptance | Verification | Evidence |
 |---|---|---|---|---|---|---|---|
-| R001 | verified | Codex | T029 | lib/huginn/precompute.ts, lib/huginn/cascade.ts, lib/munin/dream.ts, scripts/release-audit.mjs | Sleep-time Compute reads/writes `pre_computed_answers` in Supabase when configured and keeps in-memory fallback for local verification | pnpm test; pnpm typecheck; pnpm release:audit | precompute persistence audit passes; cache hit/invalidation test passes |
-| R002 | verified | Codex | T020 | app/(dashboard)/settings/page.tsx, components/ui/seed-memory-manager.tsx, lib/munin/seed.ts, lib/i18n/messages.ts | Seed Memory UI can create, edit, and retire fact/opinion seeds through `/api/seed-memory`; server writes surface Supabase errors | pnpm test; pnpm typecheck; pnpm release:audit | `ui:seed-memory-actions` audit passes; seed CRUD tests pass |
-| R003 | verified | Codex | T025 | app/(dashboard)/huginn/page.tsx, components/ui/eval-button.tsx, lib/i18n/messages.ts | Huginn Console renders runtime Huginn response, real `eval_log_id`, trace, sources, counts, and EvalButton error states | pnpm typecheck; pnpm release:audit | `ui:huginn-console-runtime` and `ui:eval-error-handling` audits pass |
-| R004 | verified | Codex | T026 | lib/huginn/gapfill.ts, lib/huginn/narrative-capture.ts, scripts/release-audit.mjs | Reality gapfill persists source-backed Munin memory; narrative capture persists tenant-scoped `raw_signals` and remains outside judgment memory | pnpm test; pnpm typecheck; pnpm release:audit | `v2:gapfill-narrative-persistence` audit passes |
-| R005 | verified | Codex | T030 | lib/huginn/bias-test.ts, scripts/release-audit.mjs | Bias test CLI runs controlled cases through the Huginn query pipeline instead of only regex helpers | pnpm test; pnpm release:audit | bias tests and `v2:bias-test-framework` audit pass |
-| R006 | verified | Codex | T027 | lib/munin/dream.ts, lib/munin/dream-phases.ts | Dream IDs are idempotent by org/content/class; clustering/contradiction logic uses source overlap and symmetric polarity detection | pnpm test; pnpm typecheck | dream test passes; L-01 remediated |
-| R007 | verified | Codex | T017 | supabase/tests/rls-cross-org-smoke.sql, scripts/run-staging-rls-smoke.mjs, scripts/apply-db-migrations.mjs, .github/workflows/staging-rls-smoke.yml | Staging smoke policies include `WITH CHECK`; migration/smoke scripts load `.env.local`; manual CI workflow exists | pnpm verify; pnpm release:audit | `v2:staging-smoke-new-tables` and `rls:staging-smoke-command` audits pass |
-| R008 | verified | Codex | T029 | lib/ai/rate-limit.ts, lib/ai/provider.ts, supabase/migrations/0004_ai_rate_limit_usage.sql, .env.example | Multi-instance deployments can opt into Supabase-backed shared AI rate limiting while local default stays in-process | pnpm test; pnpm typecheck; pnpm release:audit | `ai:shared-rate-limit-schema` and `ai:free-tier-limits` audits pass |
-| R009 | verified | Codex | R007 | staging/production Supabase environments | Apply migrations 0002/0003 to staging and production, then run live staging RLS smoke | psql migration execution and staging RLS smoke SQL | `0002/0003` applied on both configured targets; staging RLS smoke returned all cross-org counts = `0` |
+| R001 | verified | Codex | T029 | lib/huginn/precompute.ts, lib/huginn/cascade.ts, lib/munin/dream.ts, scripts/release-audit.mjs | Sleep-time Compute persistence | pnpm test; pnpm typecheck; pnpm release:audit | precompute persistence audit passes |
+| R002 | verified | Codex | T020 | app/(dashboard)/settings/page.tsx, components/ui/seed-memory-manager.tsx, lib/munin/seed.ts, lib/i18n/messages.ts | Seed Memory CRUD UI | pnpm test; pnpm typecheck; pnpm release:audit | seed CRUD tests pass |
+| R003 | verified | Codex | T025 | app/(dashboard)/huginn/page.tsx, components/ui/eval-button.tsx, lib/i18n/messages.ts | Huginn Console runtime rendering | pnpm typecheck; pnpm release:audit | audit passes |
+| R004 | verified | Codex | T026 | lib/huginn/gapfill.ts, lib/huginn/narrative-capture.ts, scripts/release-audit.mjs | Gapfill/narrative persistence | pnpm test; pnpm typecheck; pnpm release:audit | audit passes |
+| R005 | verified | Codex | T030 | lib/huginn/bias-test.ts, scripts/release-audit.mjs | Bias test pipeline integration | pnpm test; pnpm release:audit | bias tests pass |
+| R006 | verified | Codex | T027 | lib/munin/dream.ts, lib/munin/dream-phases.ts | Dream idempotency | pnpm test; pnpm typecheck | dream tests pass |
+| R007 | verified | Codex | T017 | supabase/tests/**, scripts/** | Staging smoke + migration scripts | pnpm verify; pnpm release:audit | audit passes |
+| R008 | verified | Codex | T029 | lib/ai/rate-limit.ts, lib/ai/provider.ts, supabase/migrations/0004_*.sql, .env.example | Shared AI rate limiting | pnpm test; pnpm typecheck; pnpm release:audit | audit passes |
+| R009 | verified | Codex | R007 | staging/production Supabase | Apply migrations + live RLS smoke | psql + staging smoke SQL | 0002/0003 applied; cross-org counts = 0 |
+
+</details>
+
+---
 
 ## Blockers
 | ID | Task | Blocker | Needed decision | Owner |
 |---|---|---|---|---|
-| B001 | T003 | Dependencies may not be installed in this sandbox and network is restricted | Resolved by pnpm install | Codex |
-| B004 | browser smoke | Dev server background start fails in this sandbox with Node/Windows `spawn EINVAL` | Run dev server in a normal terminal or rely on `pnpm build` until sandbox spawn is fixed | Human |
+| B004 | browser smoke | Dev server background start fails in sandbox with Node/Windows `spawn EINVAL` | Run dev server in normal terminal or rely on `pnpm build` | Human |
 
 ## Review Notes
 | Task | Reviewer | Result | Follow-up |
 |---|---|---|---|
-| T001-T016 | Codex | pass | Historical implementation remains verified; see previous ledger evidence in git history for full per-task notes. |
-| T017-T030 | Codex | pass | Local implementation and verification complete. Human/environment follow-up: apply migrations to staging/production and run live `pnpm rls:staging`. |
+| T001-T030 | Codex | pass | Historical; see git history |
+| R001-R009 | Codex | pass | Historical; see git history |

@@ -1,5 +1,6 @@
 "use client";
 
+import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef, useState, useCallback } from "react";
 import type { Map as MapType, Marker as MarkerType } from "maplibre-gl";
 
@@ -45,28 +46,27 @@ const DEMO_ENTITIES: MapEntity[] = [
   { id: "e10", name: "TSMC / Kumamoto Fab",               score: 80, confidence: 0.86, lat:  32.8,  lng:  130.7,  layer: "compute" }
 ];
 
-// Voyager style: colorful, shows geography clearly while staying professional
+// CARTO Dark Matter: dark basemap ideal for intelligence dashboards
 const MAP_STYLE = {
   version: 8 as const,
-  name: "odim-map",
+  name: "odim-dark",
   sources: {
-    "carto-voyager": {
+    "carto-dark": {
       type: "raster" as const,
-      tiles: ["https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png"],
+      tiles: ["https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png"],
       tileSize: 256,
       attribution: ""
     }
   },
   layers: [
     {
-      id: "carto-voyager-layer",
+      id: "carto-dark-layer",
       type: "raster" as const,
-      source: "carto-voyager",
+      source: "carto-dark",
       minzoom: 0,
       maxzoom: 20,
       paint: {
-        "raster-opacity": 0.88,
-        "raster-saturation": 0.2
+        "raster-opacity": 0.92
       }
     }
   ]
@@ -104,8 +104,6 @@ export function RealityMap({
 
     import("maplibre-gl").then((maplibregl) => {
       if (cancelled || !containerRef.current) return;
-      import("maplibre-gl/dist/maplibre-gl.css");
-
       const map = new maplibregl.Map({
         container: containerRef.current,
         style: MAP_STYLE,
