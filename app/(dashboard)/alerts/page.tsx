@@ -5,6 +5,9 @@ import { alerts } from "@/lib/data";
 import { getMessages } from "@/lib/i18n/messages";
 import { getLocale } from "@/lib/i18n/locale";
 
+/** Named evidence reference shape — aligns with SourceRef fields */
+type EvidenceRef = { sourceId?: string; title?: string; url?: string };
+
 export default async function AlertsPage() {
   const locale = await getLocale();
   const messages = getMessages(locale);
@@ -13,7 +16,7 @@ export default async function AlertsPage() {
   // Signal chain derived from the highest-priority alert's evidence
   const primaryAlert = alerts[0];
   const chainSteps: string[] = primaryAlert?.evidence.length
-    ? primaryAlert.evidence.map((ev: { sourceId?: string; title?: string }) =>
+    ? primaryAlert.evidence.map((ev: EvidenceRef) =>
         String(ev.title ?? ev.sourceId ?? "Source-backed evidence")
       )
     : [

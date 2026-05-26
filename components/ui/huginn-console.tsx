@@ -5,25 +5,10 @@ import { Panel } from "@/components/ui/panel";
 import { Confidence } from "@/components/ui/confidence";
 import { HuginnInput } from "@/components/ui/huginn-input";
 import { EvalButton } from "@/components/ui/eval-button";
+import type { ClientHuginnResponse } from "@/app/actions/huginn";
 
-type ReasoningStep = {
-  step: string;
-  summary: string;
-  confidence?: number;
-  sources?: string[];
-};
-
-type HuginnResponse = {
-  answer: string;
-  confidence: number;
-  sources: string[];
-  reasoningTrace: ReasoningStep[];
-  munin: { counts: Record<string, number> };
-  retrieval_layers_used: string[];
-  narrativeContrast: Array<{ title: string }>;
-  eval_log_id: string;
-  orgId: string;
-};
+// Use the shared serializable type from the Server Action
+type HuginnResponse = ClientHuginnResponse;
 
 type CascadeLayers = Record<string, string>;
 
@@ -60,6 +45,8 @@ type Props = {
   };
   traceNote: string;
   evalLabels: EvalLabels;
+  /** Server Action for submitting new questions without client-side auth */
+  action: (question: string, orgId: string) => Promise<HuginnResponse>;
 };
 
 export function HuginnConsole({
@@ -72,17 +59,14 @@ export function HuginnConsole({
   badgeLabels,
   inputLabels,
   traceNote,
-  evalLabels
+  evalLabels,
+  action
 }: Readonly<Props>) {
   const [response, setResponse] = useState<HuginnResponse>(initialResponse);
   const [currentQuestion, setCurrentQuestion] = useState(defaultQuestion);
 
   const layers = response.retrieval_layers_used as Array<keyof typeof cascadeLayers>;
   const totalMemory = Object.values(response.munin.counts).reduce((sum, v) => sum + v, 0);
-
-  function handleResponse(newResponse: HuginnResponse) {
-    setResponse(newResponse);
-  }
 
   return (
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_320px]">
@@ -101,7 +85,8 @@ export function HuginnConsole({
             defaultQuestion={defaultQuestion}
             initialResponse={initialResponse}
             labels={inputLabels}
-            onResponse={(r) => { handleResponse(r); setCurrentQuestion(r.answer ? currentQuestion : defaultQuestion); }}
+            action={action}
+            onResponse={(r, q) => { setResponse(r); setCurrentQuestion(q); }}
           />
 
           {/* Current query display */}

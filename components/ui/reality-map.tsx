@@ -5,7 +5,19 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import type { Map as MapType, GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from "maplibre-gl";
 import { DEMO_ENTITIES } from "@/lib/map/entities";
 import { DEMO_CONNECTIONS } from "@/lib/map/connections";
-import type { LayerKey, MapEntity } from "@/lib/map/types";
+import type { LayerKey, MapEntity, MapConnection } from "@/lib/map/types";
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** HTML-escape a string to prevent XSS in setHTML interpolation */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -88,13 +100,15 @@ function buildEntityCollection(entities: MapEntity[]) {
 
 function buildConnectionCollection(
   visible: Set<LayerKey>,
-  selectedId: string | null
+  selectedId: string | null,
+  allEntities: MapEntity[],
+  allConnections: MapConnection[]
 ) {
   return {
     type: "FeatureCollection" as const,
-    features: DEMO_CONNECTIONS.flatMap((conn) => {
-      const from = DEMO_ENTITIES.find((e) => e.id === conn.fromId);
-      const to = DEMO_ENTITIES.find((e) => e.id === conn.toId);
+    features: allConnections.flatMap((conn) => {
+      const from = allEntities.find((e) => e.id === conn.fromId);
+      const to = allEntities.find((e) => e.id === conn.toId);
       if (!from || !to) return [];
       if (!visible.has(from.layer) || !visible.has(to.layer)) return [];
 
@@ -147,6 +161,10 @@ type Props = Readonly<{
   selectLabel: string;
   searchHint?: string;
   onEntitySelect?: (entity: MapEntity | null) => void;
+  /** Override demo data with production entities. Falls back to DEMO_ENTITIES. */
+  entities?: MapEntity[];
+  /** Override demo data with production connections. Falls back to DEMO_CONNECTIONS. */
+  connections?: MapConnection[];
 }>;
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -155,7 +173,9 @@ export function RealityMap({
   layerLabels,
   selectLabel,
   searchHint = "Search entities…",
-  onEntitySelect
+  onEntitySelect,
+  entities: entityData = DEMO_ENTITIES,
+  connections: connectionData = DEMO_CONNECTIONS
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapType | null>(null);
@@ -178,6 +198,12 @@ export function RealityMap({
       enabled: true
     }))
   );
+
+  // Stable references for use inside map init closure
+  const entityDataRef = useRef(entityData);
+  const connectionDataRef = useRef(connectionData);
+  useEffect(() => { entityDataRef.current = entityData; }, [entityData]);
+  useEffect(() => { connectionDataRef.current = connectionData; }, [connectionData]);
 
   const enabledKeys = new Set(
     layers.filter((l) => l.enabled).map((l) => l.key)
@@ -214,13 +240,13 @@ export function RealityMap({
     }
     const q = searchQuery.toLowerCase();
     setSearchResults(
-      DEMO_ENTITIES.filter(
+      entityData.filter(
         (e) =>
           e.name.toLowerCase().includes(q) ||
           e.layer.toLowerCase().includes(q)
       ).slice(0, 6)
     );
-  }, [searchQuery]);
+  }, [searchQuery, entityData]);
 
   // ── Map init ──────────────────────────────────────────────────────────────
 
@@ -251,6 +277,24 @@ export function RealityMap({
       map.on("load", async () => {
         if (cancelled) return;
 
+        // Fallback: register a white-circle ImageData for any SDF icon that fails to load
+        map.on("styleimagemissing", (e: { id: string }) => {
+          const size = 16;
+          const canvas = document.createElement("canvas");
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.beginPath();
+            ctx.arc(size / 2, size / 2, size / 2 - 1, 0, Math.PI * 2);
+            ctx.fillStyle = "#ffffff";
+            ctx.fill();
+            if (!map.hasImage(e.id)) {
+              map.addImage(e.id, ctx.getImageData(0, 0, size, size));
+            }
+          }
+        });
+
         // Load SDF icons
         await Promise.all(
           LAYER_KEYS.map(
@@ -258,12 +302,16 @@ export function RealityMap({
               new Promise<void>((resolve) => {
                 const img = new Image();
                 img.onload = () => {
-                  if (!map.hasImage(key)) {
-                    map.addImage(key, img, { sdf: true });
+                  try {
+                    if (!map.hasImage(key)) {
+                      map.addImage(key, img, { sdf: true });
+                    }
+                  } catch {
+                    // Fallback registered via styleimagemissing
                   }
                   resolve();
                 };
-                img.onerror = () => resolve(); // graceful fallback
+                img.onerror = () => resolve(); // styleimagemissing handler covers missing icons
                 img.src = `/icons/substrate-${key}.svg`;
               })
           )
@@ -272,7 +320,7 @@ export function RealityMap({
         // ── Entity source (clustered) ────────────────────────────────────
         map.addSource("entities", {
           type: "geojson",
-          data: buildEntityCollection(DEMO_ENTITIES),
+          data: buildEntityCollection(entityDataRef.current),
           cluster: true,
           clusterMaxZoom: 8,
           clusterRadius: 50
@@ -283,7 +331,9 @@ export function RealityMap({
           type: "geojson",
           data: buildConnectionCollection(
             new Set(LAYER_KEYS),
-            null
+            null,
+            entityDataRef.current,
+            connectionDataRef.current
           )
         });
 
@@ -393,14 +443,14 @@ export function RealityMap({
             ?.setLngLat(coords)
             .setHTML(
               `<div style="background:rgba(10,12,16,0.94);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;min-width:190px;box-shadow:0 6px 20px rgba(0,0,0,0.5);">
-                <div style="font-size:11px;font-weight:500;color:#dde1ea;letter-spacing:0.01em;line-height:1.4;">${props.name}</div>
+                <div style="font-size:11px;font-weight:500;color:#dde1ea;letter-spacing:0.01em;line-height:1.4;">${escapeHtml(props.name)}</div>
                 <div style="display:flex;align-items:center;gap:10px;margin-top:7px;">
                   <span style="font-family:monospace;font-size:11px;font-weight:500;color:${color};">Score ${props.score}</span>
                   <span style="font-family:monospace;font-size:10px;color:#5c6780;">${Math.round(props.confidence * 100)}% conf.</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:5px;margin-top:6px;">
                   <span style="width:6px;height:6px;border-radius:50%;background:${color};box-shadow:0 0 5px ${color}60;display:inline-block;"></span>
-                  <span style="font-family:monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:#404c61;">${props.layer.replace("_", " ")}</span>
+                  <span style="font-family:monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:#404c61;">${escapeHtml(props.layer.replace("_", " "))}</span>
                 </div>
               </div>`
             )
@@ -417,7 +467,7 @@ export function RealityMap({
           const feature = e.features?.[0];
           if (!feature) return;
           const props = feature.properties as EntityProperties;
-          const entity = DEMO_ENTITIES.find((en) => en.id === props.id) ?? null;
+          const entity = entityDataRef.current.find((en) => en.id === props.id) ?? null;
 
           setSelectedId(props.id);
           onEntitySelect?.(entity);
@@ -488,8 +538,8 @@ export function RealityMap({
     if (!map || !loaded) return;
     const src = map.getSource("connections") as GeoJSONSource | undefined;
     if (!src) return;
-    src.setData(buildConnectionCollection(enabledKeys, selectedId));
-  }, [selectedId, loaded, enabledKeys]);
+    src.setData(buildConnectionCollection(enabledKeys, selectedId, entityData, connectionData));
+  }, [selectedId, loaded, enabledKeys, entityData, connectionData]);
 
   // ── Sync layer visibility → entity source filter ──────────────────────────
 
@@ -520,7 +570,7 @@ export function RealityMap({
     if (src) {
       src.setData(
         buildEntityCollection(
-          DEMO_ENTITIES.filter((e) => enabledKeys.has(e.layer))
+          entityDataRef.current.filter((e) => enabledKeys.has(e.layer))
         )
       );
     }
@@ -528,7 +578,7 @@ export function RealityMap({
     // Rebuild connections
     const connSrc = map.getSource("connections") as GeoJSONSource | undefined;
     if (connSrc) {
-      connSrc.setData(buildConnectionCollection(enabledKeys, selectedId));
+      connSrc.setData(buildConnectionCollection(enabledKeys, selectedId, entityDataRef.current, connectionDataRef.current));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded, layers]);

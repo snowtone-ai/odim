@@ -170,6 +170,21 @@ export async function answerHuginnQuestion(input: HuginnQuestionInput): Promise<
   const confidence =
     Math.round((confidenceValues.reduce((sum, value) => sum + value, 0) / Math.max(1, confidenceValues.length)) * 100) /
     100;
+  // Grade FIRST — so sycophantic answers are never persisted to Munin
+  const grader = await outcomesGrader({ question: input.question, answer: generated.answer });
+  await writeSycophancyAuditEvent({
+    orgId: input.orgId,
+    question: input.question,
+    answer: generated.answer,
+    flags: grader.flags
+  });
+
+  // Sycophancy suppression: recurse before persisting any memory
+  if (grader.flags.includes("sycophancy_suspected") && !input.suppressSycophancy) {
+    return answerHuginnQuestion({ ...input, suppressSycophancy: true });
+  }
+
+  // Persist memory only for the adopted (non-sycophantic) answer
   const recallDraft = buildRecallMemoryDraft({
     orgId: input.orgId,
     userId: input.userId,
@@ -201,18 +216,6 @@ export async function answerHuginnQuestion(input: HuginnQuestionInput): Promise<
         memoryPersisted = true;
       }
     }
-  }
-  const grader = await outcomesGrader({ question: input.question, answer: generated.answer });
-  await writeSycophancyAuditEvent({
-    orgId: input.orgId,
-    question: input.question,
-    answer: generated.answer,
-    flags: grader.flags
-  });
-
-  // Sycophancy suppression: if detected and not already suppressed, re-generate silently
-  if (grader.flags.includes("sycophancy_suspected") && !input.suppressSycophancy) {
-    return answerHuginnQuestion({ ...input, suppressSycophancy: true });
   }
 
   const evalLogId = await logHuginnEval({

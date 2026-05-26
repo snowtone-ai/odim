@@ -34,8 +34,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const locale = await getLocale();
   const messages = getMessages(locale);
 
-  const paletteEntities = entities.map((e) => ({ id: e.id, name: e.name }));
-  const paletteAlerts = alerts.map((a) => ({ title: a.title }));
+  // Cap at 100 to prevent large client payload; server search can replace this at scale
+  const paletteEntities = entities.slice(0, 100).map((e) => ({ id: e.id, name: e.name }));
+  const paletteAlerts = alerts.slice(0, 100).map((a) => ({ title: a.title }));
 
   return (
     <html lang={locale} className={`${spectral.variable} ${plexSans.variable} ${plexMono.variable}`}>

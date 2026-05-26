@@ -155,17 +155,20 @@ export function EntityWorkstation({
               </div>
             ) : (
               displayedEntities.map((entity) => (
-                <button
+                /* Outer div — avoids nested <button> (HTML invalid, a11y issue, click-propagation bug) */
+                <div
                   key={entity.id}
-                  type="button"
-                  onClick={() => setSelectedId(entity.id)}
-                  className="flex w-full items-start justify-between py-3 text-left transition-all duration-[var(--dur-fast)]"
+                  className="flex w-full items-start justify-between py-3"
                   style={{
                     borderBottom: "1px solid var(--line-faint)",
                     background: selectedId === entity.id ? "var(--rune-wash)" : "transparent"
                   }}
                 >
-                  <div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedId(entity.id)}
+                    className="min-w-0 flex-1 text-left transition-all duration-[var(--dur-fast)]"
+                  >
                     <div
                       className="text-[13px]"
                       style={{ color: selectedId === entity.id ? "var(--rune)" : "var(--text-primary)" }}
@@ -178,9 +181,9 @@ export function EntityWorkstation({
                     >
                       Score {entity.score} · {Math.round(entity.confidence * 100)}%
                     </div>
-                  </div>
+                  </button>
                   <FavoriteButton id={entity.id} category="entity" label={entity.name} />
-                </button>
+                </div>
               ))
             )}
           </Panel>

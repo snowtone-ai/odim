@@ -29,19 +29,17 @@ function hasPolicyTerms(sql, policyName, table, terms) {
   return terms.every((term) => block.includes(term.toLowerCase()));
 }
 
+// v3.0: 5-screen navigation — capital-flow, watchlist, audit merged/removed
 const routes = [
   "app/(dashboard)/map/page.tsx",
-  "app/(dashboard)/capital-flow/page.tsx",
   "app/(dashboard)/entity/page.tsx",
   "app/(dashboard)/alerts/page.tsx",
   "app/(dashboard)/huginn/page.tsx",
-  "app/(dashboard)/watchlist/page.tsx",
-  "app/(dashboard)/audit/page.tsx",
   "app/(dashboard)/settings/page.tsx"
 ];
 
 for (const route of routes) {
-  check(`route:${route}`, existsSync(route), "8 product screens must exist");
+  check(`route:${route}`, existsSync(route), "5 product screens must exist");
 }
 
 const tokens = file("styles/tokens.css");

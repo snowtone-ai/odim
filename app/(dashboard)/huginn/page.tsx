@@ -1,6 +1,7 @@
 import { Screen } from "@/components/ui/screen";
 import { HuginnConsole } from "@/components/ui/huginn-console";
 import { answerHuginnQuestion } from "@/lib/huginn/query";
+import { submitHuginnQuestion } from "@/app/actions/huginn";
 import { getMessages } from "@/lib/i18n/messages";
 import { getLocale } from "@/lib/i18n/locale";
 
@@ -43,6 +44,7 @@ export default async function HuginnPage() {
         inputLabels={screen.input}
         traceNote={screen.traceNote}
         evalLabels={screen.eval}
+        action={submitHuginnQuestion}
       />
     </Screen>
   );
