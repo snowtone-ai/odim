@@ -31,6 +31,8 @@ export type ConfiguredSourceOptions = {
   source: ConfiguredSourceDefinition;
   feedUrl: string;
   limit?: number;
+  offset?: number;
+  page?: number;
   fetchImpl?: typeof fetch;
 };
 
@@ -52,6 +54,24 @@ function authHeaders(source: ConfiguredSourceDefinition) {
   const headerName = source.authHeaderName ?? "authorization";
   const prefix = source.authHeaderPrefix ?? "Bearer ";
   return { [headerName]: `${prefix}${value}` };
+}
+
+function applyPaging(feedUrl: string, options: Pick<ConfiguredSourceOptions, "limit" | "offset" | "page">) {
+  const limit = options.limit ?? 50;
+  const offset = options.offset ?? 0;
+  const page = options.page ?? 1;
+  if (feedUrl.includes("{limit}") || feedUrl.includes("{offset}") || feedUrl.includes("{page}")) {
+    return feedUrl
+      .replaceAll("{limit}", String(limit))
+      .replaceAll("{offset}", String(offset))
+      .replaceAll("{page}", String(page));
+  }
+
+  const url = new URL(feedUrl);
+  if (!url.searchParams.has("limit")) url.searchParams.set("limit", String(limit));
+  if (!url.searchParams.has("offset")) url.searchParams.set("offset", String(offset));
+  if (!url.searchParams.has("page")) url.searchParams.set("page", String(page));
+  return url.toString();
 }
 
 export function parseConfiguredSourceRecords(
@@ -112,6 +132,7 @@ export async function fetchConfiguredSourceSignals(options: ConfiguredSourceOpti
   if (options.source.sourceTier === "paid" && options.source.orgIdEnv && !process.env[options.source.orgIdEnv]) {
     throw new Error(`Paid configured source ${options.source.id} requires ${options.source.orgIdEnv}`);
   }
-  const records = await fetchJsonOrCsvRecords(options.fetchImpl ?? fetch, options.feedUrl, authHeaders(options.source));
-  return parseConfiguredSourceRecords(options.source, records, options.feedUrl, options.limit);
+  const pagedUrl = applyPaging(options.feedUrl, options);
+  const records = await fetchJsonOrCsvRecords(options.fetchImpl ?? fetch, pagedUrl, authHeaders(options.source));
+  return parseConfiguredSourceRecords(options.source, records, pagedUrl, options.limit);
 }

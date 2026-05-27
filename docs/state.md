@@ -6,7 +6,7 @@
 - Current executor: Codex CEO Agent
 - Write lock: none
 - Coordinator: CEO Agent
-- Latest verification pointer: operational ingestion hardening verified (52/52 tests pass, typecheck clean, pnpm verify success, pnpm build success)
+- Latest verification pointer: operational ingestion hardening verified (55/55 tests pass, typecheck clean, pnpm verify success, pnpm build success)
 - Verification mode: standard
 
 ## Completed after v3.0
@@ -15,6 +15,8 @@
 - Daily scrape workflow now runs a dry-run smoke and then `pnpm scrape` with Supabase write env, instead of cron-only dry-run.
 - Added `scrape:backfill` mode, `SCRAPE_MODE`, `SCRAPE_BACKFILL_LIMIT`, `SCRAPE_MIN_SIGNALS`, and source-failure controls.
 - `scrapers/run.ts` now emits source-level reports, fails on too-few signals, supports daily/backfill/dry-run modes, records ingestion runs, and updates source watermarks when writing.
+- Backfill now supports `SCRAPE_SOURCE_IDS`, `SCRAPE_BACKFILL_START`, `SCRAPE_BACKFILL_END`, `SCRAPE_PAGE_SIZE`, and `SCRAPE_MAX_PAGES`.
+- EIA, PatentsView, and configured JSON/CSV sources support paged backfill requests; configured feeds can use `{limit}`, `{offset}`, and `{page}` URL placeholders.
 - Added `supabase/migrations/0005_ingestion_operations.sql` with `ingestion_runs` and `source_watermarks`.
 - Default migration runner now applies 0001–0005, including AI rate limits and ingestion operations.
 - Pipeline DB upserts now use durable conflict keys: raw signals by fingerprint, alerts/audit by dedupe key, ontology by id.

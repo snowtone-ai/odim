@@ -5,6 +5,7 @@ export type EiaOptions = {
   apiKey: string;
   baseUrl?: string;
   limit?: number;
+  offset?: number;
   fetchImpl?: typeof fetch;
 };
 
@@ -68,9 +69,10 @@ export async function fetchEiaSignals(options: EiaOptions): Promise<RawSignal[]>
   const baseUrl = options.baseUrl ?? "https://api.eia.gov/v2";
   const fetchImpl = options.fetchImpl ?? fetch;
   const limit = options.limit ?? 50;
+  const offset = options.offset ?? 0;
   if (!options.apiKey) throw new Error("EIA_API_KEY is required for EIA API requests");
 
-  const url = `${baseUrl}/electricity/operating-generator-capacity/data/?api_key=${options.apiKey}&frequency=monthly&data[0]=nameplate-capacity-mw&sort[0][column]=period&sort[0][direction]=desc&length=${limit}`;
+  const url = `${baseUrl}/electricity/operating-generator-capacity/data/?api_key=${options.apiKey}&frequency=monthly&data[0]=nameplate-capacity-mw&sort[0][column]=period&sort[0][direction]=desc&offset=${offset}&length=${limit}`;
   const response = await fetchImpl(url, { headers: { accept: "application/json" } });
   if (!response.ok) throw new Error(`EIA API request failed: ${response.status}`);
 

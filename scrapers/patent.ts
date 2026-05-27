@@ -6,6 +6,7 @@ export type PatentOptions = {
   assignee?: string;
   cpcGroup?: string;
   limit?: number;
+  page?: number;
   fetchImpl?: typeof fetch;
 };
 
@@ -62,8 +63,9 @@ export async function fetchPatentSignals(options: PatentOptions): Promise<RawSig
   const baseUrl = options.baseUrl ?? "https://search.patentsview.org/api/v1/patent/";
   const fetchImpl = options.fetchImpl ?? fetch;
   const limit = options.limit ?? 50;
+  const page = options.page ?? 1;
 
-  const params = new URLSearchParams({ per_page: String(limit), sort: "patent_date:desc" });
+  const params = new URLSearchParams({ page: String(page), per_page: String(limit), sort: "patent_date:desc" });
   if (options.assignee) params.set("q", JSON.stringify({ _contains: { "assignees.assignee_organization": options.assignee } }));
   if (options.cpcGroup) params.set("f", JSON.stringify(["patent_id", "patent_title", "patent_date", "assignees", "cpcs", "application"]));
 

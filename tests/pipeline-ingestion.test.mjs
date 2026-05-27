@@ -7,7 +7,9 @@ import { parseBuildingPermitRecords } from "../scrapers/building-permits.ts";
 import { fetchConfiguredSourceSignals, parseConfiguredSourceRecords } from "../scrapers/configured-source.ts";
 import { parseCloudRegionRecords } from "../scrapers/cloud-regions.ts";
 import { parseFercRecords } from "../scrapers/ferc.ts";
+import { fetchEiaSignals } from "../scrapers/eia.ts";
 import { parseNarrativeRecords } from "../scrapers/narrative.ts";
+import { fetchPatentSignals } from "../scrapers/patent.ts";
 import { parsePortStatisticRecords } from "../scrapers/port-statistics.ts";
 import { parseSecSubmissions } from "../scrapers/sec-edgar.ts";
 import { parseUsgsMineralRecords } from "../scrapers/usgs-minerals.ts";
@@ -301,4 +303,68 @@ test("paid configured source fetch requires org binding for RLS visibility", asy
     if (previous === undefined) delete process.env.TEST_PAID_SOURCE_ORG_ID;
     else process.env.TEST_PAID_SOURCE_ORG_ID = previous;
   }
+});
+
+test("paged public-source fetchers emit stable backfill requests", async () => {
+  const eiaUrls = [];
+  const eiaSignals = await fetchEiaSignals({
+    apiKey: "test-key",
+    baseUrl: "https://api.eia.gov/v2",
+    limit: 25,
+    offset: 50,
+    fetchImpl: async (url) => {
+      eiaUrls.push(String(url));
+      return new Response(JSON.stringify({ response: { data: [{ plantid: "42", period: "2024-01", plantName: "Grid Plant" }] } }), {
+        headers: { "content-type": "application/json" }
+      });
+    }
+  });
+  assert.match(eiaUrls[0], /offset=50/);
+  assert.match(eiaUrls[0], /length=25/);
+  assert.equal(eiaSignals[0].externalId, "eia:42:2024-01");
+
+  const patentUrls = [];
+  const patentSignals = await fetchPatentSignals({
+    baseUrl: "https://search.patentsview.org/api/v1/patent/",
+    limit: 20,
+    page: 3,
+    fetchImpl: async (url) => {
+      patentUrls.push(String(url));
+      return new Response(JSON.stringify({ patents: [{ patent_id: "1234567", patent_date: "2024-02-03", patent_title: "Cooling system" }] }), {
+        headers: { "content-type": "application/json" }
+      });
+    }
+  });
+  assert.match(patentUrls[0], /page=3/);
+  assert.match(patentUrls[0], /per_page=20/);
+  assert.equal(patentSignals[0].externalId, "patent:1234567");
+});
+
+test("configured JSON/CSV sources support paging placeholders and query parameters", async () => {
+  const source = {
+    id: "public-feed",
+    layer: "energy",
+    adapter: "configured-json-csv",
+    fieldMap: {
+      externalId: ["id"],
+      observedAt: ["date"]
+    }
+  };
+  const requestedUrls = [];
+  const signals = await fetchConfiguredSourceSignals({
+    source,
+    feedUrl: "https://example.local/feed?batch={page}&from={offset}&size={limit}",
+    limit: 10,
+    offset: 20,
+    page: 3,
+    fetchImpl: async (url) => {
+      requestedUrls.push(String(url));
+      return new Response(JSON.stringify([{ id: "A-1", date: "2024-03-04" }]), {
+        headers: { "content-type": "application/json" }
+      });
+    }
+  });
+
+  assert.equal(requestedUrls[0], "https://example.local/feed?batch=3&from=20&size=10");
+  assert.equal(signals[0].externalId, "A-1");
 });

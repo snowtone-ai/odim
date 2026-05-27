@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { resolveScrapeOptions } from "../scrapers/run.ts";
 
 test("daily scrape workflow performs dry-run smoke and live Supabase write", () => {
   const workflow = readFileSync(".github/workflows/daily-scrape.yml", "utf8");
@@ -25,4 +26,45 @@ test("automation scripts expose backfill and daily dream entry points", () => {
   assert.match(dreamWorkflow, /DEFAULT_ORG_ID/);
   assert.match(migrationRunner, /0001_initial\.sql/);
   assert.match(migrationRunner, /0005_ingestion_operations\.sql/);
+});
+
+test("backfill options support source selection, date windows, and paging controls", () => {
+  const previous = {
+    SCRAPE_BACKFILL_END: process.env.SCRAPE_BACKFILL_END,
+    SCRAPE_BACKFILL_LIMIT: process.env.SCRAPE_BACKFILL_LIMIT,
+    SCRAPE_BACKFILL_START: process.env.SCRAPE_BACKFILL_START,
+    SCRAPE_DRY_RUN: process.env.SCRAPE_DRY_RUN,
+    SCRAPE_MAX_PAGES: process.env.SCRAPE_MAX_PAGES,
+    SCRAPE_PAGE_SIZE: process.env.SCRAPE_PAGE_SIZE,
+    SCRAPE_SOURCE_IDS: process.env.SCRAPE_SOURCE_IDS
+  };
+  process.env.SCRAPE_DRY_RUN = "false";
+  process.env.SCRAPE_BACKFILL_LIMIT = "250";
+  process.env.SCRAPE_BACKFILL_START = "2020-01-01";
+  process.env.SCRAPE_BACKFILL_END = "2024-12-31";
+  process.env.SCRAPE_PAGE_SIZE = "75";
+  process.env.SCRAPE_MAX_PAGES = "4";
+  process.env.SCRAPE_SOURCE_IDS = "eia-electricity,uspto-patents";
+
+  try {
+    const options = resolveScrapeOptions(["--backfill", "--no-write"]);
+    assert.equal(options.mode, "backfill");
+    assert.equal(options.noWrite, true);
+    assert.equal(options.sourceLimit, 250);
+    assert.equal(options.pageSize, 75);
+    assert.equal(options.maxPages, 4);
+    assert.deepEqual(options.sourceIds, ["eia-electricity", "uspto-patents"]);
+    assert.equal(options.backfillStart, "2020-01-01T00:00:00.000Z");
+    assert.equal(options.backfillEnd, "2024-12-31T00:00:00.000Z");
+
+    process.env.SCRAPE_DRY_RUN = "true";
+    const explicitBackfill = resolveScrapeOptions(["--backfill"]);
+    assert.equal(explicitBackfill.dryRun, false);
+    assert.equal(explicitBackfill.noWrite, false);
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
 });

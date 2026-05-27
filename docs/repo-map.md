@@ -76,6 +76,7 @@ Odim is a multi-agent intelligence system that ingests real-world signals (SEC, 
 - **Entry:** `daily-scrape.yml` → `scrapers/run.ts:runScrape`; initial load uses `pnpm scrape:backfill`
 - **Main files:** `scrapers/*.ts` → `scrapers/run.ts` → `lib/pipeline/ontologize.ts` → `lib/pipeline/ingest.ts`
 - **Important functions:** `resolveScrapeOptions`, `collectLiveSignals`, `runScrape`, `normalizeSignal`, `buildIngestionPlan`, `upsertIngestionPlan`
+- **Backfill controls:** `SCRAPE_SOURCE_IDS`, `SCRAPE_BACKFILL_START`, `SCRAPE_BACKFILL_END`, `SCRAPE_PAGE_SIZE`, `SCRAPE_MAX_PAGES`
 - **Downstream dependencies:** Supabase tables: `raw_signals`, `ontology_objects`, `ontology_links`, `alerts`, `audit_log`, `ingestion_runs`, `source_watermarks`
 - **Tests:** `tests/pipeline-ingestion.test.mjs`, `tests/automation-workflows.test.mjs`
 
@@ -148,6 +149,9 @@ Odim is a multi-agent intelligence system that ingests real-world signals (SEC, 
 | `SCRAPE_MODE` | `daily`, `backfill`, or `dry-run` | Yes for scraper jobs |
 | `SCRAPE_MIN_SIGNALS` | Minimum raw signals before a run is accepted | Yes for scraper jobs |
 | `SCRAPE_BACKFILL_LIMIT` | Per-source limit for initial historical load | Yes for backfill |
+| `SCRAPE_BACKFILL_START` / `SCRAPE_BACKFILL_END` | Optional observed-at window for historical load | No |
+| `SCRAPE_PAGE_SIZE` / `SCRAPE_MAX_PAGES` | Per-source paging controls for backfill-capable adapters | Yes for backfill |
+| `SCRAPE_SOURCE_IDS` | Optional comma-separated source allow-list for targeted backfills | No |
 | `DEFAULT_ORG_ID` | Org used by scheduled Munin Dream | Yes for dream jobs |
 
 ## Supabase Tables (Stable Schema)
