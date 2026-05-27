@@ -38,7 +38,8 @@ test("backfill options support source selection, date windows, and paging contro
     SCRAPE_DRY_RUN: process.env.SCRAPE_DRY_RUN,
     SCRAPE_MAX_PAGES: process.env.SCRAPE_MAX_PAGES,
     SCRAPE_PAGE_SIZE: process.env.SCRAPE_PAGE_SIZE,
-    SCRAPE_SOURCE_IDS: process.env.SCRAPE_SOURCE_IDS
+    SCRAPE_SOURCE_IDS: process.env.SCRAPE_SOURCE_IDS,
+    SCRAPE_WARN_ON_SOURCE_FAILURE: process.env.SCRAPE_WARN_ON_SOURCE_FAILURE
   };
   process.env.SCRAPE_DRY_RUN = "false";
   process.env.SCRAPE_BACKFILL_LIMIT = "250";
@@ -55,6 +56,7 @@ test("backfill options support source selection, date windows, and paging contro
     assert.equal(options.sourceLimit, 250);
     assert.equal(options.pageSize, 75);
     assert.equal(options.maxPages, 4);
+    assert.equal(options.warnOnSourceFailure, true);
     assert.deepEqual(options.sourceIds, ["eia-electricity", "uspto-patents"]);
     assert.equal(options.backfillStart, "2020-01-01T00:00:00.000Z");
     assert.equal(options.backfillEnd, "2024-12-31T00:00:00.000Z");
@@ -63,6 +65,8 @@ test("backfill options support source selection, date windows, and paging contro
     const explicitBackfill = resolveScrapeOptions(["--backfill"]);
     assert.equal(explicitBackfill.dryRun, false);
     assert.equal(explicitBackfill.noWrite, false);
+    process.env.SCRAPE_WARN_ON_SOURCE_FAILURE = "false";
+    assert.equal(resolveScrapeOptions(["--backfill", "--no-write"]).warnOnSourceFailure, false);
   } finally {
     for (const [key, value] of Object.entries(previous)) {
       if (value === undefined) delete process.env[key];

@@ -39,6 +39,7 @@ type ScrapeOptions = {
   pageSize: number;
   sourceIds: string[];
   sourceLimit: number;
+  warnOnSourceFailure: boolean;
 };
 
 type SourceReport = {
@@ -119,7 +120,8 @@ export function resolveScrapeOptions(args = process.argv.slice(2)): ScrapeOption
     noWrite,
     pageSize,
     sourceIds: envList("SCRAPE_SOURCE_IDS"),
-    sourceLimit
+    sourceLimit,
+    warnOnSourceFailure: process.env.SCRAPE_WARN_ON_SOURCE_FAILURE !== "false"
   };
 }
 
@@ -260,6 +262,13 @@ async function updateSourceWatermarks(client: ReturnType<typeof createServiceSup
 
 function skipSource(report: SourceReport[], id: string, skipped: string) {
   report.push({ id, ok: true, count: 0, skipped });
+}
+
+function warnSourceFailures(failedSources: SourceReport[]) {
+  if (!failedSources.length) return;
+  console.warn(
+    `Source scrape failure(s): ${failedSources.map((source) => `${source.id}: ${source.error ?? "unknown error"}`).join("; ")}`
+  );
 }
 
 export async function collectLiveSignals(options: ScrapeOptions) {
@@ -456,6 +465,7 @@ export async function collectLiveSignals(options: ScrapeOptions) {
   }
 
   const failedSources = sourceReport.filter((source) => !source.ok);
+  if (options.warnOnSourceFailure) warnSourceFailures(failedSources);
   if (options.failOnSourceError && failedSources.length) {
     throw new Error(`Live scrape failed for required source(s): ${failedSources.map((source) => `${source.id}: ${source.error}`).join("; ")}`);
   }
