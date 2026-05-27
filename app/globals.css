@@ -116,6 +116,17 @@ textarea {
 .stagger > *:nth-child(7) { animation-delay: 360ms; }
 .stagger > *:nth-child(8) { animation-delay: 420ms; }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* ── Glass panel ── */
 .glass {
   background: var(--glass-bg);
@@ -123,6 +134,90 @@ textarea {
   -webkit-backdrop-filter: blur(16px) saturate(1.4);
   border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-inset), var(--shadow-sm);
+}
+
+/* ── Huginn prose (markdown rendering) ── */
+.huginn-prose p {
+  margin-bottom: 0.75em;
+}
+.huginn-prose p:last-child {
+  margin-bottom: 0;
+}
+.huginn-prose h1,
+.huginn-prose h2,
+.huginn-prose h3 {
+  font-weight: 600;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+  color: var(--text-primary);
+}
+.huginn-prose h1 { font-size: 1.25em; }
+.huginn-prose h2 { font-size: 1.1em; }
+.huginn-prose h3 { font-size: 1em; }
+.huginn-prose ul,
+.huginn-prose ol {
+  padding-left: 1.5em;
+  margin-bottom: 0.75em;
+}
+.huginn-prose li {
+  margin-bottom: 0.3em;
+}
+.huginn-prose li::marker {
+  color: var(--text-tertiary);
+}
+.huginn-prose code {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 0.88em;
+  padding: 0.15em 0.4em;
+  border-radius: var(--radius-xs);
+  background: var(--ink-750);
+  color: var(--rune-bright);
+}
+.huginn-prose pre {
+  margin: 0.75em 0;
+  padding: 1em;
+  border-radius: var(--radius-md);
+  background: var(--ink-900);
+  border: 1px solid var(--line-faint);
+  overflow-x: auto;
+}
+.huginn-prose pre code {
+  padding: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.85em;
+}
+.huginn-prose blockquote {
+  padding-left: 1em;
+  border-left: 2px solid var(--rune-dim);
+  color: var(--text-secondary);
+  margin: 0.75em 0;
+}
+.huginn-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75em 0;
+  font-size: 0.9em;
+}
+.huginn-prose th,
+.huginn-prose td {
+  padding: 0.5em 0.75em;
+  border: 1px solid var(--line-faint);
+  text-align: left;
+}
+.huginn-prose th {
+  background: var(--ink-800);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+.huginn-prose strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.huginn-prose a {
+  color: var(--rune);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* ── MapLibre overrides ── */

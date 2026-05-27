@@ -272,6 +272,8 @@ type Props = Readonly<{
   connections?: MapConnection[];
   /** Pre-filter to a specific layer (e.g. from Huginn navigation) */
   initialFilter?: LayerKey | null;
+  /** Initial map center from Huginn region detection */
+  initialCenter?: { lat: number; lng: number; zoom?: number };
 }>;
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -283,7 +285,8 @@ export function RealityMap({
   onEntitySelect,
   entities: entityData = DEMO_ENTITIES,
   connections: connectionData = DEMO_CONNECTIONS,
-  initialFilter = null
+  initialFilter = null,
+  initialCenter
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapType | null>(null);
@@ -370,8 +373,8 @@ export function RealityMap({
       const map = new maplibregl.Map({
         container: containerRef.current,
         style: MAP_STYLE,
-        center: [15, 28],
-        zoom: 1.6,
+        center: initialCenter ? [initialCenter.lng, initialCenter.lat] : [-98.6, 39.8],
+        zoom: initialCenter?.zoom ?? 4,
         minZoom: 1,
         maxZoom: 16,
         attributionControl: false
@@ -558,30 +561,33 @@ export function RealityMap({
 
         // ── Animations ──────────────────────────────────────────────────
 
-        // Flowing connection dash animation
-        let dashStep = 0;
-        dashIntervalRef.current = setInterval(() => {
-          dashStep = (dashStep + 1) % 24;
-          const t = dashStep / 24;
-          if (map.getLayer("connection-lines")) {
-            map.setPaintProperty("connection-lines", "line-dasharray", [
-              t * 3, 2, (1 - t) * 3
-            ]);
-          }
-        }, 65);
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (!reduceMotion) {
+          // Flowing connection dash animation
+          let dashStep = 0;
+          dashIntervalRef.current = setInterval(() => {
+            dashStep = (dashStep + 1) % 24;
+            const t = dashStep / 24;
+            if (map.getLayer("connection-lines")) {
+              map.setPaintProperty("connection-lines", "line-dasharray", [
+                t * 3, 2, (1 - t) * 3
+              ]);
+            }
+          }, 65);
 
-        // Pulsing entity ring animation
-        let pulsePhase = 0;
-        function animatePulse() {
-          pulsePhase = (pulsePhase + 0.012) % 1;
-          const t = Math.sin(pulsePhase * Math.PI * 2) * 0.5 + 0.5;
-          if (map.getLayer("entity-rings")) {
-            map.setPaintProperty("entity-rings", "circle-opacity", 0.06 + t * 0.14);
-            map.setPaintProperty("entity-rings", "circle-stroke-opacity", 0.15 + t * 0.4);
+          // Pulsing entity ring animation
+          let pulsePhase = 0;
+          function animatePulse() {
+            pulsePhase = (pulsePhase + 0.012) % 1;
+            const t = Math.sin(pulsePhase * Math.PI * 2) * 0.5 + 0.5;
+            if (map.getLayer("entity-rings")) {
+              map.setPaintProperty("entity-rings", "circle-opacity", 0.06 + t * 0.14);
+              map.setPaintProperty("entity-rings", "circle-stroke-opacity", 0.15 + t * 0.4);
+            }
+            pulseFrameRef.current = requestAnimationFrame(animatePulse);
           }
           pulseFrameRef.current = requestAnimationFrame(animatePulse);
         }
-        pulseFrameRef.current = requestAnimationFrame(animatePulse);
 
         // ── Interaction: hover ───────────────────────────────────────────
         map.on("mousemove", "entity-symbols", (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
