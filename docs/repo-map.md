@@ -13,12 +13,13 @@ Odim is a multi-agent intelligence system that ingests real-world signals (SEC, 
 7. `app/api/huginn/route.ts` — primary API entry
 
 ## Architecture Overview
-- **UI layer:** `app/(dashboard)/` — 8 pages (alerts, audit, capital-flow, entity, huginn, map, settings, watchlist); `components/ui/`
+- **UI layer:** `app/(dashboard)/` — 5 pages (alerts, entity, huginn, map, settings); `components/ui/`
 - **Routing / application layer:** Next.js App Router; `app/api/` — 9 route handlers
 - **Domain logic:** `lib/huginn/` (cascade search, grading, bias, precompute); `lib/munin/` (memory, dream, write-gate); `lib/pipeline/` (normalize, ontologize, alerts)
 - **Data access:** `lib/repositories/admin.ts`, `lib/repositories/reality.ts` — Supabase or fallback fixtures
 - **External services:** Google Gemini API (`lib/ai/provider.ts`); Supabase (`lib/supabase/`); scrapers (`scrapers/`)
 - **Config / environment:** `.env` (see env vars below); `config/sources.json`; `lib/env/runtime.ts`
+- **Data sources:** `docs/data-sources.md` — comprehensive reference for all Substrate + Narrative layer sources
 - **Tests:** `tests/` — 14 files covering auth, pipeline, huginn, bias, security, RLS
 
 ## Key Entry Points
@@ -126,7 +127,7 @@ Odim is a multi-agent intelligence system that ingests real-world signals (SEC, 
 | Auth/API key | `lib/auth/request.ts` | all `app/api/*/route.ts` callers + security tests |
 | Gemini/AI provider | `lib/ai/provider.ts` | `rate-limit.ts` + huginn integration tests |
 | DB schema | Supabase migrations | `lib/repositories/` + `lib/supabase/` + RLS smoke |
-| Scraper | `scrapers/<name>.ts` | `scrapers/run.ts` + pipeline tests |
+| Scraper | `scrapers/<name>.ts` | `scrapers/run.ts` + pipeline tests + `config/sources.json` |
 | Env config | `.env.example` + `lib/env/runtime.ts` | `lib/ai/rate-limit.ts`, `lib/auth/request.ts` |
 
 ## Key Environment Variables

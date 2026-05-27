@@ -646,6 +646,331 @@ function ontologizeGenericRealitySignal(signal: NormalizedSignal) {
   return { objects, links };
 }
 
+function ontologizeEiaSignal(signal: NormalizedSignal) {
+  const plantName = text(signal.payload.plantName) ?? signal.externalId;
+  const state = text(signal.payload.state) ?? "US";
+  const capacityMw = numberValue(signal.payload.capacityMw);
+  const objects: OntologyObjectDraft[] = [];
+  const links: OntologyLinkDraft[] = [];
+
+  const asset = objectDraft({
+    objectType: "physical_asset",
+    key: `eia:plant:${signal.externalId}`,
+    attributes: {
+      type: "power_plant",
+      name: plantName,
+      status: text(signal.payload.status) ?? "operational",
+      capacity_value: capacityMw ?? null,
+      capacity_unit: capacityMw ? "MW" : null,
+      fuel_type: text(signal.payload.fuelType) ?? null,
+      balancing_authority: text(signal.payload.balancingAuthority) ?? null
+    },
+    sourceRefs: signal.sourceRefs
+  });
+  objects.push(asset);
+
+  const location = objectDraft({
+    objectType: "geo_location",
+    key: `eia:geo:${state}:${plantName}`,
+    attributes: {
+      lat: numberValue(signal.payload.lat) ?? null,
+      lng: numberValue(signal.payload.lng) ?? null,
+      name: `${plantName}, ${state}`,
+      jurisdiction: state,
+      scale_level: "state"
+    },
+    sourceRefs: signal.sourceRefs
+  });
+  objects.push(location);
+  links.push(
+    linkDraft({
+      fromObjectId: asset.id,
+      toObjectId: location.id,
+      linkType: "located_at",
+      confidence: signal.confidence,
+      sourceRefs: signal.sourceRefs
+    })
+  );
+
+  return { objects, links };
+}
+
+function ontologizeStatePucSignal(signal: NormalizedSignal) {
+  const applicant = text(signal.payload.applicantRaw) ?? text(signal.payload.applicant) ?? "Unknown PUC applicant";
+  const docketNumber = text(signal.payload.docketNumber) ?? signal.externalId;
+  const capacityMw = numberValue(signal.payload.capacityMw);
+  const projectName = text(signal.payload.projectName) ?? docketNumber;
+  const objects: OntologyObjectDraft[] = [];
+  const links: OntologyLinkDraft[] = [];
+
+  const decisionMaker = objectDraft({
+    objectType: "decision_maker",
+    key: `state-puc:applicant:${applicant}`,
+    attributes: {
+      name: applicant,
+      type: "utility",
+      reality_score: 0
+    },
+    sourceRefs: signal.sourceRefs
+  });
+  const filing = objectDraft({
+    objectType: "permit_filing",
+    key: `state-puc:docket:${docketNumber}`,
+    attributes: {
+      source: "state_puc",
+      jurisdiction: text(signal.payload.jurisdiction) ?? "US state PUC",
+      applicant_raw: applicant,
+      filing_date: text(signal.payload.filingDate) ?? signal.observedAt.slice(0, 10),
+      status: text(signal.payload.status) ?? "submitted",
+      document_url: signal.sourceRefs[0]?.url
+    },
+    sourceRefs: signal.sourceRefs
+  });
+  const asset = objectDraft({
+    objectType: "physical_asset",
+    key: `state-puc:asset:${projectName}`,
+    attributes: {
+      type: inferAssetType(projectName),
+      name: projectName,
+      status: text(signal.payload.status) === "approved" ? "permitted" : "planned",
+      capacity_value: capacityMw ?? null,
+      capacity_unit: capacityMw ? "MW" : null
+    },
+    sourceRefs: signal.sourceRefs
+  });
+
+  objects.push(decisionMaker, filing, asset);
+  links.push(
+    linkDraft({
+      fromObjectId: decisionMaker.id,
+      toObjectId: filing.id,
+      linkType: "filed_as",
+      confidence: signal.confidence,
+      sourceRefs: signal.sourceRefs
+    }),
+    linkDraft({
+      fromObjectId: filing.id,
+      toObjectId: asset.id,
+      linkType: "precedes_announcement_by",
+      confidence: Math.max(0.4, signal.confidence - 0.1),
+      sourceRefs: signal.sourceRefs
+    })
+  );
+
+  return { objects, links };
+}
+
+function ontologizePatentSignal(signal: NormalizedSignal) {
+  const assignee = text(signal.payload.assigneeName) ?? "Unknown assignee";
+  const patentNumber = text(signal.payload.patentNumber) ?? signal.externalId;
+  const title = text(signal.payload.title) ?? patentNumber;
+  const objects: OntologyObjectDraft[] = [];
+  const links: OntologyLinkDraft[] = [];
+
+  const decisionMaker = objectDraft({
+    objectType: "decision_maker",
+    key: `patent:assignee:${assignee}`,
+    attributes: {
+      name: assignee,
+      type: "corporation",
+      reality_score: 0
+    },
+    sourceRefs: signal.sourceRefs
+  });
+  const commitment = objectDraft({
+    objectType: "capital_commitment",
+    key: `patent:ip:${patentNumber}`,
+    attributes: {
+      amount_usd: null,
+      type: "ip_investment",
+      execution_date: text(signal.payload.grantDate) ?? text(signal.payload.filingDate) ?? signal.observedAt.slice(0, 10),
+      irrevocability_score: 0.8,
+      status: "granted",
+      patent_number: patentNumber,
+      title,
+      cpc_group: text(signal.payload.cpcGroup) ?? null
+    },
+    sourceRefs: signal.sourceRefs
+  });
+
+  objects.push(decisionMaker, commitment);
+  links.push(
+    linkDraft({
+      fromObjectId: decisionMaker.id,
+      toObjectId: commitment.id,
+      linkType: "commits_capital_to",
+      confidence: signal.confidence,
+      sourceRefs: signal.sourceRefs
+    })
+  );
+
+  return { objects, links };
+}
+
+function ontologizeEpaSignal(signal: NormalizedSignal) {
+  const facilityName = text(signal.payload.facilityName) ?? signal.externalId;
+  const permitNumber = text(signal.payload.permitNumber) ?? signal.externalId;
+  const objects: OntologyObjectDraft[] = [];
+  const links: OntologyLinkDraft[] = [];
+
+  const filing = objectDraft({
+    objectType: "permit_filing",
+    key: `epa-echo:permit:${permitNumber}`,
+    attributes: {
+      source: "epa_echo_npdes",
+      jurisdiction: `US EPA – ${text(signal.payload.state) ?? "unknown state"}`,
+      applicant_raw: facilityName,
+      filing_date: text(signal.payload.issueDate) ?? signal.observedAt.slice(0, 10),
+      status: "issued",
+      expiration_date: text(signal.payload.expirationDate) ?? null,
+      document_url: signal.sourceRefs[0]?.url
+    },
+    sourceRefs: signal.sourceRefs
+  });
+  const asset = objectDraft({
+    objectType: "physical_asset",
+    key: `epa-echo:facility:${permitNumber}`,
+    attributes: {
+      type: inferAssetType(text(signal.payload.facilityType) ?? facilityName),
+      name: facilityName,
+      status: "permitted",
+      facility_type: text(signal.payload.facilityType) ?? null
+    },
+    sourceRefs: signal.sourceRefs
+  });
+
+  objects.push(filing, asset);
+  links.push(
+    linkDraft({
+      fromObjectId: filing.id,
+      toObjectId: asset.id,
+      linkType: "precedes_announcement_by",
+      confidence: Math.max(0.4, signal.confidence - 0.1),
+      sourceRefs: signal.sourceRefs
+    })
+  );
+
+  const lat = numberValue(signal.payload.lat);
+  const lng = numberValue(signal.payload.lng);
+  if (lat !== undefined && lng !== undefined) {
+    const location = objectDraft({
+      objectType: "geo_location",
+      key: `epa-echo:geo:${lat}:${lng}:${permitNumber}`,
+      attributes: {
+        lat,
+        lng,
+        name: `${facilityName}, ${text(signal.payload.state) ?? "US"}`,
+        jurisdiction: text(signal.payload.state) ?? "US",
+        scale_level: "parcel"
+      },
+      sourceRefs: signal.sourceRefs
+    });
+    objects.push(location);
+    links.push(
+      linkDraft({
+        fromObjectId: asset.id,
+        toObjectId: location.id,
+        linkType: "located_at",
+        confidence: signal.confidence,
+        sourceRefs: signal.sourceRefs
+      })
+    );
+  }
+
+  return { objects, links };
+}
+
+function ontologizeFaaSignal(signal: NormalizedSignal) {
+  const applicant = text(signal.payload.applicantRaw) ?? text(signal.payload.applicant) ?? "Unknown FAA applicant";
+  const caseNumber = text(signal.payload.caseNumber) ?? signal.externalId;
+  const objects: OntologyObjectDraft[] = [];
+  const links: OntologyLinkDraft[] = [];
+
+  const decisionMaker = objectDraft({
+    objectType: "decision_maker",
+    key: `faa:applicant:${applicant}`,
+    attributes: {
+      name: applicant,
+      type: applicant.toLowerCase().includes("llc") ? "spv" : "corporation",
+      reality_score: 0
+    },
+    sourceRefs: signal.sourceRefs
+  });
+  const filing = objectDraft({
+    objectType: "permit_filing",
+    key: `faa-oas:case:${caseNumber}`,
+    attributes: {
+      source: "faa_oas",
+      jurisdiction: "FAA",
+      applicant_raw: applicant,
+      filing_date: text(signal.payload.determinationDate) ?? signal.observedAt.slice(0, 10),
+      status: text(signal.payload.status) ?? "submitted",
+      structure_type: text(signal.payload.structureType) ?? null,
+      height_ft: numberValue(signal.payload.height) ?? null,
+      document_url: signal.sourceRefs[0]?.url
+    },
+    sourceRefs: signal.sourceRefs
+  });
+  const asset = objectDraft({
+    objectType: "physical_asset",
+    key: `faa-oas:structure:${caseNumber}`,
+    attributes: {
+      type: inferAssetType(text(signal.payload.structureType) ?? ""),
+      name: `${text(signal.payload.structureType) ?? "Structure"} – ${caseNumber}`,
+      status: "planned",
+      height_ft: numberValue(signal.payload.height) ?? null
+    },
+    sourceRefs: signal.sourceRefs
+  });
+
+  objects.push(decisionMaker, filing, asset);
+  links.push(
+    linkDraft({
+      fromObjectId: decisionMaker.id,
+      toObjectId: filing.id,
+      linkType: "filed_as",
+      confidence: signal.confidence,
+      sourceRefs: signal.sourceRefs
+    }),
+    linkDraft({
+      fromObjectId: filing.id,
+      toObjectId: asset.id,
+      linkType: "precedes_announcement_by",
+      confidence: Math.max(0.4, signal.confidence - 0.1),
+      sourceRefs: signal.sourceRefs
+    })
+  );
+
+  const lat = numberValue(signal.payload.lat);
+  const lng = numberValue(signal.payload.lng);
+  if (lat !== undefined && lng !== undefined) {
+    const location = objectDraft({
+      objectType: "geo_location",
+      key: `faa-oas:geo:${lat}:${lng}:${caseNumber}`,
+      attributes: {
+        lat,
+        lng,
+        name: `${text(signal.payload.city) ?? "Unknown"}, ${text(signal.payload.state) ?? "US"}`,
+        jurisdiction: text(signal.payload.state) ?? "US",
+        scale_level: "parcel"
+      },
+      sourceRefs: signal.sourceRefs
+    });
+    objects.push(location);
+    links.push(
+      linkDraft({
+        fromObjectId: asset.id,
+        toObjectId: location.id,
+        linkType: "located_at",
+        confidence: signal.confidence,
+        sourceRefs: signal.sourceRefs
+      })
+    );
+  }
+
+  return { objects, links };
+}
+
 export function ontologizeSignal(signal: NormalizedSignal) {
   if (signal.source === "sec-edgar") return ontologizeSecSignal(signal);
   if (signal.source === "ferc-elibrary") return ontologizeFercSignal(signal);
@@ -654,6 +979,11 @@ export function ontologizeSignal(signal: NormalizedSignal) {
   if (signal.source === "water-district-permits") return ontologizeWaterSignal(signal);
   if (signal.source === "usgs-minerals") return ontologizeRawMaterialsSignal(signal);
   if (signal.source === "port-statistics") return ontologizeLogisticsSignal(signal);
+  if (signal.source === "eia-electricity") return ontologizeEiaSignal(signal);
+  if (signal.source === "state-puc-filings") return ontologizeStatePucSignal(signal);
+  if (signal.source === "uspto-patents") return ontologizePatentSignal(signal);
+  if (signal.source === "epa-echo-npdes") return ontologizeEpaSignal(signal);
+  if (signal.source === "faa-oas") return ontologizeFaaSignal(signal);
   if (signal.layer === "narrative") return { objects: [], links: [] };
   return ontologizeGenericRealitySignal(signal);
 }

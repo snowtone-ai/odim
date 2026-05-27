@@ -7,6 +7,11 @@ import { parsePortStatisticRecords } from "../../scrapers/port-statistics.ts";
 import { parseSecSubmissions } from "../../scrapers/sec-edgar.ts";
 import { parseUsgsMineralRecords } from "../../scrapers/usgs-minerals.ts";
 import { parseWaterDistrictRecords } from "../../scrapers/water-districts.ts";
+import { parseEiaRecords } from "../../scrapers/eia.ts";
+import { parsePucRecords } from "../../scrapers/state-puc.ts";
+import { parsePatentRecords } from "../../scrapers/patent.ts";
+import { parseEpaEchoRecords } from "../../scrapers/epa-echo.ts";
+import { parseFaaObstructionRecords } from "../../scrapers/faa-obstructions.ts";
 
 export function buildFixtureRawSignals(): RawSignal[] {
   const secSignals = parseSecSubmissions(
@@ -132,6 +137,87 @@ export function buildFixtureRawSignals(): RawSignal[] {
     10
   );
 
+  const eiaSignals = parseEiaRecords(
+    [
+      {
+        plantId: "GEN-2026-0142",
+        plantName: "Moss Landing Energy Storage",
+        state: "CA",
+        capacityMw: "400",
+        fuelType: "battery_storage",
+        status: "under_construction",
+        balancingAuthority: "CAISO",
+        reportPeriod: "2026-Q2"
+      }
+    ],
+    "https://api.eia.gov/v2/electricity/facility",
+    10
+  );
+  const statePucSignals = parsePucRecords(
+    [
+      {
+        applicant: "Vistra Corp",
+        docketNumber: "PUC-52847",
+        jurisdiction: "TX PUC",
+        projectName: "Odessa Solar + Storage",
+        capacityMw: "350",
+        status: "approved",
+        filingDate: "2026-05-10"
+      }
+    ],
+    "https://example.local/state-puc",
+    "TX PUC",
+    10
+  );
+  const patentSignals = parsePatentRecords(
+    [
+      {
+        patentNumber: "US12345678B2",
+        title: "Method for Liquid Immersion Cooling of High-Density GPU Clusters",
+        assigneeName: "NVIDIA Corporation",
+        filingDate: "2024-11-15",
+        grantDate: "2026-05-22",
+        cpcGroup: "H05K7/20"
+      }
+    ],
+    "https://api.patentsview.org/patents/query",
+    10
+  );
+  const epaEchoSignals = parseEpaEchoRecords(
+    [
+      {
+        facilityName: "Laidley LLC Data Center Campus",
+        permitNumber: "LA0123456",
+        issueDate: "2026-05-12",
+        expirationDate: "2031-05-12",
+        facilityType: "Industrial",
+        lat: "32.418",
+        lng: "-91.746",
+        state: "LA"
+      }
+    ],
+    "https://echo.epa.gov/detailed-facility-report",
+    10
+  );
+  const faaSignals = parseFaaObstructionRecords(
+    [
+      {
+        caseNumber: "2026-ASW-12847",
+        structureType: "Building",
+        height: "120",
+        lat: "32.42",
+        lng: "-91.75",
+        city: "Rayville",
+        state: "LA",
+        applicant: "Laidley LLC",
+        determinationDate: "2026-05-08",
+        status: "Determined - No Hazard"
+      }
+    ],
+    "https://oeaaa.faa.gov/oeaaa/external/searchAction.jsp",
+    10
+  );
+
   return [
     ...secSignals,
     ...fercSignals,
@@ -140,6 +226,11 @@ export function buildFixtureRawSignals(): RawSignal[] {
     ...waterSignals,
     ...mineralSignals,
     ...portSignals,
-    ...narrativeSignals
+    ...narrativeSignals,
+    ...eiaSignals,
+    ...statePucSignals,
+    ...patentSignals,
+    ...epaEchoSignals,
+    ...faaSignals
   ];
 }

@@ -2,11 +2,21 @@ import { RealityMap } from "@/components/ui/reality-map";
 import { alerts, layerActivity } from "@/lib/data";
 import { getMessages } from "@/lib/i18n/messages";
 import { getLocale } from "@/lib/i18n/locale";
+import type { LayerKey } from "@/lib/map/types";
 
-export default async function RealityMapPage() {
+const VALID_LAYERS: Set<string> = new Set([
+  "energy", "cash", "land", "compute", "water", "raw_materials", "logistics"
+]);
+
+export default async function RealityMapPage(
+  props: { searchParams: Promise<{ filter?: string }> }
+) {
   const locale = await getLocale();
   const messages = getMessages(locale);
   const screen = messages.screens.map;
+  const searchParams = await props.searchParams;
+  const filterParam = searchParams.filter;
+  const initialFilter = filterParam && VALID_LAYERS.has(filterParam) ? (filterParam as LayerKey) : null;
 
   return (
     <section className="flex h-screen flex-col">
@@ -46,6 +56,7 @@ export default async function RealityMapPage() {
             layerLabels={[...messages.layers]}
             selectLabel={screen.panels.layers}
             searchHint={screen.searchHint}
+            initialFilter={initialFilter}
           />
         </div>
 

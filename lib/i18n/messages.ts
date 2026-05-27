@@ -95,7 +95,9 @@ export const messages = {
           submit: "Submit eval",
           sent: "Eval saved",
           error: "Eval request failed"
-        }
+        },
+        emptyState: "Ask Huginn a question to begin intelligence analysis.",
+        showOnMap: "Show on Map"
       },
       settings: {
         title: "Settings",
@@ -226,7 +228,9 @@ export const messages = {
           submit: "評価を送信",
           sent: "保存しました",
           error: "送信に失敗しました"
-        }
+        },
+        emptyState: "Huginnに質問して、インテリジェンス分析を開始してください。",
+        showOnMap: "マップで表示"
       },
       settings: {
         title: "設定",

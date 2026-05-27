@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import type { ClientHuginnResponse } from "@/app/actions/huginn";
 
 type Labels = {
@@ -12,24 +12,16 @@ type Labels = {
 
 type Props = {
   defaultOrgId: string;
-  defaultQuestion: string;
-  initialResponse: ClientHuginnResponse;
   labels: Labels;
-  /** Server Action — never calls /api/huginn directly from the browser */
   action: (question: string, orgId: string) => Promise<ClientHuginnResponse>;
   onResponse: (response: ClientHuginnResponse, submittedQuestion: string) => void;
 };
 
-export function HuginnInput({ defaultOrgId, defaultQuestion, initialResponse, labels, action, onResponse }: Readonly<Props>) {
-  const [question, setQuestion] = useState(defaultQuestion);
+export function HuginnInput({ defaultOrgId, labels, action, onResponse }: Readonly<Props>) {
+  const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Emit initial response on mount
-  useEffect(() => {
-    onResponse(initialResponse, defaultQuestion);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

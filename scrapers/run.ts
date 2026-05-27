@@ -13,6 +13,11 @@ import { fetchSecEdgarSignals } from "./sec-edgar.ts";
 import { fetchUsgsMineralSignals } from "./usgs-minerals.ts";
 import { fetchWaterDistrictSignals } from "./water-districts.ts";
 import { fetchConfiguredSourceSignals, type ConfiguredSourceDefinition } from "./configured-source.ts";
+import { fetchEiaSignals } from "./eia.ts";
+import { fetchStatePucSignals } from "./state-puc.ts";
+import { fetchPatentSignals } from "./patent.ts";
+import { fetchEpaEchoSignals } from "./epa-echo.ts";
+import { fetchFaaObstructionSignals } from "./faa-obstructions.ts";
 
 type SourceConfig = {
   sources: ConfiguredSourceDefinition[];
@@ -100,6 +105,47 @@ async function collectLiveSignals() {
     signals.push(
       ...(await fetchNarrativeSignals({
         feedUrl: process.env.NARRATIVE_FEED_URL,
+        limit: Number(process.env.SCRAPE_LIMIT ?? 50)
+      }))
+    );
+  }
+  if (process.env.EIA_API_KEY && process.env.EIA_FEED_URL) {
+    signals.push(
+      ...(await fetchEiaSignals({
+        baseUrl: process.env.EIA_FEED_URL,
+        apiKey: process.env.EIA_API_KEY,
+        limit: Number(process.env.SCRAPE_LIMIT ?? 50)
+      }))
+    );
+  }
+  if (process.env.STATE_PUC_FEED_URL) {
+    signals.push(
+      ...(await fetchStatePucSignals({
+        feedUrl: process.env.STATE_PUC_FEED_URL,
+        limit: Number(process.env.SCRAPE_LIMIT ?? 50)
+      }))
+    );
+  }
+  if (process.env.PATENT_FEED_URL) {
+    signals.push(
+      ...(await fetchPatentSignals({
+        baseUrl: process.env.PATENT_FEED_URL,
+        limit: Number(process.env.SCRAPE_LIMIT ?? 50)
+      }))
+    );
+  }
+  if (process.env.EPA_ECHO_FEED_URL) {
+    signals.push(
+      ...(await fetchEpaEchoSignals({
+        baseUrl: process.env.EPA_ECHO_FEED_URL,
+        limit: Number(process.env.SCRAPE_LIMIT ?? 50)
+      }))
+    );
+  }
+  if (process.env.FAA_OAS_FEED_URL) {
+    signals.push(
+      ...(await fetchFaaObstructionSignals({
+        feedUrl: process.env.FAA_OAS_FEED_URL,
         limit: Number(process.env.SCRAPE_LIMIT ?? 50)
       }))
     );

@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "principle": "Configure free public sources first; add paid providers by config, not code rewrite.",
   "allowedGapfillDomains": [
     "elibrary.ferc.gov",
@@ -8,7 +8,14 @@
     "data.sec.gov",
     "puc.texas.gov",
     "cpuc.ca.gov",
-    "dps.ny.gov"
+    "dps.ny.gov",
+    "api.eia.gov",
+    "oeaaa.faa.gov",
+    "echodata.epa.gov",
+    "search.patentsview.org",
+    "api.bls.gov",
+    "api.census.gov",
+    "api.congress.gov"
   ],
   "sources": [
     {
@@ -83,6 +90,329 @@
       "enabled": true,
       "urlEnv": "NARRATIVE_FEED_URL",
       "adapter": "scrapers/narrative.ts"
+    },
+    {
+      "id": "eia-electricity",
+      "layer": "energy",
+      "region": "us",
+      "type": "api",
+      "enabled": true,
+      "urlEnv": "EIA_FEED_URL",
+      "requiredEnv": ["EIA_API_KEY"],
+      "adapter": "scrapers/eia.ts"
+    },
+    {
+      "id": "state-puc-filings",
+      "layer": "energy",
+      "region": "us",
+      "type": "public-feed",
+      "enabled": true,
+      "urlEnv": "STATE_PUC_FEED_URL",
+      "adapter": "scrapers/state-puc.ts"
+    },
+    {
+      "id": "uspto-patents",
+      "layer": "cash",
+      "region": "us",
+      "type": "api",
+      "enabled": true,
+      "urlEnv": "USPTO_PATENTS_FEED_URL",
+      "adapter": "scrapers/patent.ts"
+    },
+    {
+      "id": "epa-echo-npdes",
+      "layer": "water",
+      "region": "us",
+      "type": "api",
+      "enabled": true,
+      "urlEnv": "EPA_ECHO_FEED_URL",
+      "adapter": "scrapers/epa-echo.ts"
+    },
+    {
+      "id": "faa-oas",
+      "layer": "land",
+      "region": "us",
+      "type": "public-feed",
+      "enabled": true,
+      "urlEnv": "FAA_OAS_FEED_URL",
+      "adapter": "scrapers/faa-obstructions.ts"
+    },
+    {
+      "id": "ercot-queue",
+      "layer": "energy",
+      "region": "us",
+      "type": "public-feed",
+      "enabled": false,
+      "urlEnv": "ERCOT_QUEUE_URL",
+      "adapter": "configured-json-csv",
+      "confidence": 0.75,
+      "fieldMap": {
+        "externalId": ["INR", "project_id", "queue_id"],
+        "observedAt": ["updated_date", "queue_date"],
+        "title": ["project_name", "description"],
+        "url": ["url"]
+      },
+      "payloadMap": {
+        "applicantRaw": ["interconnecting_entity", "developer"],
+        "projectName": ["project_name", "facility_name"],
+        "capacityMw": ["capacity_mw", "mw_capacity"],
+        "fuelType": ["fuel_type", "technology"],
+        "status": ["status", "queue_status"],
+        "county": ["county"],
+        "lat": ["latitude"],
+        "lng": ["longitude"]
+      }
+    },
+    {
+      "id": "pjm-queue",
+      "layer": "energy",
+      "region": "us",
+      "type": "public-feed",
+      "enabled": false,
+      "urlEnv": "PJM_QUEUE_URL",
+      "adapter": "configured-json-csv",
+      "confidence": 0.75,
+      "fieldMap": {
+        "externalId": ["queue_number", "project_id"],
+        "observedAt": ["queue_date", "updated_date"],
+        "title": ["project_name"],
+        "url": ["url"]
+      },
+      "payloadMap": {
+        "applicantRaw": ["developer", "company"],
+        "projectName": ["project_name"],
+        "capacityMw": ["mfo_mw", "capacity_mw"],
+        "fuelType": ["fuel", "technology_type"],
+        "status": ["status"],
+        "state": ["state"],
+        "county": ["county"]
+      }
+    },
+    {
+      "id": "miso-queue",
+      "layer": "energy",
+      "region": "us",
+      "type": "public-feed",
+      "enabled": false,
+      "urlEnv": "MISO_QUEUE_URL",
+      "adapter": "configured-json-csv",
+      "confidence": 0.75,
+      "fieldMap": {
+        "externalId": ["project_number", "queue_id"],
+        "observedAt": ["queue_date", "updated"],
+        "title": ["project_name"],
+        "url": ["url"]
+      },
+      "payloadMap": {
+        "applicantRaw": ["developer", "applicant"],
+        "projectName": ["project_name"],
+        "capacityMw": ["capacity_mw"],
+        "fuelType": ["fuel_type"],
+        "status": ["status"],
+        "state": ["state"],
+        "county": ["county"]
+      }
+    },
+    {
+      "id": "blm-mining",
+      "layer": "raw_materials",
+      "region": "us",
+      "type": "public-feed",
+      "enabled": false,
+      "urlEnv": "BLM_MINING_URL",
+      "adapter": "configured-json-csv",
+      "confidence": 0.72,
+      "fieldMap": {
+        "externalId": ["case_id", "serial_number"],
+        "observedAt": ["location_date", "filing_date"],
+        "title": ["claim_name", "description"],
+        "url": ["url"]
+      },
+      "payloadMap": {
+        "applicantRaw": ["claimant", "applicant"],
+        "commodity": ["commodity", "mineral"],
+        "acreage": ["acreage", "acres"],
+        "state": ["state"],
+        "county": ["county"],
+        "lat": ["latitude"],
+        "lng": ["longitude"]
+      }
+    },
+    {
+      "id": "bls-commodities",
+      "layer": "raw_materials",
+      "region": "us",
+      "type": "api",
+      "enabled": false,
+      "urlEnv": "BLS_COMMODITIES_URL",
+      "adapter": "configured-json-csv",
+      "confidence": 0.68,
+      "fieldMap": {
+        "externalId": ["seriesID", "series_id"],
+        "observedAt": ["period_date", "date"],
+        "title": ["series_title", "commodity_name"]
+      },
+      "payloadMap": {
+        "value": ["value"],
+        "periodName": ["periodName", "period"],
+        "commodity": ["commodity", "series_title"]
+      }
+    },
+    {
+      "id": "census-trade",
+      "layer": "logistics",
+      "region": "us",
+      "type": "api",
+      "enabled": false,
+      "urlEnv": "CENSUS_TRADE_URL",
+      "adapter": "configured-json-csv",
+      "confidence": 0.70,
+      "fieldMap": {
+        "externalId": ["time", "MONTH"],
+        "observedAt": ["time", "MONTH"],
+        "title": ["I_COMMODITY_LDESC", "commodity_description"]
+      },
+      "payloadMap": {
+        "metric": ["GEN_VAL_MO", "value"],
+        "commodity": ["I_COMMODITY", "commodity_code"],
+        "country": ["CTY_NAME", "country_name"],
+        "district": ["DIST_NAME", "district_name"]
+      }
+    },
+    {
+      "id": "bts-freight",
+      "layer": "logistics",
+      "region": "us",
+      "type": "public-feed",
+      "enabled": false,
+      "urlEnv": "BTS_FREIGHT_URL",
+      "adapter": "configured-json-csv",
+      "confidence": 0.70,
+      "fieldMap": {
+        "externalId": ["record_id", "id"],
+        "observedAt": ["date", "period"],
+        "title": ["description", "mode_description"]
+      },
+      "payloadMap": {
+        "mode": ["mode", "transport_mode"],
+        "volume": ["value", "tonnage"],
+        "volumeUnit": ["unit"],
+        "origin": ["origin", "origin_state"],
+        "destination": ["destination", "destination_state"]
+      }
+    },
+    {
+      "id": "fcc-licenses",
+      "layer": "compute",
+      "region": "us",
+      "type": "api",
+      "enabled": false,
+      "urlEnv": "FCC_LICENSE_URL",
+      "adapter": "configured-json-csv",
+      "confidence": 0.70,
+      "fieldMap": {
+        "externalId": ["licenseID", "callsign"],
+        "observedAt": ["grantDate", "issued_date"],
+        "title": ["licName", "licensee_name"],
+        "url": ["url"]
+      },
+      "payloadMap": {
+        "applicantRaw": ["licName", "licensee_name"],
+        "serviceCode": ["serviceCode", "service_type"],
+        "frequencyMhz": ["frequencyAssigned", "frequency_mhz"],
+        "state": ["licState", "state"],
+        "lat": ["latitude"],
+        "lng": ["longitude"]
+      }
+    },
+    {
+      "id": "pr-newswire",
+      "layer": "narrative",
+      "region": "global",
+      "type": "paid-feed",
+      "enabled": false,
+      "urlEnv": "PR_NEWSWIRE_URL",
+      "adapter": "configured-json-csv",
+      "confidence": 0.40,
+      "fieldMap": {
+        "externalId": ["id", "release_id"],
+        "observedAt": ["date", "published_at"],
+        "title": ["headline", "title"],
+        "url": ["url", "link"]
+      },
+      "payloadMap": {
+        "entityName": ["company", "organization"],
+        "publisher": ["source", "outlet"],
+        "topic": ["category", "industry"]
+      }
+    },
+    {
+      "id": "earnings-transcripts",
+      "layer": "narrative",
+      "region": "global",
+      "type": "public-feed",
+      "enabled": false,
+      "urlEnv": "EARNINGS_TRANSCRIPTS_URL",
+      "adapter": "configured-json-csv",
+      "confidence": 0.42,
+      "fieldMap": {
+        "externalId": ["id", "transcript_id", "filing_id"],
+        "observedAt": ["date", "call_date"],
+        "title": ["title", "company_name"],
+        "url": ["url", "source_url"]
+      },
+      "payloadMap": {
+        "entityName": ["company", "ticker", "company_name"],
+        "publisher": ["source", "provider"],
+        "topic": ["category", "call_type"],
+        "quarter": ["quarter", "fiscal_quarter"],
+        "summary": ["summary", "key_points"]
+      }
+    },
+    {
+      "id": "gdelt",
+      "layer": "narrative",
+      "region": "global",
+      "type": "api",
+      "enabled": false,
+      "urlEnv": "GDELT_FEED_URL",
+      "adapter": "configured-json-csv",
+      "confidence": 0.35,
+      "fieldMap": {
+        "externalId": ["GLOBALEVENTID", "event_id"],
+        "observedAt": ["DATEADDED", "date"],
+        "title": ["title", "headline"],
+        "url": ["SOURCEURL", "url"]
+      },
+      "payloadMap": {
+        "entityName": ["Actor1Name", "entity"],
+        "publisher": ["SOURCEURL", "domain"],
+        "topic": ["EventCode", "event_type"],
+        "goldstein": ["GoldsteinScale", "tone"],
+        "country": ["ActionGeo_CountryCode", "country"]
+      }
+    },
+    {
+      "id": "congress-hearings",
+      "layer": "narrative",
+      "region": "us",
+      "type": "api",
+      "enabled": false,
+      "urlEnv": "CONGRESS_API_URL",
+      "adapter": "configured-json-csv",
+      "confidence": 0.50,
+      "fieldMap": {
+        "externalId": ["eventId", "hearing_id"],
+        "observedAt": ["date", "hearing_date"],
+        "title": ["title", "description"],
+        "url": ["url"]
+      },
+      "payloadMap": {
+        "committee": ["committee", "committee_name"],
+        "chamber": ["chamber"],
+        "topic": ["subject", "topic"],
+        "witnesses": ["witnesses"]
+      }
     },
     {
       "id": "paid-commercial-template",

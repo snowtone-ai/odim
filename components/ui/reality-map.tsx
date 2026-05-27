@@ -1,7 +1,7 @@
 "use client";
 
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import type { Map as MapType, GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from "maplibre-gl";
 import { DEMO_ENTITIES } from "@/lib/map/entities";
 import { DEMO_CONNECTIONS } from "@/lib/map/connections";
@@ -9,7 +9,6 @@ import type { LayerKey, MapEntity, MapConnection } from "@/lib/map/types";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** HTML-escape a string to prevent XSS in setHTML interpolation */
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, "&amp;")
@@ -22,40 +21,148 @@ function escapeHtml(str: string): string {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const LAYER_COLORS: Record<LayerKey, string> = {
-  energy:        "#e0904a",
-  cash:          "#6fa86f",
-  land:          "#c4a96b",
-  compute:       "#5e9fd4",
-  water:         "#4fb8c8",
-  raw_materials: "#b47fbc",
-  logistics:     "#8fa8c4"
+  energy:        "#d97a2b",
+  cash:          "#3a9a3a",
+  land:          "#b89245",
+  compute:       "#3b82d9",
+  water:         "#1a9bb0",
+  raw_materials: "#9a5aaa",
+  logistics:     "#5a7ea0"
 };
 
 const LAYER_KEYS: LayerKey[] = [
   "energy", "cash", "land", "compute", "water", "raw_materials", "logistics"
 ];
 
-const MAP_STYLE = {
-  version: 8 as const,
-  name: "odim-dark",
-  sources: {
-    "carto-dark": {
-      type: "raster" as const,
-      tiles: ["https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png"],
-      tileSize: 256,
-      attribution: ""
+// OpenFreeMap Liberty — colorful OSM vector tiles, no API key required
+const MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+
+// ─── Canvas Icon Builders (Professional Maki-style) ───────────────────────────
+
+const ICON_SIZE = 64;
+
+type IconDrawer = (ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) => void;
+
+function createLayerIcon(layer: LayerKey): ImageData {
+  const size = ICON_SIZE;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  const cx = size / 2;
+  const cy = size / 2;
+  const circleR = size * 0.36;
+  const color = LAYER_COLORS[layer];
+
+  // Outer glow
+  ctx.shadowColor = color;
+  ctx.shadowBlur = size * 0.15;
+
+  // Circle background
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(cx, cy, circleR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Reset shadow
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+
+  // White border ring
+  ctx.strokeStyle = "rgba(255,255,255,0.5)";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // White symbol
+  ctx.fillStyle = "#fff";
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 1;
+  const sr = circleR * 0.52;
+  ICON_DRAWERS[layer](ctx, cx, cy, sr);
+
+  return ctx.getImageData(0, 0, size, size);
+}
+
+const ICON_DRAWERS: Record<LayerKey, IconDrawer> = {
+  // Lightning bolt
+  energy(ctx, cx, cy, r) {
+    ctx.beginPath();
+    ctx.moveTo(cx + r * 0.1, cy - r * 0.95);
+    ctx.lineTo(cx - r * 0.5, cy + r * 0.1);
+    ctx.lineTo(cx - r * 0.02, cy + r * 0.1);
+    ctx.lineTo(cx - r * 0.1, cy + r * 0.95);
+    ctx.lineTo(cx + r * 0.5, cy - r * 0.1);
+    ctx.lineTo(cx + r * 0.02, cy - r * 0.1);
+    ctx.closePath();
+    ctx.fill();
+  },
+  // Dollar sign
+  cash(ctx, cx, cy, r) {
+    ctx.font = `bold ${r * 1.5}px "Inter", "Segoe UI", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("$", cx, cy + r * 0.05);
+  },
+  // Mountain peaks
+  land(ctx, cx, cy, r) {
+    ctx.beginPath();
+    ctx.moveTo(cx - r * 0.85, cy + r * 0.7);
+    ctx.lineTo(cx - r * 0.2, cy - r * 0.5);
+    ctx.lineTo(cx + r * 0.05, cy - r * 0.05);
+    ctx.lineTo(cx + r * 0.3, cy - r * 0.75);
+    ctx.lineTo(cx + r * 0.85, cy + r * 0.7);
+    ctx.closePath();
+    ctx.fill();
+  },
+  // Microchip
+  compute(ctx, cx, cy, r) {
+    const half = r * 0.45;
+    ctx.fillRect(cx - half, cy - half, half * 2, half * 2);
+    const pin = r * 0.12;
+    const pinLen = r * 0.22;
+    for (const off of [-0.25, 0.25]) {
+      ctx.fillRect(cx + r * off - pin / 2, cy - half - pinLen, pin, pinLen);
+      ctx.fillRect(cx + r * off - pin / 2, cy + half, pin, pinLen);
+      ctx.fillRect(cx - half - pinLen, cy + r * off - pin / 2, pinLen, pin);
+      ctx.fillRect(cx + half, cy + r * off - pin / 2, pinLen, pin);
     }
   },
-  layers: [
-    {
-      id: "carto-dark-layer",
-      type: "raster" as const,
-      source: "carto-dark",
-      minzoom: 0,
-      maxzoom: 20,
-      paint: { "raster-opacity": 0.92 }
+  // Water droplet
+  water(ctx, cx, cy, r) {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r * 0.85);
+    ctx.bezierCurveTo(cx + r * 0.7, cy + r * 0.05, cx + r * 0.55, cy + r * 0.7, cx, cy + r * 0.85);
+    ctx.bezierCurveTo(cx - r * 0.55, cy + r * 0.7, cx - r * 0.7, cy + r * 0.05, cx, cy - r * 0.85);
+    ctx.closePath();
+    ctx.fill();
+  },
+  // Hexagonal gem
+  raw_materials(ctx, cx, cy, r) {
+    const gr = r * 0.8;
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 3) * i - Math.PI / 2;
+      const x = cx + gr * Math.cos(angle);
+      const y = cy + gr * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
     }
-  ]
+    ctx.closePath();
+    ctx.fill();
+  },
+  // Arrow (logistics flow)
+  logistics(ctx, cx, cy, r) {
+    ctx.beginPath();
+    ctx.moveTo(cx - r * 0.7, cy - r * 0.3);
+    ctx.lineTo(cx + r * 0.15, cy - r * 0.3);
+    ctx.lineTo(cx + r * 0.15, cy - r * 0.65);
+    ctx.lineTo(cx + r * 0.8, cy);
+    ctx.lineTo(cx + r * 0.15, cy + r * 0.65);
+    ctx.lineTo(cx + r * 0.15, cy + r * 0.3);
+    ctx.lineTo(cx - r * 0.7, cy + r * 0.3);
+    ctx.closePath();
+    ctx.fill();
+  }
 };
 
 // ─── GeoJSON builders ─────────────────────────────────────────────────────────
@@ -117,8 +224,8 @@ function buildConnectionCollection(
         conn.fromId === selectedId ||
         conn.toId === selectedId;
 
-      const opacity = isRelated ? (conn.active ? 0.85 : 0.45) : 0.1;
-      const width = 1 + conn.confidence * 2;
+      const opacity = isRelated ? (conn.active ? 0.9 : 0.5) : 0.12;
+      const width = 1.5 + conn.confidence * 2.5;
       const color = LAYER_COLORS[from.layer];
 
       return [
@@ -161,10 +268,10 @@ type Props = Readonly<{
   selectLabel: string;
   searchHint?: string;
   onEntitySelect?: (entity: MapEntity | null) => void;
-  /** Override demo data with production entities. Falls back to DEMO_ENTITIES. */
   entities?: MapEntity[];
-  /** Override demo data with production connections. Falls back to DEMO_CONNECTIONS. */
   connections?: MapConnection[];
+  /** Pre-filter to a specific layer (e.g. from Huginn navigation) */
+  initialFilter?: LayerKey | null;
 }>;
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -175,13 +282,16 @@ export function RealityMap({
   searchHint = "Search entities…",
   onEntitySelect,
   entities: entityData = DEMO_ENTITIES,
-  connections: connectionData = DEMO_CONNECTIONS
+  connections: connectionData = DEMO_CONNECTIONS,
+  initialFilter = null
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapType | null>(null);
   const popupRef = useRef<InstanceType<
     typeof import("maplibre-gl")["Popup"]
   > | null>(null);
+  const dashIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pulseFrameRef = useRef<number | null>(null);
 
   const [loaded, setLoaded] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -195,18 +305,18 @@ export function RealityMap({
       key,
       label: layerLabels[i] ?? key,
       color: LAYER_COLORS[key],
-      enabled: true
+      enabled: initialFilter ? key === initialFilter : true
     }))
   );
 
-  // Stable references for use inside map init closure
   const entityDataRef = useRef(entityData);
   const connectionDataRef = useRef(connectionData);
   useEffect(() => { entityDataRef.current = entityData; }, [entityData]);
   useEffect(() => { connectionDataRef.current = connectionData; }, [connectionData]);
 
-  const enabledKeys = new Set(
-    layers.filter((l) => l.enabled).map((l) => l.key)
+  const enabledKeys = useMemo(
+    () => new Set(layers.filter((l) => l.enabled).map((l) => l.key)),
+    [layers]
   );
 
   const toggleLayer = useCallback((key: LayerKey) => {
@@ -274,11 +384,19 @@ export function RealityMap({
         offset: 14
       });
 
-      map.on("load", async () => {
+      map.on("load", () => {
         if (cancelled) return;
 
-        // Fallback: register a white-circle ImageData for any SDF icon that fails to load
+        // Register canvas-rendered icons (Maki-style, pre-colored)
+        LAYER_KEYS.forEach((key) => {
+          if (!map.hasImage(key)) {
+            map.addImage(key, createLayerIcon(key), { sdf: false });
+          }
+        });
+
+        // Fallback for missing images
         map.on("styleimagemissing", (e: { id: string }) => {
+          if (LAYER_KEYS.includes(e.id as LayerKey)) return;
           const size = 16;
           const canvas = document.createElement("canvas");
           canvas.width = size;
@@ -287,35 +405,13 @@ export function RealityMap({
           if (ctx) {
             ctx.beginPath();
             ctx.arc(size / 2, size / 2, size / 2 - 1, 0, Math.PI * 2);
-            ctx.fillStyle = "#ffffff";
+            ctx.fillStyle = "#888";
             ctx.fill();
             if (!map.hasImage(e.id)) {
               map.addImage(e.id, ctx.getImageData(0, 0, size, size));
             }
           }
         });
-
-        // Load SDF icons
-        await Promise.all(
-          LAYER_KEYS.map(
-            (key) =>
-              new Promise<void>((resolve) => {
-                const img = new Image();
-                img.onload = () => {
-                  try {
-                    if (!map.hasImage(key)) {
-                      map.addImage(key, img, { sdf: true });
-                    }
-                  } catch {
-                    // Fallback registered via styleimagemissing
-                  }
-                  resolve();
-                };
-                img.onerror = () => resolve(); // styleimagemissing handler covers missing icons
-                img.src = `/icons/substrate-${key}.svg`;
-              })
-          )
-        );
 
         // ── Entity source (clustered) ────────────────────────────────────
         map.addSource("entities", {
@@ -337,9 +433,9 @@ export function RealityMap({
           )
         });
 
-        // ── Connection lines ─────────────────────────────────────────────
+        // ── Connection lines (base) ─────────────────────────────────────
         map.addLayer({
-          id: "connection-lines",
+          id: "connection-lines-base",
           type: "line",
           source: "connections",
           layout: {
@@ -349,12 +445,28 @@ export function RealityMap({
           paint: {
             "line-color": ["get", "color"],
             "line-width": ["get", "width"],
-            "line-opacity": ["get", "opacity"],
-            "line-dasharray": [2, 3]
+            "line-opacity": ["*", ["get", "opacity"], 0.3]
           }
         });
 
-        // ── Confidence circle rings ──────────────────────────────────────
+        // ── Connection lines (animated flow) ────────────────────────────
+        map.addLayer({
+          id: "connection-lines",
+          type: "line",
+          source: "connections",
+          layout: {
+            "line-cap": "butt",
+            "line-join": "round"
+          },
+          paint: {
+            "line-color": ["get", "color"],
+            "line-width": ["get", "width"],
+            "line-opacity": ["get", "opacity"],
+            "line-dasharray": [0, 2, 3]
+          }
+        });
+
+        // ── Confidence circle rings (pulsing) ────────────────────────────
         map.addLayer({
           id: "entity-rings",
           type: "circle",
@@ -364,15 +476,16 @@ export function RealityMap({
             "circle-radius": [
               "interpolate",
               ["linear"],
-              ["get", "score"],
-              60, 10,
-              85, 18
+              ["zoom"],
+              1, ["interpolate", ["linear"], ["get", "score"], 60, 8, 85, 14],
+              6, ["interpolate", ["linear"], ["get", "score"], 60, 14, 85, 24],
+              12, ["interpolate", ["linear"], ["get", "score"], 60, 20, 85, 34]
             ],
             "circle-color": ["get", "color"],
-            "circle-opacity": 0.12,
+            "circle-opacity": 0.1,
             "circle-stroke-color": ["get", "color"],
-            "circle-stroke-width": 1,
-            "circle-stroke-opacity": 0.35
+            "circle-stroke-width": 1.5,
+            "circle-stroke-opacity": 0.3
           }
         });
 
@@ -383,15 +496,15 @@ export function RealityMap({
           source: "entities",
           filter: ["has", "point_count"],
           paint: {
-            "circle-color": "#2a3348",
+            "circle-color": "rgba(255,255,255,0.92)",
             "circle-radius": [
               "step",
               ["get", "point_count"],
-              16, 3, 22, 6, 28
+              18, 3, 24, 6, 30
             ],
-            "circle-stroke-color": "rgba(255,255,255,0.15)",
+            "circle-stroke-color": "rgba(0,0,0,0.12)",
             "circle-stroke-width": 1.5,
-            "circle-opacity": 0.9
+            "circle-opacity": 0.95
           }
         });
 
@@ -403,16 +516,15 @@ export function RealityMap({
           filter: ["has", "point_count"],
           layout: {
             "text-field": "{point_count_abbreviated}",
-            "text-font": ["literal", ["Open Sans Bold"]],
-            "text-size": 11,
+            "text-size": 12,
             "text-allow-overlap": true
           },
           paint: {
-            "text-color": "#c8cfdc"
+            "text-color": "#333"
           }
         });
 
-        // ── Individual entity symbols ────────────────────────────────────
+        // ── Entity symbols (zoom-dependent sizing) ───────────────────────
         map.addLayer({
           id: "entity-symbols",
           type: "symbol",
@@ -420,15 +532,56 @@ export function RealityMap({
           filter: ["!", ["has", "point_count"]],
           layout: {
             "icon-image": ["get", "layer"],
-            "icon-size": 0.7,
+            "icon-size": [
+              "interpolate", ["linear"], ["zoom"],
+              1, 0.3,
+              4, 0.45,
+              8, 0.6,
+              12, 0.75
+            ],
             "icon-allow-overlap": true,
-            "icon-ignore-placement": true
+            "icon-ignore-placement": true,
+            "text-field": ["step", ["zoom"], "", 6, ["get", "name"]],
+            "text-size": 11,
+            "text-offset": [0, 1.8],
+            "text-anchor": "top",
+            "text-optional": true,
+            "text-max-width": 10
           },
           paint: {
-            "icon-color": ["get", "color"],
-            "icon-opacity": 1
+            "icon-opacity": 1,
+            "text-color": "#1a1a2e",
+            "text-halo-color": "rgba(255,255,255,0.85)",
+            "text-halo-width": 1.5
           }
         });
+
+        // ── Animations ──────────────────────────────────────────────────
+
+        // Flowing connection dash animation
+        let dashStep = 0;
+        dashIntervalRef.current = setInterval(() => {
+          dashStep = (dashStep + 1) % 24;
+          const t = dashStep / 24;
+          if (map.getLayer("connection-lines")) {
+            map.setPaintProperty("connection-lines", "line-dasharray", [
+              t * 3, 2, (1 - t) * 3
+            ]);
+          }
+        }, 65);
+
+        // Pulsing entity ring animation
+        let pulsePhase = 0;
+        function animatePulse() {
+          pulsePhase = (pulsePhase + 0.012) % 1;
+          const t = Math.sin(pulsePhase * Math.PI * 2) * 0.5 + 0.5;
+          if (map.getLayer("entity-rings")) {
+            map.setPaintProperty("entity-rings", "circle-opacity", 0.06 + t * 0.14);
+            map.setPaintProperty("entity-rings", "circle-stroke-opacity", 0.15 + t * 0.4);
+          }
+          pulseFrameRef.current = requestAnimationFrame(animatePulse);
+        }
+        pulseFrameRef.current = requestAnimationFrame(animatePulse);
 
         // ── Interaction: hover ───────────────────────────────────────────
         map.on("mousemove", "entity-symbols", (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
@@ -522,6 +675,10 @@ export function RealityMap({
 
     return () => {
       cancelled = true;
+      if (dashIntervalRef.current) clearInterval(dashIntervalRef.current);
+      if (pulseFrameRef.current) cancelAnimationFrame(pulseFrameRef.current);
+      dashIntervalRef.current = null;
+      pulseFrameRef.current = null;
       popupRef.current?.remove();
       if (mapRef.current) {
         mapRef.current.remove();
@@ -536,9 +693,9 @@ export function RealityMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loaded) return;
-    const src = map.getSource("connections") as GeoJSONSource | undefined;
-    if (!src) return;
-    src.setData(buildConnectionCollection(enabledKeys, selectedId, entityData, connectionData));
+    const connSrc = map.getSource("connections") as GeoJSONSource | undefined;
+    if (!connSrc) return;
+    connSrc.setData(buildConnectionCollection(enabledKeys, selectedId, entityData, connectionData));
   }, [selectedId, loaded, enabledKeys, entityData, connectionData]);
 
   // ── Sync layer visibility → entity source filter ──────────────────────────
@@ -549,7 +706,6 @@ export function RealityMap({
 
     const enabledArr = Array.from(enabledKeys);
 
-    // Update entity symbol filter
     if (map.getLayer("entity-symbols")) {
       map.setFilter("entity-symbols", [
         "all",
@@ -565,7 +721,6 @@ export function RealityMap({
       ]);
     }
 
-    // Rebuild entity source to respect layer filters for clustering
     const src = map.getSource("entities") as GeoJSONSource | undefined;
     if (src) {
       src.setData(
@@ -575,7 +730,6 @@ export function RealityMap({
       );
     }
 
-    // Rebuild connections
     const connSrc = map.getSource("connections") as GeoJSONSource | undefined;
     if (connSrc) {
       connSrc.setData(buildConnectionCollection(enabledKeys, selectedId, entityDataRef.current, connectionDataRef.current));
@@ -609,16 +763,6 @@ export function RealityMap({
 
   return (
     <div className="relative h-full w-full overflow-hidden rounded-b-[var(--radius-lg)]">
-      {/* Pulse animation */}
-      <style>{`
-        .maplibregl-popup-content { background: transparent !important; padding: 0 !important; border: none !important; box-shadow: none !important; }
-        .maplibregl-popup-tip { display: none !important; }
-        @keyframes marker-pulse {
-          0%, 100% { transform: scale(1); opacity: 0.35; }
-          50% { transform: scale(1.8); opacity: 0.08; }
-        }
-      `}</style>
-
       {/* Map canvas */}
       <div ref={containerRef} className="h-full w-full" />
 
@@ -629,7 +773,7 @@ export function RealityMap({
       >
         {searchOpen ? (
           <div
-            className="rounded-[var(--radius-md)] overflow-hidden"
+            className="overflow-hidden rounded-[var(--radius-md)]"
             style={{
               background: "rgba(9,11,15,0.92)",
               backdropFilter: "blur(14px) saturate(1.2)",
@@ -751,12 +895,12 @@ export function RealityMap({
       {!loaded && (
         <div
           className="absolute inset-0 flex items-center justify-center"
-          style={{ background: "var(--ink-900)" }}
+          style={{ background: "rgba(245,245,240,0.95)" }}
         >
           <div
             className="mono text-[11px] uppercase tracking-[0.14em]"
             style={{
-              color: "var(--text-tertiary)",
+              color: "#666",
               animation: "glow-pulse 2s ease-in-out infinite"
             }}
           >

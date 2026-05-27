@@ -11,37 +11,65 @@ async function requireAdmin(request: Request) {
 }
 
 export async function GET(request: Request) {
-  const auth = await requireAdmin(request);
-  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
-  return NextResponse.json({ seeds: await listSeedMemories(auth.orgId) });
+  try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json({ seeds: await listSeedMemories(auth.orgId) });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(request: Request) {
-  const auth = await requireAdmin(request);
-  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
-  const body = (await request.json()) as { content?: string; memoryClass?: "fact" | "opinion"; userId?: string };
-  if (!body.content?.trim()) return NextResponse.json({ error: "content is required" }, { status: 400 });
-  const seed = await createSeedMemory({
-    orgId: auth.orgId,
-    userId: body.userId,
-    content: body.content.trim(),
-    memoryClass: body.memoryClass === "opinion" ? "opinion" : "fact"
-  });
-  return NextResponse.json({ seed }, { status: 201 });
+  try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+    const body = (await request.json().catch(() => ({}))) as { content?: string; memoryClass?: "fact" | "opinion"; userId?: string };
+    if (!body.content?.trim()) return NextResponse.json({ error: "content is required" }, { status: 400 });
+    const seed = await createSeedMemory({
+      orgId: auth.orgId,
+      userId: body.userId,
+      content: body.content.trim(),
+      memoryClass: body.memoryClass === "opinion" ? "opinion" : "fact"
+    });
+    return NextResponse.json({ seed }, { status: 201 });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function PUT(request: Request) {
-  const auth = await requireAdmin(request);
-  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
-  const body = (await request.json()) as { id?: string; content?: string };
-  if (!body.id || !body.content?.trim()) return NextResponse.json({ error: "id and content are required" }, { status: 400 });
-  return NextResponse.json({ seed: await updateSeedMemory({ id: body.id, orgId: auth.orgId, content: body.content.trim() }) });
+  try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+    const body = (await request.json().catch(() => ({}))) as { id?: string; content?: string };
+    if (!body.id || !body.content?.trim()) return NextResponse.json({ error: "id and content are required" }, { status: 400 });
+    return NextResponse.json({ seed: await updateSeedMemory({ id: body.id, orgId: auth.orgId, content: body.content.trim() }) });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function DELETE(request: Request) {
-  const auth = await requireAdmin(request);
-  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
-  const id = new URL(request.url).searchParams.get("id");
-  if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
-  return NextResponse.json({ seed: await deleteSeedMemory({ id, orgId: auth.orgId }) });
+  try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+    const id = new URL(request.url).searchParams.get("id");
+    if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
+    return NextResponse.json({ seed: await deleteSeedMemory({ id, orgId: auth.orgId }) });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
 }
