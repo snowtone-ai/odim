@@ -70,7 +70,8 @@ export function assertApiKeyPepperConfigured(env: NodeJS.ProcessEnv = process.en
 
 function hashToken(token: string) {
   assertApiKeyPepperConfigured();
-  const pepper = process.env.API_KEY_PEPPER || "odim-local-development-pepper";
+  const pepper = process.env.API_KEY_PEPPER ?? "";
+  if (!pepper) throw new Error("API_KEY_PEPPER is required");
   return createHmac("sha256", pepper).update(token).digest("hex");
 }
 

@@ -22,25 +22,32 @@ function withoutSupabaseEnv(run) {
 }
 
 test("API key issuing stores only hash and redacted metadata", () => {
-  const issued = issueApiKey({
-    orgId: "demo-org",
-    name: "Test key",
-    createdBy: "demo-admin",
-    now: new Date("2026-05-24T00:00:00.000Z"),
-    tokenBytes: Buffer.alloc(24, 7)
-  });
+  const previousPepper = process.env.API_KEY_PEPPER;
+  process.env.API_KEY_PEPPER = "test-pepper";
+  try {
+    const issued = issueApiKey({
+      orgId: "demo-org",
+      name: "Test key",
+      createdBy: "demo-admin",
+      now: new Date("2026-05-24T00:00:00.000Z"),
+      tokenBytes: Buffer.alloc(24, 7)
+    });
 
-  assert.match(issued.token, /^odim_live_/);
-  assert.notEqual(issued.record.keyHash, issued.token);
-  assert.notEqual(issued.record.prefix, issued.token);
-  assert.equal(issued.token.startsWith(issued.record.prefix), true);
-  assert.equal(verifyApiKey(issued.token, issued.record), true);
-  assert.equal(verifyApiKey(`${issued.token}x`, issued.record), false);
-  assert.equal(verifyApiKey(issued.token, { ...issued.record, revokedAt: "2026-05-25T00:00:00.000Z" }), false);
+    assert.match(issued.token, /^odim_live_/);
+    assert.notEqual(issued.record.keyHash, issued.token);
+    assert.notEqual(issued.record.prefix, issued.token);
+    assert.equal(issued.token.startsWith(issued.record.prefix), true);
+    assert.equal(verifyApiKey(issued.token, issued.record), true);
+    assert.equal(verifyApiKey(`${issued.token}x`, issued.record), false);
+    assert.equal(verifyApiKey(issued.token, { ...issued.record, revokedAt: "2026-05-25T00:00:00.000Z" }), false);
 
-  const redacted = redactApiKey(issued.record);
-  assert.equal("keyHash" in redacted, false);
-  assert.equal("token" in redacted, false);
+    const redacted = redactApiKey(issued.record);
+    assert.equal("keyHash" in redacted, false);
+    assert.equal("token" in redacted, false);
+  } finally {
+    if (previousPepper === undefined) delete process.env.API_KEY_PEPPER;
+    else process.env.API_KEY_PEPPER = previousPepper;
+  }
 });
 
 test("API request auth is optional locally and required when enabled", async () => {
@@ -241,25 +248,32 @@ test("API key issuance rejects admin wildcard and scope escalation", async () =>
 });
 
 test("admin repository fallback exposes org, members, alert rules, and redacted api keys", async () => {
-  await withoutSupabaseEnv(async () => {
-    const settings = await getAdminSettings({ orgId: "demo-org" });
-    assert.equal(settings.source, "fallback");
-    assert.equal(settings.org.id, "demo-org");
-    assert.ok(settings.members.some((member) => member.role === "admin"));
-    assert.ok(settings.apiKeys.every((key) => !("keyHash" in key)));
-    assert.ok(settings.alertRules.every((rule) => rule.orgId === "demo-org"));
-    assert.ok(settings.ingestionRuns.some((run) => run.mode === "backfill"));
-    assert.ok(settings.sourceWatermarks.some((watermark) => watermark.sourceId === "sec-edgar"));
+  const previousPepper = process.env.API_KEY_PEPPER;
+  process.env.API_KEY_PEPPER = "test-pepper";
+  try {
+    await withoutSupabaseEnv(async () => {
+      const settings = await getAdminSettings({ orgId: "demo-org" });
+      assert.equal(settings.source, "fallback");
+      assert.equal(settings.org.id, "demo-org");
+      assert.ok(settings.members.some((member) => member.role === "admin"));
+      assert.ok(settings.apiKeys.every((key) => !("keyHash" in key)));
+      assert.ok(settings.alertRules.every((rule) => rule.orgId === "demo-org"));
+      assert.ok(settings.ingestionRuns.some((run) => run.mode === "backfill"));
+      assert.ok(settings.sourceWatermarks.some((watermark) => watermark.sourceId === "sec-edgar"));
 
-    const created = await createApiKey({ orgId: "demo-org" }, { name: "Agent key", createdBy: "demo-admin" });
-    assert.equal(created.source, "fallback");
-    assert.match(created.token, /^odim_live_/);
-    assert.equal("keyHash" in created.apiKey, false);
+      const created = await createApiKey({ orgId: "demo-org" }, { name: "Agent key", createdBy: "demo-admin" });
+      assert.equal(created.source, "fallback");
+      assert.match(created.token, /^odim_live_/);
+      assert.equal("keyHash" in created.apiKey, false);
 
-    const revoked = await revokeApiKey({ orgId: "demo-org" }, { id: created.apiKey.id });
-    assert.equal(revoked.revoked, true);
-    assert.equal(revoked.orgId, "demo-org");
-  });
+      const revoked = await revokeApiKey({ orgId: "demo-org" }, { id: created.apiKey.id });
+      assert.equal(revoked.revoked, true);
+      assert.equal(revoked.orgId, "demo-org");
+    });
+  } finally {
+    if (previousPepper === undefined) delete process.env.API_KEY_PEPPER;
+    else process.env.API_KEY_PEPPER = previousPepper;
+  }
 });
 
 test("admin repository falls back when Supabase schema is not applied", async () => {
