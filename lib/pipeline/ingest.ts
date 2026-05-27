@@ -69,10 +69,17 @@ export async function upsertIngestionPlan(client: SupabaseClient, plan: Ingestio
     ["alerts", rows.alerts],
     ["audit_log", rows.auditEvents]
   ];
+  const conflictTargets: Record<string, string> = {
+    alerts: "dedupe_key",
+    audit_log: "dedupe_key",
+    ontology_links: "id",
+    ontology_objects: "id",
+    raw_signals: "fingerprint"
+  };
 
   for (const [table, tableRows] of operations) {
     if (!tableRows.length) continue;
-    const { error } = await client.from(table).upsert(tableRows, { onConflict: "id" });
+    const { error } = await client.from(table).upsert(tableRows, { onConflict: conflictTargets[table] ?? "id" });
     if (error) throw new Error(`${table} upsert failed: ${error.message}`);
   }
 }

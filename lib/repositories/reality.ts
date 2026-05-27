@@ -27,7 +27,14 @@ function shouldFallbackFromSupabaseError(message: string) {
   return /schema cache|does not exist|Could not find the table|relation .* does not exist/i.test(message);
 }
 
+function assertSupabaseReadEnv() {
+  if (!hasSupabaseReadEnv() && isProductionRuntime()) {
+    throw new Error("Supabase read environment is required in production");
+  }
+}
+
 export async function listAlerts(context: OrgContext = {}) {
+  assertSupabaseReadEnv();
   if (!hasSupabaseReadEnv()) return { alerts: fallbackAlerts, source: "fallback" as const };
   const client = createServerSupabaseReadClient();
   const { data, error } = await client
@@ -52,6 +59,7 @@ export async function listAlerts(context: OrgContext = {}) {
 }
 
 export async function listSignals(context: OrgContext = {}) {
+  assertSupabaseReadEnv();
   if (!hasSupabaseReadEnv()) return { signals: fallbackSignals, source: "fallback" as const };
   const client = createServerSupabaseReadClient();
   const { data, error } = await client
@@ -77,6 +85,7 @@ export async function listSignals(context: OrgContext = {}) {
 }
 
 export async function listEntities(context: OrgContext = {}) {
+  assertSupabaseReadEnv();
   if (!hasSupabaseReadEnv()) return { entities: fallbackEntities, source: "fallback" as const };
   const client = createServerSupabaseReadClient();
   const { data, error } = await client
@@ -107,6 +116,7 @@ export async function listEntities(context: OrgContext = {}) {
 }
 
 export async function listAuditEvents(context: OrgContext = {}) {
+  assertSupabaseReadEnv();
   if (!hasSupabaseReadEnv()) return { auditEvents: fallbackAuditEvents, source: "fallback" as const };
   const client = createServerSupabaseReadClient();
   const { data, error } = await client

@@ -21,3 +21,33 @@ jobs:
       - run: pnpm test
       - run: pnpm verify
       - run: pnpm scrape:dry-run
+      - run: pnpm scrape
+        env:
+          SCRAPE_ENABLED: "true"
+          SCRAPE_DRY_RUN: "false"
+          SCRAPE_MODE: daily
+          SCRAPE_LIMIT: ${{ vars.SCRAPE_LIMIT || '50' }}
+          SCRAPE_MIN_SIGNALS: ${{ vars.SCRAPE_MIN_SIGNALS || '1' }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SEC_EDGAR_BASE_URL: ${{ vars.SEC_EDGAR_BASE_URL || 'https://data.sec.gov/submissions' }}
+          SEC_EDGAR_CIKS: ${{ vars.SEC_EDGAR_CIKS }}
+          SEC_EDGAR_USER_AGENT: ${{ vars.SEC_EDGAR_USER_AGENT }}
+          FERC_FEED_URL: ${{ vars.FERC_FEED_URL }}
+          BUILDING_PERMITS_URL: ${{ vars.BUILDING_PERMITS_URL }}
+          BUILDING_PERMITS_JURISDICTION: ${{ vars.BUILDING_PERMITS_JURISDICTION }}
+          CLOUD_REGION_FEED_URL: ${{ vars.CLOUD_REGION_FEED_URL }}
+          WATER_DISTRICT_FEED_URL: ${{ vars.WATER_DISTRICT_FEED_URL }}
+          WATER_DISTRICT_JURISDICTION: ${{ vars.WATER_DISTRICT_JURISDICTION }}
+          USGS_MINERALS_FEED_URL: ${{ vars.USGS_MINERALS_FEED_URL }}
+          PORT_STATISTICS_FEED_URL: ${{ vars.PORT_STATISTICS_FEED_URL }}
+          NARRATIVE_FEED_URL: ${{ vars.NARRATIVE_FEED_URL }}
+          EIA_FEED_URL: ${{ vars.EIA_FEED_URL || 'https://api.eia.gov/v2' }}
+          EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+          STATE_PUC_FEED_URL: ${{ vars.STATE_PUC_FEED_URL }}
+          USPTO_PATENTS_FEED_URL: ${{ vars.USPTO_PATENTS_FEED_URL || 'https://search.patentsview.org/api/v1/patent/' }}
+          PATENT_ASSIGNEE: ${{ vars.PATENT_ASSIGNEE }}
+          PATENT_CPC_GROUP: ${{ vars.PATENT_CPC_GROUP }}
+          EPA_ECHO_FEED_URL: ${{ vars.EPA_ECHO_FEED_URL || 'https://echodata.epa.gov/echo' }}
+          EPA_ECHO_STATE: ${{ vars.EPA_ECHO_STATE }}
+          FAA_OAS_FEED_URL: ${{ vars.FAA_OAS_FEED_URL }}

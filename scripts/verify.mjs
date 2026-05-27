@@ -15,6 +15,7 @@ const requiredFiles = [
   "scripts/verify.mjs",
   "scripts/release-audit.mjs",
   "scripts/issue-bootstrap-api-key.mjs",
+  "scripts/run-daily-dream.mjs",
   "scripts/run-staging-rls-smoke.mjs",
   ".env.example",
   ".gitignore",
@@ -34,6 +35,7 @@ const requiredFiles = [
   "app/(dashboard)/settings/page.tsx",
   "styles/tokens.css",
   "supabase/migrations/0001_initial.sql",
+  "supabase/migrations/0005_ingestion_operations.sql",
   "supabase/tests/rls-cross-org-smoke.sql",
   "supabase/tests/service-role-write-grants.sql",
   "config/sources.json",
@@ -92,6 +94,11 @@ for (const key of [
   "API_AUTH_RATE_LIMIT_WINDOW_MS",
   "REPOSITORY_SUPABASE_STRICT",
   "NEXT_PUBLIC_SUPABASE_URL",
+  "DEFAULT_ORG_ID",
+  "SCRAPE_MODE",
+  "SCRAPE_BACKFILL_LIMIT",
+  "SCRAPE_MIN_SIGNALS",
+  "SCRAPE_FAIL_ON_SOURCE_ERROR",
   "SEC_EDGAR_CIKS",
   "FERC_FEED_URL",
   "CLOUD_REGION_FEED_URL",
@@ -99,6 +106,12 @@ for (const key of [
   "USGS_MINERALS_FEED_URL",
   "PORT_STATISTICS_FEED_URL",
   "NARRATIVE_FEED_URL",
+  "EIA_FEED_URL",
+  "EIA_API_KEY",
+  "STATE_PUC_FEED_URL",
+  "USPTO_PATENTS_FEED_URL",
+  "EPA_ECHO_FEED_URL",
+  "FAA_OAS_FEED_URL",
   "PAID_SOURCE_URL",
   "PAID_SOURCE_ORG_ID",
   "PAID_SOURCE_API_KEY"
@@ -112,6 +125,24 @@ for (const column of ["fingerprint", "external_id", "source_refs", "dedupe_key",
 }
 for (const table of ["api_keys", "alert_rules"]) {
   if (!migration.includes(`create table if not exists ${table}`)) throw new Error(`migration missing ${table}`);
+}
+
+const operationsMigration = readFileSync("supabase/migrations/0005_ingestion_operations.sql", "utf8");
+for (const table of ["ingestion_runs", "source_watermarks"]) {
+  if (!operationsMigration.includes(`create table if not exists ${table}`)) throw new Error(`operations migration missing ${table}`);
+}
+
+const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
+if (packageJson.scripts?.["scrape:backfill"] !== "node scrapers/run.ts --backfill") {
+  throw new Error("package.json missing scrape:backfill");
+}
+if (packageJson.scripts?.["dream:daily"] !== "node scripts/run-daily-dream.mjs") {
+  throw new Error("package.json missing dream:daily");
+}
+
+const scrapeWorkflow = readFileSync(".github/workflows/daily-scrape.yml", "utf8");
+for (const marker of ["pnpm scrape", "SCRAPE_DRY_RUN: \"false\"", "SUPABASE_SERVICE_ROLE_KEY"]) {
+  if (!scrapeWorkflow.includes(marker)) throw new Error(`daily-scrape workflow missing ${marker}`);
 }
 
 const sources = JSON.parse(readFileSync("config/sources.json", "utf8"));

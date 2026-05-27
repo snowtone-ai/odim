@@ -83,8 +83,21 @@ function shouldFallbackFromSupabaseError(message: string) {
   return /schema cache|does not exist|Could not find the table|relation .* does not exist/i.test(message);
 }
 
+function assertSupabaseReadEnv() {
+  if (!hasSupabaseReadEnv() && isProductionRuntime()) {
+    throw new Error("Supabase read environment is required in production");
+  }
+}
+
+function assertSupabaseWriteEnv() {
+  if (!hasSupabaseWriteEnv() && isProductionRuntime()) {
+    throw new Error("Supabase write environment is required in production");
+  }
+}
+
 export async function getAdminSettings(context: OrgContext = {}) {
   const orgId = effectiveOrgId(context);
+  assertSupabaseReadEnv();
   if (!hasSupabaseReadEnv()) {
     return fallbackAdminSettings(orgId);
   }
@@ -150,6 +163,7 @@ export async function getAdminSettings(context: OrgContext = {}) {
 export async function createApiKey(context: OrgContext, input: { name: string; scopes?: string[]; createdBy?: string }) {
   const orgId = effectiveOrgId(context);
   const issued = issueApiKey({ orgId, name: input.name, scopes: input.scopes, createdBy: input.createdBy });
+  assertSupabaseWriteEnv();
   if (!hasSupabaseWriteEnv()) {
     return {
       source: "fallback" as const,
@@ -170,6 +184,7 @@ export async function createApiKey(context: OrgContext, input: { name: string; s
 export async function revokeApiKey(context: OrgContext, input: { id: string }) {
   const orgId = effectiveOrgId(context);
   if (!input.id) throw new Error("api key id is required");
+  assertSupabaseWriteEnv();
   if (!hasSupabaseWriteEnv()) {
     return { source: "fallback" as const, revoked: true, id: input.id, orgId };
   }

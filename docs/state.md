@@ -2,12 +2,24 @@
 
 ## Current
 - Branch: main
-- Active task: v3.0 product overhaul — complete
-- Current executor: Claude Sonnet 4.6
+- Active task: long-term operational hardening toward fully usable no-paid-API product
+- Current executor: Codex CEO Agent
 - Write lock: none
-- Coordinator: CEO Agent / Sonnet
-- Latest verification pointer: T031–T055 all verified (49/49 tests pass, typecheck clean, pnpm build success)
+- Coordinator: CEO Agent
+- Latest verification pointer: operational ingestion hardening verified (52/52 tests pass, typecheck clean, pnpm verify success, pnpm build success)
 - Verification mode: standard
+
+## Completed after v3.0
+
+### Operational ingestion hardening
+- Daily scrape workflow now runs a dry-run smoke and then `pnpm scrape` with Supabase write env, instead of cron-only dry-run.
+- Added `scrape:backfill` mode, `SCRAPE_MODE`, `SCRAPE_BACKFILL_LIMIT`, `SCRAPE_MIN_SIGNALS`, and source-failure controls.
+- `scrapers/run.ts` now emits source-level reports, fails on too-few signals, supports daily/backfill/dry-run modes, records ingestion runs, and updates source watermarks when writing.
+- Added `supabase/migrations/0005_ingestion_operations.sql` with `ingestion_runs` and `source_watermarks`.
+- Default migration runner now applies 0001–0005, including AI rate limits and ingestion operations.
+- Pipeline DB upserts now use durable conflict keys: raw signals by fingerprint, alerts/audit by dedupe key, ontology by id.
+- Production repository/admin reads and writes now fail closed when Supabase env is missing instead of returning fallback data.
+- Daily Munin Dream workflow now uses Node 24 and `pnpm dream:daily` with `DEFAULT_ORG_ID` instead of inline TypeScript import and paid-source org naming.
 
 ## Completed in v3.0 (T031–T055)
 

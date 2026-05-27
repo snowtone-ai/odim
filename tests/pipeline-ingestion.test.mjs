@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { buildIngestionPlan } from "../lib/pipeline/ontologize.ts";
 import { normalizeSignal } from "../lib/pipeline/normalize.ts";
-import { toDatabaseRows } from "../lib/pipeline/ingest.ts";
+import { toDatabaseRows, upsertIngestionPlan } from "../lib/pipeline/ingest.ts";
 import { parseBuildingPermitRecords } from "../scrapers/building-permits.ts";
 import { fetchConfiguredSourceSignals, parseConfiguredSourceRecords } from "../scrapers/configured-source.ts";
 import { parseCloudRegionRecords } from "../scrapers/cloud-regions.ts";
@@ -156,6 +156,46 @@ test("ingestion plan is idempotent and carries audit evidence", () => {
   assert.equal(rows.alerts.length, plan.alerts.length);
   assert.ok("fingerprint" in rows.rawSignals[0]);
   assert.ok("source_refs" in rows.auditEvents[0]);
+});
+
+test("database upsert uses durable conflict keys for replays", async () => {
+  const signals = parseFercRecords(
+    [
+      {
+        applicant: "Entergy Louisiana, LLC",
+        capacityMw: "2200",
+        docketNumber: "ER26-2042",
+        filingDate: "2026-05-19",
+        projectName: "Richland Parish large load"
+      }
+    ],
+    "https://elibrary.ferc.gov/eLibrary/search"
+  );
+  const plan = buildIngestionPlan(signals);
+  const calls = [];
+  const client = {
+    from(table) {
+      return {
+        async upsert(rows, options) {
+          calls.push({ table, count: rows.length, onConflict: options?.onConflict });
+          return { error: null };
+        }
+      };
+    }
+  };
+
+  await upsertIngestionPlan(client, plan);
+
+  assert.deepEqual(
+    calls.map((call) => [call.table, call.onConflict]),
+    [
+      ["raw_signals", "fingerprint"],
+      ["ontology_objects", "id"],
+      ["ontology_links", "id"],
+      ["alerts", "dedupe_key"],
+      ["audit_log", "dedupe_key"]
+    ]
+  );
 });
 
 test("narrative signals are audited but not promoted into ontology truth", () => {

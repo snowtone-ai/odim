@@ -16,10 +16,10 @@ jobs:
           version: 10
       - uses: actions/setup-node@v4
         with:
-          node-version: 20.9
+          node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: node -e "import('./lib/munin/dream.ts').then((m)=>m.dreamJob({orgId:process.env.PAID_SOURCE_ORG_ID||'demo-org'}).then((r)=>console.log(JSON.stringify(r))))"
+      - run: pnpm dream:daily
         env:
           DREAM_ENABLED: "true"
           AI_PROVIDER: ${{ vars.AI_PROVIDER || 'mock' }}
@@ -27,4 +27,4 @@ jobs:
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          PAID_SOURCE_ORG_ID: ${{ vars.PAID_SOURCE_ORG_ID }}
+          DEFAULT_ORG_ID: ${{ vars.DEFAULT_ORG_ID || 'demo-org' }}

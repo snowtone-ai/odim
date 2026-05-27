@@ -35,7 +35,13 @@ if (!databaseUrl) {
 const migrations = process.argv.slice(3);
 const files = migrations.length
   ? migrations
-  : ["supabase/migrations/0002_huginn_munin_v2.sql", "supabase/migrations/0003_sleep_time_compute.sql"];
+  : [
+      "supabase/migrations/0001_initial.sql",
+      "supabase/migrations/0002_huginn_munin_v2.sql",
+      "supabase/migrations/0003_sleep_time_compute.sql",
+      "supabase/migrations/0004_ai_rate_limit_usage.sql",
+      "supabase/migrations/0005_ingestion_operations.sql"
+    ];
 
 for (const file of files) {
   if (!existsSync(file)) throw new Error(`${file} is missing`);

@@ -42,7 +42,7 @@ export default async function RealityMapPage(
         >
           <span
             className="inline-block h-[5px] w-[5px] rounded-full bg-[var(--positive)]"
-            style={{ boxShadow: "0 0 6px rgba(95,168,120,0.45)" }}
+            style={{ boxShadow: "0 0 6px color-mix(in srgb, var(--positive) 45%, transparent)" }}
           />
           {messages.common.live}
         </div>
@@ -73,7 +73,7 @@ export default async function RealityMapPage(
             className="px-4 py-2.5"
             style={{
               borderBottom: "1px solid var(--line-faint)",
-              backgroundImage: "linear-gradient(90deg, rgba(255,255,255,0.008) 0%, transparent 50%)"
+              backgroundImage: "linear-gradient(90deg, color-mix(in srgb, var(--text-primary) 1%, transparent) 0%, transparent 50%)"
             }}
           >
             <span
@@ -114,7 +114,7 @@ export default async function RealityMapPage(
             style={{
               borderTop: "1px solid var(--line-faint)",
               borderBottom: "1px solid var(--line-faint)",
-              backgroundImage: "linear-gradient(90deg, rgba(255,255,255,0.008) 0%, transparent 50%)"
+              backgroundImage: "linear-gradient(90deg, color-mix(in srgb, var(--text-primary) 1%, transparent) 0%, transparent 50%)"
             }}
           >
             <span

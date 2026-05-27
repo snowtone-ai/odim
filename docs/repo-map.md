@@ -29,9 +29,9 @@ Odim is a multi-agent intelligence system that ingests real-world signals (SEC, 
 | Query orchestrator | `lib/huginn/query.ts` | Drives entire answer generation |
 | Auth middleware | `lib/auth/request.ts` | Every API route calls `authorizeApiRequest` |
 | Memory read | `lib/munin/memory.ts` | `searchMuninMemory` feeds cascade |
-| Signal ingestion | `lib/pipeline/ingest.ts` | `ingestSignals` → normalize → ontologize → alerts |
+| Signal ingestion | `scrapers/run.ts` + `lib/pipeline/ingest.ts` | `runScrape` → collect public signals → build plan → upsert |
 | Autonomous agent | `lib/munin/dream.ts` | Daily synthesis loop |
-| Scraper runner | `scrapers/run.ts` | `runScrapers` called by `daily-scrape.yml` |
+| Scraper runner | `scrapers/run.ts` | `runScrape` called by `daily-scrape.yml`; supports daily/backfill/dry-run |
 | Settings UI | `components/ui/seed-memory-manager.tsx` | Fact/opinion CRUD |
 
 ## Core Modules
@@ -46,7 +46,7 @@ Odim is a multi-agent intelligence system that ingests real-world signals (SEC, 
 | `lib/munin/memory.ts` | Memory CRUD + semantic search | supabase |
 | `lib/munin/dream.ts` | Autonomous daily synthesis | dream-phases, memory, provider |
 | `lib/munin/write-gate.ts` | Memory quality filter | — |
-| `lib/pipeline/ingest.ts` | Full ingestion pipeline | normalize, ontologize, alert, audit |
+| `lib/pipeline/ingest.ts` | Database persistence for ingestion plans | Supabase, conflict-key upserts |
 | `lib/pipeline/ontologize.ts` | Signal → ontology objects/links | idempotency |
 | `lib/pipeline/normalize.ts` | Raw signal validation + dedup | idempotency |
 | `lib/pipeline/alert.ts` | Alert generation from signals | — |
@@ -73,14 +73,14 @@ Odim is a multi-agent intelligence system that ingests real-world signals (SEC, 
 - **Tests:** `tests/huginn-*.test.mjs`
 
 ### Flow 2: Signal Ingestion (Scraper → DB)
-- **Entry:** `daily-scrape.yml` → `scrapers/run.ts:runScrapers`
-- **Main files:** `scrapers/*.ts` → `lib/pipeline/ingest.ts` → `lib/pipeline/normalize.ts` → `lib/pipeline/ontologize.ts`
-- **Important functions:** `ingestSignals`, `normalizeSignal`, `ontologizeSignal`, `buildAlerts`, `buildAuditEvents`, `deterministicUuid`
-- **Downstream dependencies:** Supabase tables: `signals`, `entities`, `entity_links`, `alerts`, `audit_log`
-- **Tests:** `tests/pipeline-ingestion.test.mjs`
+- **Entry:** `daily-scrape.yml` → `scrapers/run.ts:runScrape`; initial load uses `pnpm scrape:backfill`
+- **Main files:** `scrapers/*.ts` → `scrapers/run.ts` → `lib/pipeline/ontologize.ts` → `lib/pipeline/ingest.ts`
+- **Important functions:** `resolveScrapeOptions`, `collectLiveSignals`, `runScrape`, `normalizeSignal`, `buildIngestionPlan`, `upsertIngestionPlan`
+- **Downstream dependencies:** Supabase tables: `raw_signals`, `ontology_objects`, `ontology_links`, `alerts`, `audit_log`, `ingestion_runs`, `source_watermarks`
+- **Tests:** `tests/pipeline-ingestion.test.mjs`, `tests/automation-workflows.test.mjs`
 
 ### Flow 3: Autonomous Dream (Munin)
-- **Entry:** `daily-dream.yml` → `lib/munin/dream.ts:runDream`
+- **Entry:** `daily-dream.yml` → `pnpm dream:daily` → `lib/munin/dream.ts:dreamJob`
 - **Main files:** `lib/munin/dream-phases.ts`, `lib/munin/memory.ts`, `lib/ai/provider.ts`
 - **Important functions:** `consolidateMemories`, `synthesizeInsights`, `detectBiasHazards`, `invalidatePrecomputedAnswers`, `recordDreamRun`
 - **Downstream dependencies:** `munin_memory`, `pre_computed_answers` tables
@@ -98,9 +98,9 @@ Odim is a multi-agent intelligence system that ingests real-world signals (SEC, 
 - `answerHuginnQuestion` → `cascadeSearch` → `searchMuninMemory`, `listAlerts`, `realityGapfillSearch`
 - `cascadeSearch` → `findPrecomputedAnswer` (early exit on cache hit)
 - `generateAnswer` → `assertAiRateLimitAvailableForRequest` → Gemini API
-- `runScrapers` → `ingestSignals` → `normalizeSignal` → `ontologizeSignal` → `buildAlerts`
-- `runDream` → `synthesizeInsights` → `generateAnswer` → writes to `munin_memory`
-- `invalidatePrecomputedAnswers` triggered by `ingestSignals` and `runDream`
+- `runScrape` → `collectLiveSignals` → `buildIngestionPlan` → `upsertIngestionPlan`
+- `dreamJob` → `synthesizeInsights` → `generateAnswer` → writes to `munin_memory`
+- `invalidatePrecomputedAnswers` triggered by ingestion persistence and dream flows
 - Changes to `lib/pipeline/ontologize.ts` impact `entities`, `entity_links`, `alerts`
 - Changes to `lib/munin/write-gate.ts` affect all memory writes (seed + dream)
 - `lib/munin/seed.ts` calls `writeGate` before any DB write → gate is enforced for all user seeds
@@ -113,6 +113,7 @@ Odim is a multi-agent intelligence system that ingests real-world signals (SEC, 
 | `lib/auth/request.ts` | Auth bypass = full access | `codegraph_callers` + `tests/security-controls.test.mjs` |
 | `lib/munin/write-gate.ts` | Memory quality gate; bypass allows noise | `codegraph_impact` + `tests/huginn-*.test.mjs` |
 | `lib/pipeline/idempotency.ts` | Fingerprint bugs → dedup failures | `codegraph_callers` + `tests/pipeline-ingestion.test.mjs` |
+| `scrapers/run.ts` | Silent empty updates or double collection | `tests/automation-workflows.test.mjs` + `pnpm scrape:dry-run` |
 | `lib/huginn/precompute.ts` | Stale cache → wrong answers | `codegraph_impact` on `invalidatePrecomputedAnswers` |
 | `lib/ai/rate-limit.ts` | Misconfiguration → quota exceeded or auth bypass | `codegraph_callers` + `tests/ai-rate-limit.test.mjs` |
 | Supabase RLS policies | Tenant data leak | `.github/workflows/staging-rls-smoke.mjs` |
@@ -128,6 +129,7 @@ Odim is a multi-agent intelligence system that ingests real-world signals (SEC, 
 | Gemini/AI provider | `lib/ai/provider.ts` | `rate-limit.ts` + huginn integration tests |
 | DB schema | Supabase migrations | `lib/repositories/` + `lib/supabase/` + RLS smoke |
 | Scraper | `scrapers/<name>.ts` | `scrapers/run.ts` + pipeline tests + `config/sources.json` |
+| Automation workflow | `.github/workflows/*.yml` | `tests/automation-workflows.test.mjs` + `pnpm verify` |
 | Env config | `.env.example` + `lib/env/runtime.ts` | `lib/ai/rate-limit.ts`, `lib/auth/request.ts` |
 
 ## Key Environment Variables
@@ -143,6 +145,10 @@ Odim is a multi-agent intelligence system that ingests real-world signals (SEC, 
 | `AI_MODEL` | Default: `gemini-2.5-flash` | No |
 | `SLEEP_COMPUTE_ENABLED` | Precomputed answer cache | No |
 | `AI_RATE_LIMITS` | JSON `{rpm, rpd, tpm}` | No |
+| `SCRAPE_MODE` | `daily`, `backfill`, or `dry-run` | Yes for scraper jobs |
+| `SCRAPE_MIN_SIGNALS` | Minimum raw signals before a run is accepted | Yes for scraper jobs |
+| `SCRAPE_BACKFILL_LIMIT` | Per-source limit for initial historical load | Yes for backfill |
+| `DEFAULT_ORG_ID` | Org used by scheduled Munin Dream | Yes for dream jobs |
 
 ## Supabase Tables (Stable Schema)
 | Table | Purpose |
@@ -156,6 +162,8 @@ Odim is a multi-agent intelligence system that ingests real-world signals (SEC, 
 | `alerts` | Generated alerts (dedupeKey, priority, evidence) |
 | `audit_log` | All system events |
 | `ai_rate_limit_usage` | RPM/RPD/TPM tracking per model+org+date |
+| `ingestion_runs` | Scheduled/backfill scraper run status, counts, source report, errors |
+| `source_watermarks` | Last successful source update metadata for replay/resume planning |
 
 ## Low-Priority Read Areas
 Only inspect these when directly relevant:

@@ -186,6 +186,8 @@ const biasTest = file("lib/huginn/bias-test.ts");
 const gapfill = file("lib/huginn/gapfill.ts");
 const narrativeCapture = file("lib/huginn/narrative-capture.ts");
 const huginnPage = file("app/(dashboard)/huginn/page.tsx");
+const huginnAction = file("app/actions/huginn.ts");
+const huginnConsole = file("components/ui/huginn-console.tsx");
 const seedMemoryManager = file("components/ui/seed-memory-manager.tsx");
 const evalButton = file("components/ui/eval-button.tsx");
 check("huginn:org-required", huginnRoute.includes("orgId is required") && huginnQuery.includes("orgId is required"), "Huginn requires org scope");
@@ -235,9 +237,11 @@ check(
 );
 check(
   "ui:huginn-console-runtime",
-  huginnPage.includes("answerHuginnQuestion") &&
-    huginnPage.includes("response.eval_log_id") &&
-    huginnPage.includes("response.reasoningTrace") &&
+  huginnAction.includes("answerHuginnQuestion") &&
+    huginnAction.includes("eval_log_id") &&
+    huginnAction.includes("reasoningTrace") &&
+    huginnConsole.includes("response.eval_log_id") &&
+    huginnConsole.includes("response.reasoningTrace") &&
     huginnPage.includes("force-dynamic"),
   "Huginn Console renders runtime Huginn response, trace, sources, counts, and eval_log_id"
 );
