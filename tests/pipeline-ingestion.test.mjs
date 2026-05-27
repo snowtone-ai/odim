@@ -4,6 +4,7 @@ import { buildIngestionPlan } from "../lib/pipeline/ontologize.ts";
 import { normalizeSignal } from "../lib/pipeline/normalize.ts";
 import { toDatabaseRows, upsertIngestionPlan } from "../lib/pipeline/ingest.ts";
 import { fetchBuildingPermitSignals, parseBuildingPermitRecords } from "../scrapers/building-permits.ts";
+import { parseCsvRows } from "../scrapers/common.ts";
 import { fetchConfiguredSourceSignals, parseConfiguredSourceRecords } from "../scrapers/configured-source.ts";
 import { fetchCloudRegionSignals, parseCloudRegionRecords } from "../scrapers/cloud-regions.ts";
 import { fetchFercSignals, parseFercRecords } from "../scrapers/ferc.ts";
@@ -446,6 +447,17 @@ test("configured JSON/CSV sources support paging placeholders and query paramete
 
   assert.equal(requestedUrls[0], "https://example.local/feed?batch=3&from=20&size=10");
   assert.equal(signals[0].externalId, "A-1");
+});
+
+test("CSV parser preserves quoted fields with commas and escaped quotes", () => {
+  const rows = parseCsvRows('name,description,amount\n"Meta, Inc.","filed ""AI"" capex update",42\n');
+  assert.deepEqual(rows, [
+    {
+      name: "Meta, Inc.",
+      description: 'filed "AI" capex update',
+      amount: "42"
+    }
+  ]);
 });
 
 test("public JSON/CSV feed adapters pass paging controls through feed URLs", async () => {
