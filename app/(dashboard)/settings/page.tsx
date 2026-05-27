@@ -12,7 +12,12 @@ const defaultSettingsOrgId = process.env.DEFAULT_ORG_ID || "11111111-1111-4111-8
 
 function shortDate(value?: string) {
   if (!value) return "not recorded";
-  return value.slice(0, 10);
+  return value.slice(0, 10) + " UTC";
+}
+
+// M-1: scrape が "running" のまま 2 時間以上経過している場合をスタックとみなす
+function isStuckRunning(startedAt: string): boolean {
+  return Date.now() - new Date(startedAt).getTime() > 2 * 60 * 60 * 1000;
 }
 
 export default async function SettingsPage() {
@@ -113,36 +118,57 @@ export default async function SettingsPage() {
         </Panel>
 
         <Panel title="Ingestion Operations">
+          {/* M-3: fallback 表示時は明示的にデモデータであることを示す */}
           <div className="mono text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
-            scheduled scrape / backfill observability
+            {settings.source} · scheduled scrape / backfill observability
           </div>
           <div className="mt-4 grid gap-3">
-            {settings.ingestionRuns.map((run) => (
-              <div
-                className="pb-3"
-                style={{ borderBottom: "1px solid var(--line-faint)" }}
-                key={run.id}
-              >
-                <div className="flex items-center justify-between gap-3 text-[13px]">
-                  <span className="mono uppercase" style={{ color: "var(--text-primary)" }}>
-                    {run.mode} / {run.status}
-                  </span>
-                  <span className="mono shrink-0" style={{ color: run.status === "failed" ? "var(--critical)" : "var(--rune)" }}>
-                    {run.rawSignalCount} signals
-                  </span>
-                </div>
-                <div className="mono mt-1 text-[10px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
-                  {shortDate(run.startedAt)} · limit {run.sourceLimit} · {run.alertCount} alerts
-                </div>
-                {run.error ? (
-                  <div className="mt-2 text-[12px]" style={{ color: "var(--critical)" }}>
-                    {run.error}
-                  </div>
-                ) : null}
+            {/* H-2: service_role 権限不足などで Supabase から空が返った場合に警告 */}
+            {settings.source === "supabase" && settings.ingestionRuns.length === 0 ? (
+              <div className="mono text-[11px]" style={{ color: "var(--text-tertiary)" }}>
+                no runs recorded — if scrape has run, verify service_role permissions on ingestion_runs
               </div>
-            ))}
+            ) : null}
+            {settings.ingestionRuns.map((run) => {
+              // M-1: running のまま 2 時間以上経過していればスタックとみなして警告色
+              const stuck = run.status === "running" && isStuckRunning(run.startedAt);
+              const statusColor = run.status === "failed" || stuck
+                ? "var(--critical)"
+                : run.status === "running"
+                ? "var(--rune)"
+                : "var(--rune)";
+              return (
+                <div
+                  className="pb-3"
+                  style={{ borderBottom: "1px solid var(--line-faint)" }}
+                  key={run.id}
+                >
+                  <div className="flex items-center justify-between gap-3 text-[13px]">
+                    <span className="mono uppercase" style={{ color: "var(--text-primary)" }}>
+                      {run.mode} / {run.status}{stuck ? " ⚠ stuck" : ""}
+                    </span>
+                    <span className="mono shrink-0" style={{ color: statusColor }}>
+                      {run.rawSignalCount} signals
+                    </span>
+                  </div>
+                  <div className="mono mt-1 text-[10px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
+                    {shortDate(run.startedAt)} · limit {run.sourceLimit} · {run.alertCount} alerts
+                  </div>
+                  {run.error ? (
+                    <div className="mt-2 text-[12px]" style={{ color: "var(--critical)" }}>
+                      {run.error}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
           <div className="mt-4 grid gap-2">
+            {settings.source === "supabase" && settings.sourceWatermarks.length === 0 ? (
+              <div className="mono text-[11px]" style={{ color: "var(--text-tertiary)" }}>
+                no watermarks recorded
+              </div>
+            ) : null}
             {settings.sourceWatermarks.map((watermark) => (
               <div
                 className="grid grid-cols-[1fr_auto_auto] items-center gap-3 py-2 text-[12px]"

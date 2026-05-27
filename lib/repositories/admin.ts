@@ -188,6 +188,10 @@ export async function getAdminSettings(context: OrgContext = {}) {
       .or(tenantOrPublicFilter("org_id", orgId))
       .order("created_at", { ascending: false })
       .limit(100),
+    // NOTE(single-tenant): ingestion_runs and source_watermarks have no org_id column.
+    // These are system-wide pipeline operation tables, safe for single-tenant deployment.
+    // Multi-tenant expansion requires: ALTER TABLE ingestion_runs ADD COLUMN org_id uuid;
+    // ALTER TABLE source_watermarks ADD COLUMN org_id uuid; plus .eq("org_id", orgId) filters.
     client
       .from("ingestion_runs")
       .select("id, mode, status, source_limit, raw_signal_count, alert_count, error, started_at, finished_at")

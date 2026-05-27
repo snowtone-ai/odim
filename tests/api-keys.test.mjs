@@ -277,6 +277,28 @@ test("admin repository falls back when Supabase schema is not applied", async ()
   }
 });
 
+// L-2: ingestionRuns / sourceWatermarks が空でも Settings データ構造が壊れないことを確認
+test("admin repository fallback returns array types for ingestion fields", async () => {
+  await withoutSupabaseEnv(async () => {
+    const settings = await getAdminSettings({ orgId: "demo-org" });
+    assert.ok(Array.isArray(settings.ingestionRuns), "ingestionRuns must be an array");
+    assert.ok(Array.isArray(settings.sourceWatermarks), "sourceWatermarks must be an array");
+    // 各要素の必須フィールド型を検証
+    for (const run of settings.ingestionRuns) {
+      assert.ok(typeof run.id === "string", "run.id must be string");
+      assert.ok(["daily", "backfill", "dry-run"].includes(run.mode), "run.mode must be valid enum");
+      assert.ok(["running", "succeeded", "failed"].includes(run.status), "run.status must be valid enum");
+      assert.ok(typeof run.rawSignalCount === "number", "run.rawSignalCount must be number");
+      assert.ok(typeof run.startedAt === "string", "run.startedAt must be string");
+    }
+    for (const wm of settings.sourceWatermarks) {
+      assert.ok(typeof wm.sourceId === "string", "watermark.sourceId must be string");
+      assert.ok(typeof wm.rawSignalCount === "number", "watermark.rawSignalCount must be number");
+      assert.ok(typeof wm.lastSuccessAt === "string", "watermark.lastSuccessAt must be string");
+    }
+  });
+});
+
 test("admin repository does not hide missing Supabase schema in production", async () => {
   const previousUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const previousKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
