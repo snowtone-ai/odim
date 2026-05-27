@@ -45,11 +45,12 @@ test("API key issuing stores only hash and redacted metadata", () => {
 
 test("API request auth is optional locally and required when enabled", async () => {
   const previousAuth = process.env.AUTH_REQUIRED;
+  const orgId = "11111111-1111-4111-8111-111111111111";
   try {
     process.env.AUTH_REQUIRED = "false";
-    const local = await authorizeApiRequest(new Request("https://odim.local/api/alerts?orgId=demo-org"), "alerts:read");
+    const local = await authorizeApiRequest(new Request(`https://odim.local/api/alerts?orgId=${orgId}`), "alerts:read");
     assert.equal(local.ok, true);
-    assert.equal(local.context.orgId, "demo-org");
+    assert.equal(local.context.orgId, orgId);
 
     process.env.AUTH_REQUIRED = "true";
     const missing = await authorizeApiRequest(new Request("https://odim.local/api/alerts"), "alerts:read");

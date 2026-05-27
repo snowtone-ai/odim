@@ -16,7 +16,10 @@ test("raw_signals has RLS with proprietary tenant isolation", () => {
 });
 
 test("app-layer tenant filters match RLS visibility semantics", () => {
-  assert.equal(tenantOrPublicFilter("org_id", "org-a"), "org_id.is.null,org_id.eq.org-a");
+  const orgId = "11111111-1111-4111-8111-111111111111";
+  assert.equal(tenantOrPublicFilter("org_id", orgId), `org_id.is.null,org_id.eq.${orgId}`);
+  assert.equal(tenantOrPublicFilter("org_id", "org-a"), "org_id.is.null");
   assert.equal(rawSignalVisibilityFilter(), "is_proprietary.eq.false");
-  assert.equal(rawSignalVisibilityFilter("org-a"), "is_proprietary.eq.false,org_id.eq.org-a");
+  assert.equal(rawSignalVisibilityFilter(orgId), `is_proprietary.eq.false,org_id.eq.${orgId}`);
+  assert.equal(rawSignalVisibilityFilter("org-a"), "is_proprietary.eq.false");
 });

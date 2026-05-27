@@ -103,11 +103,16 @@ test("repository APIs do not hide missing Supabase schema in production", async 
 });
 
 test("org context helpers build public-only and public-or-org filters", () => {
+  const orgId = "11111111-1111-4111-8111-111111111111";
+  const queryOrgId = "22222222-2222-4222-8222-222222222222";
   assert.equal(tenantOrPublicFilter("org_id"), "org_id.is.null");
-  assert.equal(tenantOrPublicFilter("org_id", "org-123"), "org_id.is.null,org_id.eq.org-123");
+  assert.equal(tenantOrPublicFilter("org_id", orgId), `org_id.is.null,org_id.eq.${orgId}`);
+  assert.equal(tenantOrPublicFilter("org_id", "org-123"), "org_id.is.null");
 
-  const request = new Request("https://odim.local/api/alerts?orgId=query-org", {
-    headers: { "x-odim-org-id": "header-org" }
+  const request = new Request(`https://odim.local/api/alerts?orgId=${queryOrgId}`, {
+    headers: { "x-odim-org-id": orgId }
   });
-  assert.deepEqual(getOrgContextFromRequest(request), { orgId: "header-org" });
+  assert.deepEqual(getOrgContextFromRequest(request), { orgId });
+
+  assert.deepEqual(getOrgContextFromRequest(new Request("https://odim.local/api/alerts?orgId=bad-org")), {});
 });
