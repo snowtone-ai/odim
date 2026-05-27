@@ -42,6 +42,7 @@ export type SecEdgarOptions = {
 };
 
 const trackedForms = new Set(["8-K", "S-1"]);
+const secConcurrencyLimit = 3;
 
 function normalizeCik(cik: string | number) {
   return String(cik).replace(/^0+/, "").padStart(10, "0");
@@ -122,6 +123,20 @@ function historicalSubmissionUrl(baseUrl: string, fileName: string) {
   return new URL(fileName, baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`).toString();
 }
 
+async function mapWithConcurrency<T, U>(items: T[], limit: number, task: (item: T) => Promise<U>) {
+  const results: U[] = [];
+  let nextIndex = 0;
+  async function worker() {
+    while (nextIndex < items.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      results[index] = await task(items[index]);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
+
 export async function fetchSecEdgarSignals(options: SecEdgarOptions): Promise<RawSignal[]> {
   const baseUrl = options.baseUrl ?? "https://data.sec.gov/submissions";
   const fetchImpl = options.fetchImpl ?? fetch;
@@ -130,8 +145,7 @@ export async function fetchSecEdgarSignals(options: SecEdgarOptions): Promise<Ra
   if (!options.userAgent) throw new Error("SEC_EDGAR_USER_AGENT is required for SEC EDGAR requests");
   const userAgent = options.userAgent;
 
-  const batches = await Promise.all(
-    options.ciks.map(async (cik) => {
+  const batches = await mapWithConcurrency(options.ciks, secConcurrencyLimit, async (cik) => {
       const normalizedCik = normalizeCik(cik);
       const response = await fetchWithTimeout(fetchImpl, `${baseUrl}/CIK${normalizedCik}.json`, {
         headers: {
@@ -158,8 +172,7 @@ export async function fetchSecEdgarSignals(options: SecEdgarOptions): Promise<Ra
         signals.push(...parseSecFilingTable((await fileResponse.json()) as SecRecentFilings, metadata, limit - signals.length));
       }
       return signals.slice(0, limit);
-    })
-  );
+    });
 
   return batches.flat();
 }
