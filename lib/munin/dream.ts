@@ -90,7 +90,11 @@ export async function dreamJob(input: { orgId: string; memories?: MuninMemory[] 
   const supersededIds = consolidationClusters.flatMap((cluster) => cluster.map((memory) => memory.id));
   if (hasSupabaseWriteEnv() && createdRows.length) {
     const client = createServiceSupabaseClient();
-    await client.from("munin_memory").upsert(createdRows.map(toMuninMemoryRow), { onConflict: "id" });
+    const { error } = await client.from("munin_memory").upsert(createdRows.map(toMuninMemoryRow), { onConflict: "id" });
+    if (error) {
+      console.error("Dream memory upsert failed", { orgId: input.orgId, error: error.message });
+      throw new Error(`Dream memory upsert failed: ${error.message}`);
+    }
     if (supersededIds.length) {
       await client
         .from("munin_memory")
