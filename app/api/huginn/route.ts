@@ -18,7 +18,11 @@ export async function POST(request: Request) {
     if (body.orgId && !uuidV4Pattern.test(body.orgId)) {
       return NextResponse.json({ error: "orgId must be a UUID v4" }, { status: 400 });
     }
-    const orgId = auth.context.orgId ?? body.orgId;
+    let orgId = auth.context.orgId;
+    if (!orgId && auth.mode !== "disabled") {
+      return NextResponse.json({ error: "orgId is required" }, { status: 403 });
+    }
+    orgId ??= body.orgId;
     if (!orgId) {
       return NextResponse.json({ error: "orgId is required" }, { status: 400 });
     }
