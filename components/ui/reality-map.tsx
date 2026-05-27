@@ -295,6 +295,7 @@ export function RealityMap({
   > | null>(null);
   const dashIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pulseFrameRef = useRef<number | null>(null);
+  const cleanupCallbacksRef = useRef<Array<() => void>>([]);
 
   const [loaded, setLoaded] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -562,9 +563,28 @@ export function RealityMap({
         // ── Animations ──────────────────────────────────────────────────
 
         const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        if (!reduceMotion) {
-          // Flowing connection dash animation
-          let dashStep = 0;
+        let dashStep = 0;
+        let pulsePhase = 0;
+
+        function stopAnimations() {
+          if (dashIntervalRef.current) clearInterval(dashIntervalRef.current);
+          if (pulseFrameRef.current) cancelAnimationFrame(pulseFrameRef.current);
+          dashIntervalRef.current = null;
+          pulseFrameRef.current = null;
+        }
+
+        function animatePulse() {
+          pulsePhase = (pulsePhase + 0.012) % 1;
+          const t = Math.sin(pulsePhase * Math.PI * 2) * 0.5 + 0.5;
+          if (map.getLayer("entity-rings")) {
+            map.setPaintProperty("entity-rings", "circle-opacity", 0.06 + t * 0.14);
+            map.setPaintProperty("entity-rings", "circle-stroke-opacity", 0.15 + t * 0.4);
+          }
+          pulseFrameRef.current = requestAnimationFrame(animatePulse);
+        }
+
+        function startAnimations() {
+          if (reduceMotion || document.hidden || dashIntervalRef.current || pulseFrameRef.current) return;
           dashIntervalRef.current = setInterval(() => {
             dashStep = (dashStep + 1) % 24;
             const t = dashStep / 24;
@@ -574,20 +594,22 @@ export function RealityMap({
               ]);
             }
           }, 65);
-
-          // Pulsing entity ring animation
-          let pulsePhase = 0;
-          function animatePulse() {
-            pulsePhase = (pulsePhase + 0.012) % 1;
-            const t = Math.sin(pulsePhase * Math.PI * 2) * 0.5 + 0.5;
-            if (map.getLayer("entity-rings")) {
-              map.setPaintProperty("entity-rings", "circle-opacity", 0.06 + t * 0.14);
-              map.setPaintProperty("entity-rings", "circle-stroke-opacity", 0.15 + t * 0.4);
-            }
-            pulseFrameRef.current = requestAnimationFrame(animatePulse);
-          }
           pulseFrameRef.current = requestAnimationFrame(animatePulse);
         }
+
+        function handleVisibilityChange() {
+          if (document.hidden) {
+            stopAnimations();
+          } else {
+            startAnimations();
+          }
+        }
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        cleanupCallbacksRef.current.push(() => {
+          document.removeEventListener("visibilitychange", handleVisibilityChange);
+          stopAnimations();
+        });
+        startAnimations();
 
         // ── Interaction: hover ───────────────────────────────────────────
         map.on("mousemove", "entity-symbols", (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
@@ -685,6 +707,7 @@ export function RealityMap({
       if (pulseFrameRef.current) cancelAnimationFrame(pulseFrameRef.current);
       dashIntervalRef.current = null;
       pulseFrameRef.current = null;
+      for (const cleanupCallback of cleanupCallbacksRef.current.splice(0)) cleanupCallback();
       popupRef.current?.remove();
       if (mapRef.current) {
         mapRef.current.remove();
