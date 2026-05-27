@@ -32,8 +32,7 @@
 | 言語 | **TypeScript（strict mode）** | 型安全。CodeXの実装ミスを型で検出。 |
 | スタイリング | **Tailwind CSS 4.3.0 + 独自デザイントークン** | ただしデフォルトTailwindの見た目は禁止（`07-DESIGN.md`）。 |
 | アニメーション | **Motion（旧 Framer Motion）** | 「ぬるっとした」画面遷移・パネル開閉の実現。 |
-| 3D地球儀 | **react-globe.gl**（Three.js / WebGL ラッパー） | マクロ表示。Soumaは過去にGlobe実装経験あり。 |
-| 2D地図 | **MapLibre GL JS + 無料タイル**（OpenFreeMap または CARTO無料枠） | ミクロ表示。Mapboxは有料枠があるため不採用、MapLibreはOSSで完全無料。 |
+| 2D地図 | **MapLibre GL JS + CARTO Dark Matter タイル** | Palantir Gotham品質。ネイティブシンボルレイヤー・クラスタリング・接続ライン・信頼度リング・アニメーションパルス。3D Globeは廃止（→ `10-DECISIONS.md` D-02-v2）。 |
 | チャート | **visx（D3ベース）または Recharts** | サンキー図・時系列・ヒートマップ。 |
 | 状態管理 | **Zustand** | 軽量。WebGLキャンバスとReact UIの即時同期に必要。 |
 | 国際化 | **next-intl** | 日英バイリンガル。 |
@@ -137,9 +136,8 @@
 │    ├─ /api/entities … エンティティ取得                      │
 │    └─ /api/alerts   … アラート                             │
 │                                                          │
-│  /app （8画面のフロントエンド）                              │
-│    Reality Map / Capital Flow / Entity / Alerts /         │
-│    Huginn Console / Watchlist / Audit / Settings          │
+│  /app （5画面のフロントエンド）                              │
+│    Map / Entity Intelligence / Alerts / Huginn / Settings │
 └──────────────────────────────────────────────────────────┘
                │
        ┌───────┴────────┐
@@ -176,14 +174,11 @@ odim/
 │   └── sources.json           # データソース定義（差し替え可能に）
 ├── app/
 │   ├── (dashboard)/
-│   │   ├── map/                # Reality Map
-│   │   ├── capital-flow/       # Capital Flow
-│   │   ├── entity/             # Entity Intelligence
+│   │   ├── map/                # Reality Map（MapLibre Palantir Gotham品質）
+│   │   ├── entity/             # Entity Intelligence（Capital Flow + Watchlist統合）
 │   │   ├── alerts/             # Signal Alerts
-│   │   ├── huginn/             # Huginn Console
-│   │   ├── watchlist/          # Watchlist & Briefs
-│   │   ├── audit/              # Audit Trail
-│   │   └── settings/           # Settings
+│   │   ├── huginn/             # Huginn（インタラクティブコンソール）
+│   │   └── settings/           # Settings（Audit Trail統合）
 │   ├── api/
 │   │   ├── huginn/route.ts
 │   │   ├── signals/route.ts
@@ -191,15 +186,21 @@ odim/
 │   │   └── alerts/route.ts
 │   └── layout.tsx
 ├── components/
-│   ├── globe/                  # react-globe.gl ラッパー
-│   ├── map/                    # MapLibre ラッパー
-│   ├── charts/                 # サンキー図・時系列等
 │   └── ui/                     # デザインシステム部品（07-DESIGN.md準拠）
+│       ├── reality-map.tsx      # MapLibreネイティブレイヤー（シンボル+ライン+クラスタ）
+│       ├── entity-workstation.tsx  # Entityページ（フィルタ・セクターヒート・Gap・Brief）
+│       ├── huginn-console.tsx   # Huginnインタラクティブコンソール
+│       ├── huginn-input.tsx     # クエリ入力（ローディング状態付き）
+│       ├── command-palette.tsx  # Cmd+Kグローバル検索
+│       ├── entity-link.tsx      # 画面間エンティティナビゲーション
+│       ├── seed-memory-manager.tsx  # Seed Memory CRUD UI
+│       └── shell.tsx            # アプリシェル（5画面ナビ）
 ├── lib/
 │   ├── ai/
 │   │   └── provider.ts         # AI抽象化（Gemini⇄Claude⇄GPT）
 │   ├── huginn/                 # Huginnエージェントロジック
 │   ├── munin/                  # Munin記憶ロジック（source-05-huginn-munin.md）
+│   ├── map/                    # マップデータ層（types.ts, entities.ts, connections.ts）
 │   ├── ontology/               # Ontology操作
 │   ├── resolvers/              # SPVResolver, RDS, Triangulation
 │   └── supabase/               # Supabaseクライアント

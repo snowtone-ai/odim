@@ -46,17 +46,16 @@
 - `/api/huginn` Route Handler。
 - **受け入れ基準**: 自然言語クエリにOntologyベースで回答し、Reasoning Traceと出典が出る。組織分離が機能する。
 
-### Phase E：フロントエンド（8画面）
-`06-SCREENS.md` に従い実装。画面間に弱い依存はあるが、おおむね並行可能：
-1. Reality Map（Globe + 2D Map）
-2. Capital Flow
-3. Entity Intelligence
-4. Signal Alerts
-5. Huginn Console
-6. Watchlist & Briefs
-7. Audit Trail
-8. Settings
-- **受け入れ基準**: 全8画面が `07-DESIGN.md` 準拠で動作し、画面遷移が「ぬるっと」している。
+### Phase E：フロントエンド（5画面）— v3.0完了済み
+`06-SCREENS.md` に従い実装。v3.0（2026-05）で完了。8画面→5画面に統合再設計済み：
+1. Reality Map（MapLibre GLネイティブ、Palantir Gotham品質）— 完了
+2. Entity Intelligence（Capital Flow + Watchlist統合）— 完了
+3. Signal Alerts — 完了
+4. Huginn（HuginnInput + HuginnConsole インタラクティブClient Component）— 完了
+5. Settings（Audit Trail統合）— 完了
+- 追加: CommandPalette（Cmd+K）— 完了
+- 追加: EntityLink（画面間ナビ）— 完了
+- **受け入れ基準**: 全5画面が `07-DESIGN.md` 準拠で動作し、画面遷移が「ぬるっと」している。✓ 達成（pnpm build / typecheck / test 49/49 パス）。
 
 ### Phase F：仕上げ・監査
 - 認証・組織管理・RLSの最終確認。
@@ -72,11 +71,11 @@
 
 | マイルストーン | 状態 |
 |---|---|
-| **M1: Skeleton** | アプリ起動、8画面ルーティング、デザインシステム稼働（Phase A完了） |
+| **M1: Skeleton** | アプリ起動、ルーティング、デザインシステム稼働（Phase A完了） ✓ |
 | **M2: Data Alive** | 日次バッチでOntologyに実データ充填（Phase B完了） |
 | **M3: Intelligence** | 推論層が動き、アラートが出る（Phase C完了） |
 | **M4: Agent** | Huginn/Muninが動作、組織分離OK（Phase D完了） |
-| **M5: Full Product** | 8画面完成、全機能統合（Phase E完了） |
+| **M5: Full Product** | 5画面完成、全機能統合（Phase E完了） ✓ v3.0達成 |
 | **M6: Launch-Ready** | 監査通過、無料枠で動く完全な商用品質（Phase F完了）→ 公開／コンテスト提出 |
 
 ---
@@ -86,7 +85,7 @@
 ユーザーの目標は「MVPではなく、完全な商用リリース可能状態まで一気に作り切る」。
 本Context Folderにおける「商用リリース可能」の厳密な定義：
 
-1. 8画面すべてが `07-DESIGN.md` 品質で完成している。
+1. 5画面すべてが `07-DESIGN.md` 品質で完成している（v3.0で達成済み）。
 2. 7つのReality Layerすべてにデータパイプラインが存在する（網羅率は米国優先で地域差あり）。
 3. Huginn/Muninが組織分離込みで動作する。
 4. 全推論に出典と信頼度が付き、Audit Trailで追跡できる。

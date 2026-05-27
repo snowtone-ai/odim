@@ -11,10 +11,14 @@
 - 決定：北欧神話のオーディン（Odin）＋鴉フギン/ムニンに由来。
 - 理由：知恵・全方位の観測・「世界を見る眼」という含意がプロダクト思想と一致。Huginn/Muninは機能名としても機能する。
 
-### D-02：3D Globe と 2D Map の両方を採用
-- 決定：マクロ＝3D Globe、ミクロ＝2D Map。ズーム階層で滑らかに切替。
-- 理由：Globeは「資本の世界的流れ」を直感的に見せブランド体験を強くする。2Dは「特定地点の精密分析」に向く。Windy.comと同じ二刀流が最適。
-- 却下案：Globeのみ → 国・用地レベルの精密作業に不向き。2Dのみ → ブランド体験とマクロ把握が弱い。
+### D-02：3D Globe と 2D Map の両方を採用（初期設計）→ v3.0で変更
+- ~~決定：マクロ＝3D Globe、ミクロ＝2D Map。ズーム階層で滑らかに切替。~~
+- **v3.0改訂（2026-05）: Globe廃止、MapLibre GL JS 単一実装に変更。**
+
+### D-02-v2：Globe廃止・MapLibre一本化
+- 決定：react-globe.gl を廃止。MapLibre GL JS + CARTO Dark Matter タイル のみ。
+- 理由：Globe⇄2D切り替えの複雑性（遷移アニメーション・データ受け渡し・パフォーマンス）がコストに見合わないと判断。MapLibreネイティブレイヤー（シンボル・ライン・クラスタ）で Palantir Gotham 品質の地図を実現した結果、Globe なしでも「世界OS」の視覚体験は十分に達成可能と確認。
+- 廃止したもの：`components/globe/`、Globe⇄2D切り替えロジック、react-globe.gl 依存。
 
 ### D-03：初期ターゲットは米国のTier 1ヘッジファンド
 - 決定：ヘッジファンド／クオンツファンドを初期顧客に。
@@ -49,6 +53,19 @@
 ### D-10：書体はSpectral + IBM Plex Sans + IBM Plex Mono
 - 決定：Interを使わない。Display=Spectral（知的セリフ）、UI=IBM Plex Sans、データ=IBM Plex Mono。
 - 理由：Interは「AIデフォルト」の象徴。Spectralの知的なセリフがOdin/知恵の世界観を表現し、決定的な差別化になる。全て無料・OSS。
+
+### D-11：ナビゲーション 8画面 → 5画面に統合（v3.0、2026-05）
+- 決定：独立画面であったCapital Flow・Watchlist & Briefs・Audit Trailを廃止し、それぞれEntity Intelligence・Settingsに統合。
+- 理由：画面数が多いとユーザーの認知負荷が上がる。データ分析の主要ユースケース（「企業を調べる」）では Capital Flow と Watchlist は Entity ページと常にセットで参照される。Audit Trail は分析中に参照するものでなく管理ツールとして Settings に属する方が自然。統合により1画面で文脈を失わずに深掘りできるようになった。
+- 廃止したルート：`/capital-flow`、`/watchlist`、`/audit`。
+
+### D-12：CommandPalette（Cmd+K）の全画面統合（v3.0、2026-05）
+- 決定：`components/ui/command-palette.tsx` を実装し、全5画面でCmd+Kでアクセス可能なグローバル検索を提供。
+- 理由：5画面統合後、「どの画面にいても素早くエンティティやアラートにジャンプできる」UXが重要になった。Sidebarはナビゲーション、CommandPaletteはコンテキスト検索として役割を分離。
+
+### D-13：Huginn SycophancyバッジのUI削除（v3.0、2026-05）
+- 決定：Sycophancy検出の結果をUIバッジで表示することを廃止。バックエンドでの検出 + anti-sycophancyプロンプトによる自動リトライはサイレントで継続。
+- 理由：バッジ表示はユーザーに過剰な不安を与え、回答品質への不信を招く。自動補正が機能するなら、「修正した」という事実をUIに出す必要はない。
 
 ---
 
