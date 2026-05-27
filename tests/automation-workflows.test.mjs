@@ -27,6 +27,7 @@ test("automation scripts expose backfill and daily dream entry points", () => {
   assert.match(migrationRunner, /0001_initial\.sql/);
   assert.match(migrationRunner, /0005_ingestion_operations\.sql/);
   assert.match(migrationRunner, /0006_ingest_transaction\.sql/);
+  assert.match(migrationRunner, /0007_performance_indexes\.sql/);
 });
 
 test("backfill options support source selection, date windows, and paging controls", () => {
