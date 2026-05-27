@@ -14,13 +14,27 @@ type SecSubmissionsResponse = {
   name: string;
   tickers?: string[];
   filings?: {
+    files?: Array<{
+      filingCount?: number;
+      filingFrom?: string;
+      filingTo?: string;
+      name?: string;
+    }>;
     recent?: SecRecentFilings;
   };
+};
+
+type SecFilingMetadata = {
+  cik: string | number;
+  companyName: string;
+  ticker?: string;
 };
 
 export type SecEdgarOptions = {
   ciks: string[];
   baseUrl?: string;
+  historicalFileLimit?: number;
+  includeHistorical?: boolean;
   userAgent?: string;
   limit?: number;
   fetchImpl?: typeof fetch;
@@ -50,17 +64,13 @@ function recentAt(recent: SecRecentFilings, index: number) {
   };
 }
 
-export function parseSecSubmissions(payload: SecSubmissionsResponse, limit = 50): RawSignal[] {
-  const recent = payload.filings?.recent;
-  if (!recent?.accessionNumber?.length) return [];
-
-  const cik = normalizeCik(payload.cik);
-  const companyName = payload.name;
-  const ticker = payload.tickers?.[0];
+function parseSecFilingTable(table: SecRecentFilings | undefined, metadata: SecFilingMetadata, limit = 50): RawSignal[] {
+  if (!table?.accessionNumber?.length) return [];
+  const cik = normalizeCik(metadata.cik);
   const signals: RawSignal[] = [];
 
-  for (let index = 0; index < recent.accessionNumber.length && signals.length < limit; index += 1) {
-    const filing = recentAt(recent, index);
+  for (let index = 0; index < table.accessionNumber.length && signals.length < limit; index += 1) {
+    const filing = recentAt(table, index);
     if (!filing.accessionNumber || !filing.form || !trackedForms.has(filing.form)) continue;
     const filingDate = filing.filingDate ?? filing.reportDate;
     if (!filingDate) continue;
@@ -77,7 +87,7 @@ export function parseSecSubmissions(payload: SecSubmissionsResponse, limit = 50)
         {
           sourceId: "sec-edgar",
           url: documentUrl,
-          title: `${companyName} ${filing.form} ${filing.accessionNumber}`,
+          title: `${metadata.companyName} ${filing.form} ${filing.accessionNumber}`,
           externalId: filing.accessionNumber,
           observedAt: `${filingDate}T00:00:00.000Z`
         }
@@ -85,13 +95,13 @@ export function parseSecSubmissions(payload: SecSubmissionsResponse, limit = 50)
       payload: {
         accessionNumber: filing.accessionNumber,
         cik,
-        companyName,
+        companyName: metadata.companyName,
         filingDate,
         form: filing.form,
         items: filing.items,
         primaryDocument: filing.primaryDocument,
         reportDate: filing.reportDate,
-        ticker
+        ticker: metadata.ticker
       }
     });
   }
@@ -99,10 +109,23 @@ export function parseSecSubmissions(payload: SecSubmissionsResponse, limit = 50)
   return signals;
 }
 
+export function parseSecSubmissions(payload: SecSubmissionsResponse, limit = 50): RawSignal[] {
+  return parseSecFilingTable(
+    payload.filings?.recent,
+    { cik: payload.cik, companyName: payload.name, ticker: payload.tickers?.[0] },
+    limit
+  );
+}
+
+function historicalSubmissionUrl(baseUrl: string, fileName: string) {
+  return new URL(fileName, baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`).toString();
+}
+
 export async function fetchSecEdgarSignals(options: SecEdgarOptions): Promise<RawSignal[]> {
   const baseUrl = options.baseUrl ?? "https://data.sec.gov/submissions";
   const fetchImpl = options.fetchImpl ?? fetch;
   const limit = options.limit ?? 50;
+  const historicalFileLimit = options.historicalFileLimit ?? 5;
   if (!options.userAgent) throw new Error("SEC_EDGAR_USER_AGENT is required for SEC EDGAR requests");
   const userAgent = options.userAgent;
 
@@ -116,7 +139,24 @@ export async function fetchSecEdgarSignals(options: SecEdgarOptions): Promise<Ra
         }
       });
       if (!response.ok) throw new Error(`SEC EDGAR ${normalizedCik} request failed: ${response.status}`);
-      return parseSecSubmissions((await response.json()) as SecSubmissionsResponse, limit);
+      const payload = (await response.json()) as SecSubmissionsResponse;
+      const signals = parseSecSubmissions(payload, limit);
+      if (!options.includeHistorical || signals.length >= limit) return signals.slice(0, limit);
+
+      const metadata = { cik: payload.cik, companyName: payload.name, ticker: payload.tickers?.[0] };
+      for (const file of payload.filings?.files?.slice(0, historicalFileLimit) ?? []) {
+        if (!file.name || signals.length >= limit) break;
+        const fileUrl = historicalSubmissionUrl(baseUrl, file.name);
+        const fileResponse = await fetchImpl(fileUrl, {
+          headers: {
+            "user-agent": userAgent,
+            accept: "application/json"
+          }
+        });
+        if (!fileResponse.ok) throw new Error(`SEC EDGAR historical ${normalizedCik} ${file.name} request failed: ${fileResponse.status}`);
+        signals.push(...parseSecFilingTable((await fileResponse.json()) as SecRecentFilings, metadata, limit - signals.length));
+      }
+      return signals.slice(0, limit);
     })
   );
 

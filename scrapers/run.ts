@@ -275,6 +275,8 @@ export async function collectLiveSignals(options: ScrapeOptions) {
     signals.push(...(await runSource(sourceReport, "sec-edgar", options, () =>
       fetchSecEdgarSignals({
         ciks,
+        historicalFileLimit: options.maxPages,
+        includeHistorical: options.mode === "backfill",
         userAgent: process.env.SEC_EDGAR_USER_AGENT,
         baseUrl: process.env.SEC_EDGAR_BASE_URL,
         limit

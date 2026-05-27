@@ -11,7 +11,7 @@ import { fetchEiaSignals } from "../scrapers/eia.ts";
 import { fetchNarrativeSignals, parseNarrativeRecords } from "../scrapers/narrative.ts";
 import { fetchPatentSignals } from "../scrapers/patent.ts";
 import { parsePortStatisticRecords } from "../scrapers/port-statistics.ts";
-import { parseSecSubmissions } from "../scrapers/sec-edgar.ts";
+import { fetchSecEdgarSignals, parseSecSubmissions } from "../scrapers/sec-edgar.ts";
 import { parseUsgsMineralRecords } from "../scrapers/usgs-minerals.ts";
 import { parseWaterDistrictRecords } from "../scrapers/water-districts.ts";
 
@@ -34,6 +34,57 @@ test("SEC EDGAR submissions become source-backed cash signals", () => {
   assert.equal(signals[0].layer, "cash");
   assert.equal(signals[0].sourceRefs[0].sourceId, "sec-edgar");
   assert.match(signals[0].sourceRefs[0].url, /Archives\/edgar\/data/);
+});
+
+test("SEC EDGAR backfill follows historical submission files", async () => {
+  const requestedUrls = [];
+  const signals = await fetchSecEdgarSignals({
+    ciks: ["1326801"],
+    baseUrl: "https://data.sec.gov/submissions",
+    includeHistorical: true,
+    historicalFileLimit: 2,
+    limit: 3,
+    userAgent: "Odim test contact@example.com",
+    fetchImpl: async (url) => {
+      requestedUrls.push(String(url));
+      if (String(url).endsWith("CIK0001326801.json")) {
+        return new Response(
+          JSON.stringify({
+            cik: "1326801",
+            name: "Meta Platforms, Inc.",
+            tickers: ["META"],
+            filings: {
+              recent: {
+                accessionNumber: ["0001326801-26-000042"],
+                filingDate: ["2026-05-20"],
+                form: ["8-K"],
+                primaryDocument: ["meta-8k.htm"]
+              },
+              files: [{ name: "CIK0001326801-submissions-001.json" }]
+            }
+          }),
+          { headers: { "content-type": "application/json" } }
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          accessionNumber: ["0001326801-20-000001", "0001326801-19-000002"],
+          filingDate: ["2020-01-02", "2019-05-03"],
+          form: ["S-1", "10-K"],
+          primaryDocument: ["meta-s1.htm", "meta-10k.htm"]
+        }),
+        { headers: { "content-type": "application/json" } }
+      );
+    }
+  });
+
+  assert.deepEqual(requestedUrls, [
+    "https://data.sec.gov/submissions/CIK0001326801.json",
+    "https://data.sec.gov/submissions/CIK0001326801-submissions-001.json"
+  ]);
+  assert.equal(signals.length, 2);
+  assert.equal(signals[1].externalId, "0001326801-20-000001");
+  assert.equal(signals[1].payload.companyName, "Meta Platforms, Inc.");
 });
 
 test("FERC and building permit records parse into Reality Layer signals", () => {
