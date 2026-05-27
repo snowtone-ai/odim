@@ -9,10 +9,13 @@ import { fetchConfiguredSourceSignals, parseConfiguredSourceRecords } from "../s
 import { fetchCloudRegionSignals, parseCloudRegionRecords } from "../scrapers/cloud-regions.ts";
 import { fetchFercSignals, parseFercRecords } from "../scrapers/ferc.ts";
 import { fetchEiaSignals } from "../scrapers/eia.ts";
+import { parseEpaEchoRecords } from "../scrapers/epa-echo.ts";
+import { parseFaaObstructionRecords } from "../scrapers/faa-obstructions.ts";
 import { fetchNarrativeSignals, parseNarrativeRecords } from "../scrapers/narrative.ts";
 import { fetchPatentSignals } from "../scrapers/patent.ts";
 import { parsePortStatisticRecords } from "../scrapers/port-statistics.ts";
 import { fetchSecEdgarSignals, parseSecSubmissions } from "../scrapers/sec-edgar.ts";
+import { parsePucRecords } from "../scrapers/state-puc.ts";
 import { parseUsgsMineralRecords } from "../scrapers/usgs-minerals.ts";
 import { parseWaterDistrictRecords } from "../scrapers/water-districts.ts";
 
@@ -143,6 +146,29 @@ test("remaining Reality Layer adapters emit source-backed signals", () => {
     ["compute", "water", "raw_materials", "logistics"]
   );
   assert.ok([cloud, water, minerals, logistics].flat().every((signal) => signal.sourceRefs.length === 1));
+});
+
+test("EPA, FAA, and State PUC parsers emit deterministic source-backed signals", () => {
+  const epa = parseEpaEchoRecords(
+    [{ SourceID: "NPDES-1", CWPIssueDate: "2026-05-11", CWPName: "Water Facility", FacState: "LA" }],
+    "https://example.local/epa"
+  );
+  const faa = parseFaaObstructionRecords(
+    [{ caseNumber: "ASN-1", determinationDate: "2026-05-12", structureType: "Tower", applicant: "GridCo" }],
+    "https://example.local/faa"
+  );
+  const puc = parsePucRecords(
+    [{ docketNumber: "PUC-1", filingDate: "2026-05-13", applicant: "UtilityCo", capacityMw: "200" }],
+    "https://example.local/puc",
+    "TX"
+  );
+  const firstNormalized = normalizeSignal(epa[0]);
+  const secondNormalized = normalizeSignal(epa[0]);
+
+  assert.deepEqual([epa[0].layer, faa[0].layer, puc[0].layer], ["water", "land", "energy"]);
+  assert.deepEqual([epa[0].source, faa[0].source, puc[0].source], ["epa-echo-npdes", "faa-oas", "state-puc-filings"]);
+  assert.ok([epa, faa, puc].flat().every((signal) => signal.sourceRefs.length === 1));
+  assert.equal(firstNormalized.fingerprint, secondNormalized.fingerprint);
 });
 
 test("normalization enforces source refs and deterministic fingerprints", () => {
