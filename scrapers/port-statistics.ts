@@ -1,9 +1,11 @@
 import type { RawSignal } from "../lib/pipeline/types.ts";
-import { fetchJsonOrCsvRecords, getString, parseDate, type PublicRecord } from "./common.ts";
+import { applyPagingToUrl, fetchJsonOrCsvRecords, getString, parseDate, type PublicRecord } from "./common.ts";
 
 export type PortStatisticsOptions = {
   feedUrl: string;
   limit?: number;
+  offset?: number;
+  page?: number;
   fetchImpl?: typeof fetch;
 };
 
@@ -59,9 +61,10 @@ export function parsePortStatisticRecords(records: PublicRecord[], sourceUrl: st
 }
 
 export async function fetchPortStatisticSignals(options: PortStatisticsOptions): Promise<RawSignal[]> {
+  const pagedUrl = applyPagingToUrl(options.feedUrl, options);
   return parsePortStatisticRecords(
-    await fetchJsonOrCsvRecords(options.fetchImpl ?? fetch, options.feedUrl),
-    options.feedUrl,
+    await fetchJsonOrCsvRecords(options.fetchImpl ?? fetch, pagedUrl),
+    pagedUrl,
     options.limit
   );
 }

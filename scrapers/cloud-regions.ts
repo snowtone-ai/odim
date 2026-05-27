@@ -1,9 +1,11 @@
 import type { RawSignal } from "../lib/pipeline/types.ts";
-import { fetchJsonOrCsvRecords, getString, parseDate, type PublicRecord } from "./common.ts";
+import { applyPagingToUrl, fetchJsonOrCsvRecords, getString, parseDate, type PublicRecord } from "./common.ts";
 
 export type CloudRegionOptions = {
   feedUrl: string;
   limit?: number;
+  offset?: number;
+  page?: number;
   fetchImpl?: typeof fetch;
 };
 
@@ -59,9 +61,10 @@ export function parseCloudRegionRecords(records: PublicRecord[], sourceUrl: stri
 }
 
 export async function fetchCloudRegionSignals(options: CloudRegionOptions): Promise<RawSignal[]> {
+  const pagedUrl = applyPagingToUrl(options.feedUrl, options);
   return parseCloudRegionRecords(
-    await fetchJsonOrCsvRecords(options.fetchImpl ?? fetch, options.feedUrl),
-    options.feedUrl,
+    await fetchJsonOrCsvRecords(options.fetchImpl ?? fetch, pagedUrl),
+    pagedUrl,
     options.limit
   );
 }

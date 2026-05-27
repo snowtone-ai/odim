@@ -1,4 +1,5 @@
 import type { RawSignal } from "../lib/pipeline/types.ts";
+import { applyPagingToUrl } from "./common.ts";
 
 type PermitRecord = Record<string, unknown>;
 
@@ -6,6 +7,8 @@ export type BuildingPermitOptions = {
   feedUrl: string;
   jurisdiction?: string;
   limit?: number;
+  offset?: number;
+  page?: number;
   fetchImpl?: typeof fetch;
 };
 
@@ -86,9 +89,10 @@ export function parseBuildingPermitRecords(
 
 export async function fetchBuildingPermitSignals(options: BuildingPermitOptions): Promise<RawSignal[]> {
   const fetchImpl = options.fetchImpl ?? fetch;
-  const response = await fetchImpl(options.feedUrl, { headers: { accept: "application/json" } });
+  const pagedUrl = applyPagingToUrl(options.feedUrl, options);
+  const response = await fetchImpl(pagedUrl, { headers: { accept: "application/json" } });
   if (!response.ok) throw new Error(`Building permit feed request failed: ${response.status}`);
   const payload = (await response.json()) as PermitRecord[] | { results?: PermitRecord[]; data?: PermitRecord[] };
   const records = Array.isArray(payload) ? payload : (payload.results ?? payload.data ?? []);
-  return parseBuildingPermitRecords(records, options.feedUrl, options.jurisdiction, options.limit);
+  return parseBuildingPermitRecords(records, pagedUrl, options.jurisdiction, options.limit);
 }

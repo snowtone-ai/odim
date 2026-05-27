@@ -1,10 +1,12 @@
 import type { RawSignal } from "../lib/pipeline/types.ts";
-import { fetchJsonOrCsvRecords, getString, parseDate, type PublicRecord } from "./common.ts";
+import { applyPagingToUrl, fetchJsonOrCsvRecords, getString, parseDate, type PublicRecord } from "./common.ts";
 
 export type StatePucOptions = {
   feedUrl: string;
   jurisdiction?: string;
   limit?: number;
+  offset?: number;
+  page?: number;
   fetchImpl?: typeof fetch;
 };
 
@@ -66,9 +68,10 @@ export function parsePucRecords(
 }
 
 export async function fetchStatePucSignals(options: StatePucOptions): Promise<RawSignal[]> {
+  const pagedUrl = applyPagingToUrl(options.feedUrl, options);
   return parsePucRecords(
-    await fetchJsonOrCsvRecords(options.fetchImpl ?? fetch, options.feedUrl),
-    options.feedUrl,
+    await fetchJsonOrCsvRecords(options.fetchImpl ?? fetch, pagedUrl),
+    pagedUrl,
     options.jurisdiction,
     options.limit
   );

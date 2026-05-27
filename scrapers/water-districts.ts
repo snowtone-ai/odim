@@ -1,10 +1,12 @@
 import type { RawSignal } from "../lib/pipeline/types.ts";
-import { fetchJsonOrCsvRecords, getString, parseDate, type PublicRecord } from "./common.ts";
+import { applyPagingToUrl, fetchJsonOrCsvRecords, getString, parseDate, type PublicRecord } from "./common.ts";
 
 export type WaterDistrictOptions = {
   feedUrl: string;
   jurisdiction?: string;
   limit?: number;
+  offset?: number;
+  page?: number;
   fetchImpl?: typeof fetch;
 };
 
@@ -64,9 +66,10 @@ export function parseWaterDistrictRecords(
 }
 
 export async function fetchWaterDistrictSignals(options: WaterDistrictOptions): Promise<RawSignal[]> {
+  const pagedUrl = applyPagingToUrl(options.feedUrl, options);
   return parseWaterDistrictRecords(
-    await fetchJsonOrCsvRecords(options.fetchImpl ?? fetch, options.feedUrl),
-    options.feedUrl,
+    await fetchJsonOrCsvRecords(options.fetchImpl ?? fetch, pagedUrl),
+    pagedUrl,
     options.jurisdiction,
     options.limit
   );

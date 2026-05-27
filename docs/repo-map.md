@@ -77,6 +77,7 @@ Odim is a multi-agent intelligence system that ingests real-world signals (SEC, 
 - **Main files:** `scrapers/*.ts` → `scrapers/run.ts` → `lib/pipeline/ontologize.ts` → `lib/pipeline/ingest.ts`
 - **Important functions:** `resolveScrapeOptions`, `collectLiveSignals`, `runScrape`, `normalizeSignal`, `buildIngestionPlan`, `upsertIngestionPlan`
 - **Backfill controls:** `SCRAPE_SOURCE_IDS`, `SCRAPE_BACKFILL_START`, `SCRAPE_BACKFILL_END`, `SCRAPE_PAGE_SIZE`, `SCRAPE_MAX_PAGES`
+- **Paged adapters:** EIA, PatentsView, configured JSON/CSV, FERC, building permits, cloud regions, water districts, USGS minerals, port statistics, narrative, state PUC, FAA
 - **Downstream dependencies:** Supabase tables: `raw_signals`, `ontology_objects`, `ontology_links`, `alerts`, `audit_log`, `ingestion_runs`, `source_watermarks`
 - **Tests:** `tests/pipeline-ingestion.test.mjs`, `tests/automation-workflows.test.mjs`
 

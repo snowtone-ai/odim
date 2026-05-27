@@ -285,10 +285,12 @@ export async function collectLiveSignals(options: ScrapeOptions) {
   }
   const fercFeedUrl = process.env.FERC_FEED_URL;
   if (fercFeedUrl) {
-    signals.push(...(await runSource(sourceReport, "ferc-elibrary", options, () =>
+    signals.push(...(await runPagedSource(sourceReport, "ferc-elibrary", options, (page) =>
       fetchFercSignals({
         feedUrl: fercFeedUrl,
-        limit
+        limit: page.limit,
+        offset: page.offset,
+        page: page.page
       })
     )));
   } else {
@@ -296,11 +298,13 @@ export async function collectLiveSignals(options: ScrapeOptions) {
   }
   const buildingPermitsUrl = process.env.BUILDING_PERMITS_URL;
   if (buildingPermitsUrl) {
-    signals.push(...(await runSource(sourceReport, "county-building-permits", options, () =>
+    signals.push(...(await runPagedSource(sourceReport, "county-building-permits", options, (page) =>
       fetchBuildingPermitSignals({
         feedUrl: buildingPermitsUrl,
         jurisdiction: process.env.BUILDING_PERMITS_JURISDICTION,
-        limit
+        limit: page.limit,
+        offset: page.offset,
+        page: page.page
       })
     )));
   } else {
@@ -308,10 +312,12 @@ export async function collectLiveSignals(options: ScrapeOptions) {
   }
   const cloudRegionFeedUrl = process.env.CLOUD_REGION_FEED_URL;
   if (cloudRegionFeedUrl) {
-    signals.push(...(await runSource(sourceReport, "public-cloud-regions", options, () =>
+    signals.push(...(await runPagedSource(sourceReport, "public-cloud-regions", options, (page) =>
       fetchCloudRegionSignals({
         feedUrl: cloudRegionFeedUrl,
-        limit
+        limit: page.limit,
+        offset: page.offset,
+        page: page.page
       })
     )));
   } else {
@@ -319,11 +325,13 @@ export async function collectLiveSignals(options: ScrapeOptions) {
   }
   const waterDistrictFeedUrl = process.env.WATER_DISTRICT_FEED_URL;
   if (waterDistrictFeedUrl) {
-    signals.push(...(await runSource(sourceReport, "water-district-permits", options, () =>
+    signals.push(...(await runPagedSource(sourceReport, "water-district-permits", options, (page) =>
       fetchWaterDistrictSignals({
         feedUrl: waterDistrictFeedUrl,
         jurisdiction: process.env.WATER_DISTRICT_JURISDICTION,
-        limit
+        limit: page.limit,
+        offset: page.offset,
+        page: page.page
       })
     )));
   } else {
@@ -331,10 +339,12 @@ export async function collectLiveSignals(options: ScrapeOptions) {
   }
   const usgsMineralsFeedUrl = process.env.USGS_MINERALS_FEED_URL;
   if (usgsMineralsFeedUrl) {
-    signals.push(...(await runSource(sourceReport, "usgs-minerals", options, () =>
+    signals.push(...(await runPagedSource(sourceReport, "usgs-minerals", options, (page) =>
       fetchUsgsMineralSignals({
         feedUrl: usgsMineralsFeedUrl,
-        limit
+        limit: page.limit,
+        offset: page.offset,
+        page: page.page
       })
     )));
   } else {
@@ -342,10 +352,12 @@ export async function collectLiveSignals(options: ScrapeOptions) {
   }
   const portStatisticsFeedUrl = process.env.PORT_STATISTICS_FEED_URL;
   if (portStatisticsFeedUrl) {
-    signals.push(...(await runSource(sourceReport, "port-statistics", options, () =>
+    signals.push(...(await runPagedSource(sourceReport, "port-statistics", options, (page) =>
       fetchPortStatisticSignals({
         feedUrl: portStatisticsFeedUrl,
-        limit
+        limit: page.limit,
+        offset: page.offset,
+        page: page.page
       })
     )));
   } else {
@@ -353,10 +365,12 @@ export async function collectLiveSignals(options: ScrapeOptions) {
   }
   const narrativeFeedUrl = process.env.NARRATIVE_FEED_URL;
   if (narrativeFeedUrl) {
-    signals.push(...(await runSource(sourceReport, "narrative-rss", options, () =>
+    signals.push(...(await runPagedSource(sourceReport, "narrative-rss", options, (page) =>
       fetchNarrativeSignals({
         feedUrl: narrativeFeedUrl,
-        limit
+        limit: page.limit,
+        offset: page.offset,
+        page: page.page
       })
     )));
   } else {
@@ -378,10 +392,12 @@ export async function collectLiveSignals(options: ScrapeOptions) {
   }
   const statePucFeedUrl = process.env.STATE_PUC_FEED_URL;
   if (statePucFeedUrl) {
-    signals.push(...(await runSource(sourceReport, "state-puc-filings", options, () =>
+    signals.push(...(await runPagedSource(sourceReport, "state-puc-filings", options, (page) =>
       fetchStatePucSignals({
         feedUrl: statePucFeedUrl,
-        limit
+        limit: page.limit,
+        offset: page.offset,
+        page: page.page
       })
     )));
   } else {
@@ -405,10 +421,12 @@ export async function collectLiveSignals(options: ScrapeOptions) {
   )));
   const faaOasFeedUrl = process.env.FAA_OAS_FEED_URL;
   if (faaOasFeedUrl) {
-    signals.push(...(await runSource(sourceReport, "faa-oas", options, () =>
+    signals.push(...(await runPagedSource(sourceReport, "faa-oas", options, (page) =>
       fetchFaaObstructionSignals({
         feedUrl: faaOasFeedUrl,
-        limit
+        limit: page.limit,
+        offset: page.offset,
+        page: page.page
       })
     )));
   } else {

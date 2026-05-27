@@ -1,10 +1,13 @@
 import type { RawSignal } from "../lib/pipeline/types.ts";
+import { applyPagingToUrl } from "./common.ts";
 
 type FercRecord = Record<string, unknown>;
 
 export type FercOptions = {
   feedUrl: string;
   limit?: number;
+  offset?: number;
+  page?: number;
   fetchImpl?: typeof fetch;
 };
 
@@ -89,15 +92,16 @@ export function parseFercRecords(records: FercRecord[], sourceUrl: string, limit
 
 export async function fetchFercSignals(options: FercOptions): Promise<RawSignal[]> {
   const fetchImpl = options.fetchImpl ?? fetch;
-  const response = await fetchImpl(options.feedUrl, { headers: { accept: "application/json,text/csv;q=0.9,*/*;q=0.1" } });
+  const pagedUrl = applyPagingToUrl(options.feedUrl, options);
+  const response = await fetchImpl(pagedUrl, { headers: { accept: "application/json,text/csv;q=0.9,*/*;q=0.1" } });
   if (!response.ok) throw new Error(`FERC feed request failed: ${response.status}`);
 
   const contentType = response.headers.get("content-type") ?? "";
   if (contentType.includes("json")) {
     const payload = (await response.json()) as FercRecord[] | { results?: FercRecord[]; data?: FercRecord[] };
     const records = Array.isArray(payload) ? payload : (payload.results ?? payload.data ?? []);
-    return parseFercRecords(records, options.feedUrl, options.limit);
+    return parseFercRecords(records, pagedUrl, options.limit);
   }
 
-  return parseFercRecords(parseCsv(await response.text()), options.feedUrl, options.limit);
+  return parseFercRecords(parseCsv(await response.text()), pagedUrl, options.limit);
 }

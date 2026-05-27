@@ -1,9 +1,11 @@
 import type { RawSignal } from "../lib/pipeline/types.ts";
-import { fetchJsonOrCsvRecords, getString, parseDate, type PublicRecord } from "./common.ts";
+import { applyPagingToUrl, fetchJsonOrCsvRecords, getString, parseDate, type PublicRecord } from "./common.ts";
 
 export type NarrativeOptions = {
   feedUrl: string;
   limit?: number;
+  offset?: number;
+  page?: number;
   fetchImpl?: typeof fetch;
 };
 
@@ -56,9 +58,10 @@ export function parseNarrativeRecords(records: PublicRecord[], sourceUrl: string
 }
 
 export async function fetchNarrativeSignals(options: NarrativeOptions): Promise<RawSignal[]> {
+  const pagedUrl = applyPagingToUrl(options.feedUrl, options);
   return parseNarrativeRecords(
-    await fetchJsonOrCsvRecords(options.fetchImpl ?? fetch, options.feedUrl),
-    options.feedUrl,
+    await fetchJsonOrCsvRecords(options.fetchImpl ?? fetch, pagedUrl),
+    pagedUrl,
     options.limit
   );
 }

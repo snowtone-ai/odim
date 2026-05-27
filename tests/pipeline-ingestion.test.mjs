@@ -3,12 +3,12 @@ import test from "node:test";
 import { buildIngestionPlan } from "../lib/pipeline/ontologize.ts";
 import { normalizeSignal } from "../lib/pipeline/normalize.ts";
 import { toDatabaseRows, upsertIngestionPlan } from "../lib/pipeline/ingest.ts";
-import { parseBuildingPermitRecords } from "../scrapers/building-permits.ts";
+import { fetchBuildingPermitSignals, parseBuildingPermitRecords } from "../scrapers/building-permits.ts";
 import { fetchConfiguredSourceSignals, parseConfiguredSourceRecords } from "../scrapers/configured-source.ts";
-import { parseCloudRegionRecords } from "../scrapers/cloud-regions.ts";
-import { parseFercRecords } from "../scrapers/ferc.ts";
+import { fetchCloudRegionSignals, parseCloudRegionRecords } from "../scrapers/cloud-regions.ts";
+import { fetchFercSignals, parseFercRecords } from "../scrapers/ferc.ts";
 import { fetchEiaSignals } from "../scrapers/eia.ts";
-import { parseNarrativeRecords } from "../scrapers/narrative.ts";
+import { fetchNarrativeSignals, parseNarrativeRecords } from "../scrapers/narrative.ts";
 import { fetchPatentSignals } from "../scrapers/patent.ts";
 import { parsePortStatisticRecords } from "../scrapers/port-statistics.ts";
 import { parseSecSubmissions } from "../scrapers/sec-edgar.ts";
@@ -367,4 +367,82 @@ test("configured JSON/CSV sources support paging placeholders and query paramete
 
   assert.equal(requestedUrls[0], "https://example.local/feed?batch=3&from=20&size=10");
   assert.equal(signals[0].externalId, "A-1");
+});
+
+test("public JSON/CSV feed adapters pass paging controls through feed URLs", async () => {
+  const cases = [
+    {
+      run: () =>
+        fetchFercSignals({
+          feedUrl: "https://example.local/ferc?offset={offset}&limit={limit}&page={page}",
+          limit: 5,
+          offset: 10,
+          page: 3,
+          fetchImpl: async (url) => {
+            requestedUrls.push(String(url));
+            return new Response(JSON.stringify([{ docketNumber: "ER24-1", filingDate: "2024-01-02" }]), {
+              headers: { "content-type": "application/json" }
+            });
+          }
+        })
+    },
+    {
+      run: () =>
+        fetchBuildingPermitSignals({
+          feedUrl: "https://example.local/permits",
+          limit: 5,
+          offset: 10,
+          page: 3,
+          fetchImpl: async (url) => {
+            requestedUrls.push(String(url));
+            return new Response(JSON.stringify([{ permitNumber: "P-1", issuedAt: "2024-01-03" }]), {
+              headers: { "content-type": "application/json" }
+            });
+          }
+        })
+    },
+    {
+      run: () =>
+        fetchCloudRegionSignals({
+          feedUrl: "https://example.local/cloud",
+          limit: 5,
+          offset: 10,
+          page: 3,
+          fetchImpl: async (url) => {
+            requestedUrls.push(String(url));
+            return new Response(JSON.stringify([{ announcedAt: "2024-01-04", provider: "AWS", regionName: "us-test-1" }]), {
+              headers: { "content-type": "application/json" }
+            });
+          }
+        })
+    },
+    {
+      run: () =>
+        fetchNarrativeSignals({
+          feedUrl: "https://example.local/news",
+          limit: 5,
+          offset: 10,
+          page: 3,
+          fetchImpl: async (url) => {
+            requestedUrls.push(String(url));
+            return new Response(JSON.stringify([{ date: "2024-01-05", headline: "Utility files interconnect plan" }]), {
+              headers: { "content-type": "application/json" }
+            });
+          }
+        })
+    }
+  ];
+  const requestedUrls = [];
+
+  for (const item of cases) {
+    const signals = await item.run();
+    assert.equal(signals.length, 1);
+  }
+
+  assert.equal(requestedUrls[0], "https://example.local/ferc?offset=10&limit=5&page=3");
+  for (const url of requestedUrls.slice(1)) {
+    assert.match(url, /limit=5/);
+    assert.match(url, /offset=10/);
+    assert.match(url, /page=3/);
+  }
 });
