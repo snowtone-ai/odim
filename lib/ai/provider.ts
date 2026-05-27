@@ -36,6 +36,21 @@ async function sleep(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function fetchGemini(url: string, init: RequestInit) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("Gemini request timed out after 30000ms");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function generateAnswer(request: GenerateRequest): Promise<GenerateResponse> {
   const provider = process.env.AI_PROVIDER ?? "mock";
   const model = process.env.AI_MODEL ?? "gemini-2.5-flash";
@@ -64,7 +79,7 @@ export async function generateAnswer(request: GenerateRequest): Promise<Generate
 
   let response: Response | undefined;
   for (let attempt = 0; attempt < attempts; attempt += 1) {
-    response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+    response = await fetchGemini(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
