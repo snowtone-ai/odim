@@ -12,6 +12,8 @@ export type DreamRun = {
   status: "pending_review";
 };
 
+let dreamRunning = false;
+
 function readMuninSnapshot(orgId: string, memories = buildFixtureMemories(orgId)) {
   return memories.filter(
     (memory) =>
@@ -35,16 +37,22 @@ async function recordDreamRun(run: DreamRun) {
 }
 
 export async function dreamJob(input: { orgId: string; memories?: MuninMemory[] }) {
-  if (process.env.DREAM_ENABLED !== "true" && (process.env.AI_PROVIDER ?? "mock") !== "mock") {
-    return recordDreamRun({ orgId: input.orgId, phaseSummary: { skipped: true }, diff: {}, status: "pending_review" });
+  if (dreamRunning) {
+    console.warn("Dream job already running; skipping concurrent invocation", { orgId: input.orgId });
+    return recordDreamRun({ orgId: input.orgId, phaseSummary: { skipped: true, reason: "concurrent_run" }, diff: {}, status: "pending_review" });
   }
-  const snapshot = readMuninSnapshot(input.orgId, input.memories);
-  const clusters = clusterByEmbedding(snapshot);
-  const consolidationClusters = clusters.filter((cluster) => cluster.length >= 2);
-  const consolidated = consolidationClusters.map(consolidateCluster);
-  const contradictions = resolveByRecency(detectContradictions(snapshot));
-  const promoted = extractRecurringPatterns(snapshot);
-  const createdRows: MuninMemory[] = [];
+  dreamRunning = true;
+  try {
+    if (process.env.DREAM_ENABLED !== "true" && (process.env.AI_PROVIDER ?? "mock") !== "mock") {
+      return recordDreamRun({ orgId: input.orgId, phaseSummary: { skipped: true }, diff: {}, status: "pending_review" });
+    }
+    const snapshot = readMuninSnapshot(input.orgId, input.memories);
+    const clusters = clusterByEmbedding(snapshot);
+    const consolidationClusters = clusters.filter((cluster) => cluster.length >= 2);
+    const consolidated = consolidationClusters.map(consolidateCluster);
+    const contradictions = resolveByRecency(detectContradictions(snapshot));
+    const promoted = extractRecurringPatterns(snapshot);
+    const createdRows: MuninMemory[] = [];
 
   for (const item of [...consolidated.map((value) => ({ ...value, memoryClass: "fact" as const })), ...promoted.map((value) => ({ ...value, memoryClass: "procedure" as const }))]) {
     const gate = writeGate({
@@ -106,21 +114,24 @@ export async function dreamJob(input: { orgId: string; memories?: MuninMemory[] 
     });
   }
 
-  return recordDreamRun({
-    orgId: input.orgId,
-    phaseSummary: {
-      cluster: { clusters: clusters.length },
-      consolidate: { created: consolidated.length },
-      contradict: { detected: contradictions.length },
-      promote: { created: promoted.length },
-      preCompute: { created: createdRows.slice(0, 5).length }
-    },
-    diff: {
-      immutableInputs: snapshot.map((memory) => memory.id),
-      supersededByMvcc: supersededIds,
-      createdRows: createdRows.map((memory) => ({ id: memory.id, memoryClass: memory.memoryClass })),
-      contradictions: contradictions.map((item) => ({ left: item.left.id, right: item.right.id, winner: item.winner.id }))
-    },
-    status: "pending_review"
-  });
+    return recordDreamRun({
+      orgId: input.orgId,
+      phaseSummary: {
+        cluster: { clusters: clusters.length },
+        consolidate: { created: consolidated.length },
+        contradict: { detected: contradictions.length },
+        promote: { created: promoted.length },
+        preCompute: { created: createdRows.slice(0, 5).length }
+      },
+      diff: {
+        immutableInputs: snapshot.map((memory) => memory.id),
+        supersededByMvcc: supersededIds,
+        createdRows: createdRows.map((memory) => ({ id: memory.id, memoryClass: memory.memoryClass })),
+        contradictions: contradictions.map((item) => ({ left: item.left.id, right: item.right.id, winner: item.winner.id }))
+      },
+      status: "pending_review"
+    });
+  } finally {
+    dreamRunning = false;
+  }
 }
