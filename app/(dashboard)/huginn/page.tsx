@@ -26,6 +26,7 @@ export default async function HuginnPage() {
         evalLabels={screen.eval}
         emptyStateText={screen.emptyState}
         showOnMapLabel={screen.showOnMap}
+        webSearchLabel={screen.webSearch}
         action={submitHuginnQuestion}
       />
     </Screen>

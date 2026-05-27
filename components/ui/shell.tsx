@@ -6,10 +6,11 @@ import {
   Globe,
   Building2,
   Bell,
-  Bird,
   Settings,
   Languages
 } from "lucide-react";
+import { OdimLogo } from "@/components/ui/odim-logo";
+import { HuginnIcon } from "@/components/ui/huginn-icon";
 import { LocaleSwitcher } from "@/components/ui/locale-switcher";
 import type { Messages } from "@/lib/i18n/messages";
 
@@ -70,7 +71,7 @@ export function Shell({
     { icon: Globe,      label: messages.shell.nav.map,     href: "/map" },
     { icon: Building2,  label: messages.shell.nav.entity,  href: "/entity" },
     { icon: Bell,       label: messages.shell.nav.alerts,  href: "/alerts" },
-    { icon: Bird,       label: messages.shell.nav.huginn,  href: "/huginn" },
+    { icon: HuginnIcon, label: messages.shell.nav.huginn,  href: "/huginn" },
     { icon: Settings,   label: messages.shell.nav.settings, href: "/settings" }
   ];
 
@@ -81,22 +82,14 @@ export function Shell({
         className="md:fixed inset-y-0 left-0 z-40 hidden w-[var(--sidebar-w)] flex-col items-center py-5 md:flex"
         style={{
           background: "var(--ink-900)",
-          borderRight: "1px solid var(--line-faint)",
+          borderRight: "1px solid var(--line-soft)",
           backgroundImage: "linear-gradient(180deg, var(--sidebar-sheen) 0%, transparent 40%)"
         }}
       >
-        {/* Logo mark */}
-        <div
-          className="relative flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)]"
-          style={{
-            border: "1px solid var(--line-faint)",
-            boxShadow: "inset 0 1px 0 var(--logo-sheen)"
-          }}
-        >
-          <span className="font-[var(--font-spectral)] text-[18px] font-semibold leading-none tracking-[0.04em] text-[var(--text-primary)]">
-            O
-          </span>
-        </div>
+        {/* Logo */}
+        <Link href="/map" className="transition-opacity duration-[var(--dur-fast)] hover:opacity-80">
+          <OdimLogo size={36} />
+        </Link>
 
         <nav className="mt-7 grid gap-0.5">
           {nav.map((item) => (
@@ -131,10 +124,10 @@ export function Shell({
         className="flex items-center gap-3 overflow-x-auto px-4 py-2.5 md:hidden"
         style={{
           background: "var(--ink-900)",
-          borderBottom: "1px solid var(--line-faint)"
+          borderBottom: "1px solid var(--line-soft)"
         }}
       >
-        <span className="font-[var(--font-spectral)] text-[15px] font-semibold tracking-[0.08em]">ODIM</span>
+        <OdimLogo size={28} />
         <nav className="flex gap-0.5">
           {nav.map((item) => {
             const Icon = item.icon;
@@ -152,7 +145,7 @@ export function Shell({
         </nav>
       </div>
 
-      <main className="min-h-screen md:ml-64">{children}</main>
+      <main className="min-h-screen md:ml-[calc(var(--sidebar-w)+20px)]">{children}</main>
     </div>
   );
 }

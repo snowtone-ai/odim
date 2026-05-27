@@ -9,18 +9,18 @@ export function Panel({
       className="overflow-hidden rounded-[var(--radius-lg)]"
       style={{
         background: "var(--ink-800)",
-        border: "1px solid var(--glass-border)",
+        border: accent ? "1px solid var(--line-strong)" : "1px solid var(--glass-border)",
         boxShadow: accent
           ? "var(--shadow-inset), var(--shadow-md), var(--shadow-glow)"
           : "var(--shadow-inset), var(--shadow-sm)",
         backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.016) 0%, transparent 64px)"
       }}
     >
-      {/* Panel header — 12px semi-bold, text-secondary for clear readability */}
+      {/* Panel header */}
       <div
         className="flex items-center px-5 py-3"
         style={{
-          borderBottom: "1px solid var(--line-faint)",
+          borderBottom: "1px solid var(--line-soft)",
           backgroundImage: "linear-gradient(90deg, rgba(255,255,255,0.008) 0%, transparent 50%)"
         }}
       >

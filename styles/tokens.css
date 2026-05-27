@@ -46,7 +46,7 @@
 
   /* ── Glass ── */
   --glass-bg:        rgba(12, 15, 21, 0.76);
-  --glass-border:    rgba(255, 255, 255, 0.055);
+  --glass-border:    rgba(255, 255, 255, 0.10);
   --glass-highlight: rgba(255, 255, 255, 0.028);
 
   /* ── Shadows ── */

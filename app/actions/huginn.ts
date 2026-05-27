@@ -21,9 +21,10 @@ export type ClientHuginnResponse = {
  */
 export async function submitHuginnQuestion(
   question: string,
-  orgId: string
+  orgId: string,
+  webSearch?: boolean
 ): Promise<ClientHuginnResponse> {
-  const result = await answerHuginnQuestion({ question, orgId });
+  const result = await answerHuginnQuestion({ question, orgId, webSearch });
   return {
     answer: result.answer,
     confidence: result.confidence,

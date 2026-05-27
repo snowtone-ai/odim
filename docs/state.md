@@ -2,14 +2,21 @@
 
 ## Current
 - Branch: main
-- Active task: long-term operational hardening toward fully usable no-paid-API product
+- Active task: release-critical refactoring complete
 - Current executor: Codex CEO Agent
 - Write lock: none
 - Coordinator: CEO Agent
-- Latest verification pointer: operational ingestion hardening verified (57/57 tests pass, typecheck clean, pnpm verify success, release audit 91 checks, pnpm build success)
+- Latest verification pointer: release-critical refactoring verified (pnpm typecheck clean, pnpm lint clean, 78/78 tests pass, pnpm build success, release audit 91 checks passed)
 - Verification mode: standard
 
 ## Completed after v3.0
+
+### Release-critical refactoring and review
+- RC-001窶鼎C-031 are implemented as focused commits across security headers, CI, env validation, auth scope controls, prompt safety, AI/scraper timeouts, transactional ingestion, route rate limits, frontend resilience, RLS smoke coverage, parser coverage, and bias tests.
+- Added `middleware.ts`, `.github/workflows/ci.yml`, `lib/env/validate.ts`, `lib/api/rate-limit.ts`, `supabase/migrations/0006_ingest_transaction.sql`, `supabase/migrations/0007_performance_indexes.sql`, route-level Huginn tests, and expanded parser/bias/RLS smoke tests.
+- Default migration runner now applies 0001窶・007, including transactional ingestion and performance indexes.
+- `AGENTS.md` now records release-critical coding rules for future repository work.
+- Verification: `pnpm typecheck`, `pnpm lint`, `pnpm test` (78/78), `pnpm build`, and `pnpm release:audit` (91 checks) passed.
 
 ### Operational ingestion hardening
 - Daily scrape workflow now runs a dry-run smoke and then `pnpm scrape` with Supabase write env, instead of cron-only dry-run.

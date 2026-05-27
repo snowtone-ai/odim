@@ -9,7 +9,7 @@ const VALID_LAYERS: Set<string> = new Set([
 ]);
 
 export default async function RealityMapPage(
-  props: { searchParams: Promise<{ filter?: string }> }
+  props: { searchParams: Promise<{ filter?: string; lat?: string; lng?: string; zoom?: string }> }
 ) {
   const locale = await getLocale();
   const messages = getMessages(locale);
@@ -17,20 +17,20 @@ export default async function RealityMapPage(
   const searchParams = await props.searchParams;
   const filterParam = searchParams.filter;
   const initialFilter = filterParam && VALID_LAYERS.has(filterParam) ? (filterParam as LayerKey) : null;
+  const lat = searchParams.lat ? Number(searchParams.lat) : undefined;
+  const lng = searchParams.lng ? Number(searchParams.lng) : undefined;
+  const zoom = searchParams.zoom ? Number(searchParams.zoom) : undefined;
+  const initialCenter = lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng)
+    ? { lat, lng, zoom: Number.isFinite(zoom ?? NaN) ? zoom : undefined }
+    : undefined;
 
   return (
     <section className="flex h-screen flex-col">
-      {/* Compact header */}
+      {/* Compact status bar — no title, just live indicator */}
       <header
-        className="flex shrink-0 items-center justify-between px-5 py-2"
+        className="flex shrink-0 items-center justify-end px-5 py-2"
         style={{ borderBottom: "1px solid var(--line-faint)" }}
       >
-        <h1
-          className="font-[var(--font-spectral)] text-[18px] leading-tight tracking-wide"
-          style={{ color: "var(--text-primary)" }}
-        >
-          {screen.title}
-        </h1>
         <div
           className="mono flex shrink-0 items-center gap-2 rounded-[var(--radius-sm)] px-2.5 py-1 text-[10px] uppercase tracking-[0.14em]"
           style={{
@@ -57,6 +57,7 @@ export default async function RealityMapPage(
             selectLabel={screen.panels.layers}
             searchHint={screen.searchHint}
             initialFilter={initialFilter}
+            initialCenter={initialCenter}
           />
         </div>
 
@@ -65,7 +66,7 @@ export default async function RealityMapPage(
           className="hidden overflow-y-auto xl:flex xl:flex-col"
           style={{
             background: "var(--ink-850)",
-            borderLeft: "1px solid var(--line-faint)"
+            borderLeft: "1px solid var(--line-soft)"
           }}
         >
           {/* Layers section */}
