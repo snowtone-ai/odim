@@ -251,6 +251,34 @@ test("database upsert uses durable conflict keys for replays", async () => {
   );
 });
 
+test("database upsert prefers ingest_batch RPC transaction", async () => {
+  const signals = parseFercRecords(
+    [{ queue_id: "Q-2", utility: "ERCOT", requested_mw: "150", status: "active", posted_at: "2026-05-20" }],
+    "https://example.local/ferc"
+  );
+  const plan = buildIngestionPlan(signals);
+  const calls = [];
+  const client = {
+    async rpc(functionName, args) {
+      calls.push({ functionName, args });
+      return { error: null };
+    },
+    from() {
+      throw new Error("sequential fallback should not run when RPC exists");
+    }
+  };
+
+  await upsertIngestionPlan(client, plan);
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].functionName, "ingest_batch");
+  assert.equal(calls[0].args.p_signals.length, plan.rawSignals.length);
+  assert.equal(calls[0].args.p_objects.length, plan.ontologyObjects.length);
+  assert.equal(calls[0].args.p_links.length, plan.ontologyLinks.length);
+  assert.equal(calls[0].args.p_alerts.length, plan.alerts.length);
+  assert.equal(calls[0].args.p_audit.length, plan.auditEvents.length);
+});
+
 test("narrative signals are audited but not promoted into ontology truth", () => {
   const narrative = parseNarrativeRecords(
     [

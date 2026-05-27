@@ -40,7 +40,8 @@ const files = migrations.length
       "supabase/migrations/0002_huginn_munin_v2.sql",
       "supabase/migrations/0003_sleep_time_compute.sql",
       "supabase/migrations/0004_ai_rate_limit_usage.sql",
-      "supabase/migrations/0005_ingestion_operations.sql"
+      "supabase/migrations/0005_ingestion_operations.sql",
+      "supabase/migrations/0006_ingest_transaction.sql"
     ];
 
 for (const file of files) {

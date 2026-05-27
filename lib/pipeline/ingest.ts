@@ -62,6 +62,22 @@ export function toDatabaseRows(plan: IngestionPlan) {
 
 export async function upsertIngestionPlan(client: SupabaseClient, plan: IngestionPlan) {
   const rows = toDatabaseRows(plan);
+  const rpcClient = client as SupabaseClient & {
+    rpc?: (functionName: string, args: Record<string, unknown>) => Promise<{ error: { message: string; code?: string } | null }>;
+  };
+  if (typeof rpcClient.rpc === "function") {
+    const { error } = await rpcClient.rpc("ingest_batch", {
+      p_signals: rows.rawSignals,
+      p_objects: rows.ontologyObjects,
+      p_links: rows.ontologyLinks,
+      p_alerts: rows.alerts,
+      p_audit: rows.auditEvents
+    });
+    if (!error) return;
+    if (!isMissingIngestBatchRpc(error)) throw new Error(`ingest_batch RPC failed: ${error.message}`);
+    console.warn("ingest_batch RPC unavailable; falling back to sequential upserts", { error: error.message });
+  }
+
   const operations: Array<[string, Array<Record<string, unknown>>]> = [
     ["raw_signals", rows.rawSignals],
     ["ontology_objects", rows.ontologyObjects],
@@ -82,4 +98,8 @@ export async function upsertIngestionPlan(client: SupabaseClient, plan: Ingestio
     const { error } = await client.from(table).upsert(tableRows, { onConflict: conflictTargets[table] ?? "id" });
     if (error) throw new Error(`${table} upsert failed: ${error.message}`);
   }
+}
+
+function isMissingIngestBatchRpc(error: { message: string; code?: string }) {
+  return error.code === "PGRST202" || /Could not find the function|schema cache|function .* does not exist/i.test(error.message);
 }
