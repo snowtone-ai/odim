@@ -6,7 +6,7 @@ import { getLocale } from "@/lib/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
-const defaultHuginnOrgId = process.env.PAID_SOURCE_ORG_ID || "11111111-1111-4111-8111-111111111111";
+const defaultHuginnOrgId = process.env.DEFAULT_ORG_ID || "11111111-1111-4111-8111-111111111111";
 
 export default async function HuginnPage() {
   const locale = await getLocale();

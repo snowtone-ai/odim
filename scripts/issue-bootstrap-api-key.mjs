@@ -37,7 +37,7 @@ function isUuid(value) {
 
 loadDotenvLocal();
 
-const orgId = process.env.BOOTSTRAP_ORG_ID || process.env.PAID_SOURCE_ORG_ID || "11111111-1111-4111-8111-111111111111";
+const orgId = process.env.BOOTSTRAP_ORG_ID || process.env.DEFAULT_ORG_ID || "11111111-1111-4111-8111-111111111111";
 const name = process.env.BOOTSTRAP_API_KEY_NAME || "Bootstrap Admin API Key";
 const scopes = (process.env.BOOTSTRAP_API_KEY_SCOPES || "admin:*")
   .split(",")

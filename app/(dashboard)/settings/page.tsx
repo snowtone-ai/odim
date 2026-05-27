@@ -8,7 +8,7 @@ import { getAdminSettings } from "@/lib/repositories/admin";
 import { listSeedMemories } from "@/lib/munin/seed";
 import { auditEvents } from "@/lib/data";
 
-const defaultSettingsOrgId = process.env.PAID_SOURCE_ORG_ID || "11111111-1111-4111-8111-111111111111";
+const defaultSettingsOrgId = process.env.DEFAULT_ORG_ID || "11111111-1111-4111-8111-111111111111";
 
 function shortDate(value?: string) {
   if (!value) return "not recorded";
