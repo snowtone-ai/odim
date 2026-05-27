@@ -8,10 +8,10 @@ Current environment model: single Supabase project/branch (`main`, production-ta
 
 | Requirement | Status Target | Authoritative Evidence |
 |---|---|---|
-| Requirement 1: all 8 screens are complete at `source-07-design.md` quality | Local code gate | `app/(dashboard)/*/page.tsx`, `styles/tokens.css`, `components/ui/*`, `tests/no-placeholder-surfaces.test.mjs`, `pnpm release:audit`, browser smoke |
-| Requirement 2: all 7 Reality Layers have data pipelines | Local code gate | `config/sources.json`, `scrapers/*`, `lib/pipeline/*`, `tests/pipeline-ingestion.test.mjs`, `pnpm scrape:dry-run` |
+| Requirement 1: all 5 consolidated screens are complete at `source-07-design.md` quality | Local code gate | `app/(dashboard)/*/page.tsx`, `styles/tokens.css`, `components/ui/*`, `tests/no-placeholder-surfaces.test.mjs`, `pnpm release:audit`, browser smoke |
+| Requirement 2: all 7 Reality Layers have data pipelines | Local code gate | `config/sources.json`, `scrapers/*`, `lib/pipeline/*`, `tests/pipeline-ingestion.test.mjs`, `tests/automation-workflows.test.mjs`, `pnpm scrape:dry-run`, `pnpm scrape:backfill` |
 | Requirement 3: Huginn/Munin works with org isolation | Local code gate plus staging RLS smoke | `app/api/huginn/route.ts`, `lib/huginn/query.ts`, `lib/munin/memory.ts`, `lib/api/org.ts`, `supabase/migrations/0001_initial.sql`, `tests/huginn-query.test.mjs`, `tests/security-controls.test.mjs` |
-| Requirement 4: all reasoning has sources, confidence, and Audit Trail traceability | Local code gate | `lib/pipeline/audit.ts`, `lib/pipeline/alert.ts`, `lib/repositories/reality.ts`, `app/(dashboard)/audit/page.tsx`, `tests/pipeline-ingestion.test.mjs`, `tests/no-placeholder-surfaces.test.mjs` |
+| Requirement 4: all reasoning has sources, confidence, and Audit Trail traceability | Local code gate | `lib/pipeline/audit.ts`, `lib/pipeline/alert.ts`, `lib/repositories/reality.ts`, `app/(dashboard)/settings/page.tsx`, `tests/pipeline-ingestion.test.mjs`, `tests/no-placeholder-surfaces.test.mjs` |
 | Requirement 5: runs inside free tiers for Gemini Flash / Supabase / Vercel | Local code gate plus env discipline | `lib/ai/rate-limit.ts`, `.env.example`, `package.json`, `pnpm build`; Gemini 2.5 Flash defaults are capped at 10 RPM / 250,000 TPM / 250 RPD per org/model bucket. Google AI rate-limit docs checked on 2026-05-24: https://ai.google.dev/gemini-api/docs/rate-limits |
 | Requirement 6: commercialization requires only `.env` key replacement and paid source entries in `config/sources.json` | Local code gate | `.env.example`, `config/sources.json`, `scrapers/configured-source.ts`, `scrapers/run.ts`, `tests/pipeline-ingestion.test.mjs`; paid feeds must set `orgIdEnv` so proprietary raw signals remain tenant-scoped |
 
@@ -27,12 +27,13 @@ Current environment model: single Supabase project/branch (`main`, production-ta
 | Production Supabase failures do not fall back to demo data | `lib/env/runtime.ts`, `lib/repositories/reality.ts`, `lib/repositories/admin.ts`, `lib/huginn/query.ts`, `tests/repository-fallback.test.mjs`, `tests/huginn-query.test.mjs`; `ODIM_RUNTIME_ENV=production` or Vercel production env disables schema/read/write fallback |
 | Narrative is not mixed into Reality truth | `lib/pipeline/ontologize.ts`, `tests/pipeline-ingestion.test.mjs` |
 | Glossary language remains consistent | Dashboard copy is centralized in `lib/i18n/messages.ts`; product terms remain Odim/Huginn/Munin/Reality Layer/Audit Trail |
+| Daily and historical ingestion are operable | `.github/workflows/daily-scrape.yml`, `scrapers/run.ts`, `scripts/apply-db-migrations.mjs`, `supabase/migrations/0005_ingestion_operations.sql`, `app/(dashboard)/settings/page.tsx`, `tests/automation-workflows.test.mjs`; daily writes to Supabase after dry-run smoke, backfill supports source/date/page controls, and run/watermark state is visible in Settings |
 
 ## Human-Only Launch Gates
 
 These are deployment operations, not code changes:
 
-- Apply `supabase/migrations/0001_initial.sql`, `0002_huginn_munin_v2.sql`, and `0003_sleep_time_compute.sql` to the target Supabase project. If `AI_RATE_LIMIT_BACKEND=supabase` is enabled, also apply `0004_ai_rate_limit_usage.sql`.
+- Apply `supabase/migrations/0001_initial.sql` through `0005_ingestion_operations.sql` to the target Supabase project. The default `pnpm db:migrate:*` runner applies all five migrations in order.
 - Set `.env` values in Vercel/Supabase/GitHub Actions from `.env.example`, including `AUTH_REQUIRED=true` for commercial API routes.
 - Set a high-entropy `API_KEY_PEPPER`; API key auth returns 503 when auth is enforced without it.
 - Configure infrastructure-level API auth rate limiting for production, such as Vercel Edge Middleware, Vercel Firewall, Cloudflare WAF, API Gateway, or Redis-backed shared throttling. The in-process limiter is a fail-safe, not the only commercial control.
@@ -45,17 +46,17 @@ These are deployment operations, not code changes:
 
 ## Final Verification Snapshot
 
-Recorded after Huginn/Munin v2 review remediation:
+Recorded after operational ingestion hardening:
 
 | Gate | Result |
 |---|---|
-| `pnpm test` | 49 tests passed |
+| `pnpm test` | 57 tests passed |
 | `pnpm typecheck` | passed |
-| `pnpm release:audit` | 94 checks passed |
+| `pnpm release:audit` | 91 checks passed |
 | `pnpm verify` | structural checks passed |
-| `pnpm db:migrate:staging` | executed via `psql` wrapper (0002/0003 applied) |
+| `pnpm db:migrate:staging` | default runner applies 0001 through 0005; live execution requires `SUPABASE_STAGING_DATABASE_URL` |
 | `pnpm rls:staging` | passed (all cross-org probes `0`) |
-| `pnpm db:migrate:production` | executed via `psql` wrapper (0002/0003 applied; existing objects skipped safely) |
+| `pnpm db:migrate:production` | default runner applies 0001 through 0005; live execution requires `SUPABASE_PRODUCTION_DATABASE_URL` |
 | `pnpm build` | production build passed; `/huginn` is dynamic server-rendered on demand |
 | Browser/API smoke | pending because dev server background start still needs a working local server process |
 
@@ -63,7 +64,7 @@ Recorded after Huginn/Munin v2 review remediation:
 
 Status: v2 remediation smoke completed on 2026-05-25.
 
-Run after applying `supabase/migrations/0001_initial.sql`, `0002_huginn_munin_v2.sql`, and `0003_sleep_time_compute.sql` to the staging Supabase project.
+Run after applying `supabase/migrations/0001_initial.sql` through `0005_ingestion_operations.sql` to the staging Supabase project.
 
 Preferred command:
 

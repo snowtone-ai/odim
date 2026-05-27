@@ -1,11 +1,11 @@
 # tasks.md -- pm-zero v9.5 Execution Ledger
 
 ## Goal Binding
-- Active goal: Odim v3.0 — First-Principles Product Overhaul
-- Planning owner: Souma (Planner)
-- Implementation owner: Sonnet (Claude Code)
-- Review owner: Souma
-- Scope: T031–T052 (full product overhaul). No scope deferral.
+- Active goal: Complete usable Odim product without business launch or paid APIs
+- Planning owner: Codex CEO Agent
+- Implementation owner: Codex
+- Review owner: Codex, with external senior review prompt generated for Claude Code
+- Scope: Keep the v3.0 product surface stable while closing locally solvable gaps for free-tier, source-backed, long-term operation.
 
 ## Status Vocabulary
 - proposed: idea exists, not ready
@@ -142,6 +142,21 @@ Phase 5: T054 → T055
 - T050 (command palette), T051 (entity links), T052 (i18n) are independent of each other.
 
 **Write scope conflicts**: Map work (Phase 1) and entity page merges (T043–T044) both touch page components but different files. Safe to parallelize with disjoint scopes.
+
+---
+
+## Operational Hardening Tasks
+
+| ID | Status | Owner | Depends On | Write Scope | Acceptance | Verification | Evidence |
+|---|---|---|---|---|---|---|---|
+| T056 | verified | Codex | T055 | `.github/workflows/daily-scrape.yml`, `scrapers/run.ts`, `package.json`, `tests/automation-workflows.test.mjs` | Daily public-source ingestion performs dry-run smoke and then live Supabase write with minimum-signal failure controls | `pnpm test`; `pnpm verify`; `pnpm build` | Workflow runs `pnpm scrape:dry-run` followed by `pnpm scrape`; automation tests pass |
+| T057 | verified | Codex | T056 | `scrapers/run.ts`, `scrapers/*`, `config/sources.json`, `tests/*` | Initial historical ingestion is available through `pnpm scrape:backfill` with source selection, date windows, page size, and page count controls | `pnpm test`; `pnpm release:audit` | Backfill tests cover `SCRAPE_SOURCE_IDS`, `SCRAPE_BACKFILL_START/END`, `SCRAPE_PAGE_SIZE`, `SCRAPE_MAX_PAGES`; paged adapters tested |
+| T058 | verified | Codex | T056 | `supabase/migrations/0005_ingestion_operations.sql`, `lib/pipeline/ingest.ts`, `scrapers/run.ts`, `scripts/apply-db-migrations.mjs` | Ingestion runs and source watermarks persist for replay/resume planning; default migration runner applies 0001-0005 | `pnpm test`; `pnpm verify`; `pnpm build` | `ingestion_runs` and `source_watermarks` migration exists; runner includes 0005; pipeline tests pass |
+| T059 | verified | Codex | T056 | `lib/pipeline/ingest.ts`, `tests/pipeline-ingestion.test.mjs` | Database writes are idempotent across replay using durable conflict keys | `pnpm test` | Raw signals upsert by fingerprint, alerts/audit by dedupe key, ontology objects by id |
+| T060 | verified | Codex | T055 | `lib/repositories/*`, `lib/env/runtime.ts`, `tests/repository-fallback.test.mjs`, `tests/huginn-query.test.mjs` | Production Supabase read/write errors fail closed instead of returning fallback demo data | `pnpm test`; `pnpm release:audit` | Production fallback tests and release audit pass |
+| T061 | verified | Codex | T056 | `.github/workflows/daily-dream.yml`, `scripts/run-daily-dream.mjs`, `package.json` | Daily Munin Dream has a stable scheduled entry point using `DEFAULT_ORG_ID` | `pnpm test`; `pnpm verify` | `pnpm dream:daily` script and workflow are present; default org no longer depends on paid-source env |
+| T062 | verified | Codex | T058 | `app/(dashboard)/settings/page.tsx`, `lib/repositories/admin.ts`, `tests/admin-repository.test.mjs` | Operators can see recent ingestion runs and source watermarks in Settings without querying Supabase directly | `pnpm typecheck`; `pnpm test`; `pnpm build` | Settings route renders run/watermark panels; admin repository tests pass |
+| T063 | verified | Codex | T055 | `app/(dashboard)/settings/page.tsx`, `app/(dashboard)/huginn/page.tsx`, `scripts/*.mjs` | Free/default runtime paths use `DEFAULT_ORG_ID`; paid-source org env remains limited to configured proprietary sources | `pnpm typecheck`; `pnpm test`; `pnpm verify`; `pnpm release:audit`; `pnpm build` | App/scripts no longer read `PAID_SOURCE_ORG_ID` for default org context |
 
 ---
 

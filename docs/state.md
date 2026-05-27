@@ -6,7 +6,7 @@
 - Current executor: Codex CEO Agent
 - Write lock: none
 - Coordinator: CEO Agent
-- Latest verification pointer: operational ingestion hardening verified (57/57 tests pass, typecheck clean, pnpm verify success, pnpm build success)
+- Latest verification pointer: operational ingestion hardening verified (57/57 tests pass, typecheck clean, pnpm verify success, release audit 91 checks, pnpm build success)
 - Verification mode: standard
 
 ## Completed after v3.0
@@ -25,6 +25,8 @@
 - Pipeline DB upserts now use durable conflict keys: raw signals by fingerprint, alerts/audit by dedupe key, ontology by id.
 - Production repository/admin reads and writes now fail closed when Supabase env is missing instead of returning fallback data.
 - Daily Munin Dream workflow now uses Node 24 and `pnpm dream:daily` with `DEFAULT_ORG_ID` instead of inline TypeScript import and paid-source org naming.
+- App/default operational scripts use `DEFAULT_ORG_ID` for default org context; `PAID_SOURCE_ORG_ID` remains limited to configured proprietary source templates.
+- `tasks.md` and `docs/commercial-readiness.md` now record the operational hardening evidence instead of stale v2/v3 verification snapshots.
 
 ## Completed in v3.0 (T031–T055)
 
