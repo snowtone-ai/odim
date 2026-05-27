@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkRequestRateLimit } from "@/lib/api/rate-limit";
 import { authorizeApiRequest } from "@/lib/auth/request";
 import { answerHuginnQuestion } from "@/lib/huginn/query";
 
@@ -8,6 +9,13 @@ export async function POST(request: Request) {
   try {
     const auth = await authorizeApiRequest(request, "huginn:query");
     if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+    const rateLimit = checkRequestRateLimit(auth.context.orgId, "huginn", { maxRequests: 10, windowMs: 60_000 });
+    if (!rateLimit.ok) {
+      return NextResponse.json(
+        { error: "Too many requests" },
+        { status: 429, headers: { "Retry-After": String(rateLimit.retryAfter) } }
+      );
+    }
     const body = (await request.json().catch(() => ({}))) as { question?: string; orgId?: string; userId?: string };
     if (!body.question) {
       return NextResponse.json({ error: "question is required" }, { status: 400 });

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { checkRequestRateLimit, resetRequestRateLimit } from "../lib/api/rate-limit.ts";
 import { canIssueScopes, issueApiKey, redactApiKey, resolveIssuableScopes, toApiKeyRow, verifyApiKey } from "../lib/auth/api-keys.ts";
 import { authorizeApiRequest, resetApiAuthRateLimit } from "../lib/auth/request.ts";
 import { createApiKey, getAdminSettings, revokeApiKey } from "../lib/repositories/admin.ts";
@@ -245,6 +246,18 @@ test("API key issuance rejects admin wildcard and scope escalation", async () =>
   assert.equal(canIssueScopes(["admin:write"], ["alerts:read"]), false);
   assert.equal(canIssueScopes(["admin:*"], ["alerts:read"]), true);
   assert.equal(canIssueScopes(["alerts:read", "entities:read"], ["alerts:read"]), true);
+});
+
+test("request rate limiter returns retry window after burst", () => {
+  resetRequestRateLimit();
+  const limits = { maxRequests: 2, windowMs: 60_000 };
+  assert.equal(checkRequestRateLimit("org-a", "huginn", limits, 1_000).ok, true);
+  assert.equal(checkRequestRateLimit("org-a", "huginn", limits, 2_000).ok, true);
+  const blocked = checkRequestRateLimit("org-a", "huginn", limits, 3_000);
+  assert.equal(blocked.ok, false);
+  assert.equal(blocked.retryAfter, 58);
+  assert.equal(checkRequestRateLimit("org-b", "huginn", limits, 3_000).ok, true);
+  resetRequestRateLimit();
 });
 
 test("admin repository fallback exposes org, members, alert rules, and redacted api keys", async () => {
