@@ -60,6 +60,16 @@
 - Scalability
 - UX polish
 
+## Release-Critical Coding Rules
+- Keep each change focused on one concern. Do not mix refactors, behavior changes, tests, and documentation beyond what the active task requires.
+- Security hardening is additive: tighten validation, auth, rate limits, env gates, and error handling without removing existing protections.
+- Tests travel with risky code. Add or update focused tests in the same change when touching auth, tenant isolation, AI prompts, ingestion, parsers, migrations, or API routes.
+- Migrations are append-only unless explicitly directed. Never edit applied migrations; add a new numbered migration and update the migration runner when it should apply by default.
+- API routes must authorize first, validate input before domain work, avoid trusting request body org IDs over authenticated context, and return JSON errors without leaking stack traces.
+- External calls and scheduled jobs must fail visibly: use timeouts, bounded retries or concurrency, source-level reports, and logged errors that can be traced from CI or operations output.
+- Frontend resilience changes must preserve accessibility: visible page headings, loading/error states, reduced-motion support, and no background animation loops while the tab is hidden.
+- Verification is part of the work. Run the narrowest useful check after each focused change, then run the repository-level command required by the task or group before declaring completion.
+
 ## Commands
 - install: pnpm install
 - lint: pnpm lint

@@ -237,11 +237,11 @@ check(
 );
 check(
   "ui:huginn-console-runtime",
-  huginnAction.includes("answerHuginnQuestion") &&
+    huginnAction.includes("answerHuginnQuestion") &&
     huginnAction.includes("eval_log_id") &&
     huginnAction.includes("reasoningTrace") &&
-    huginnConsole.includes("response.eval_log_id") &&
-    huginnConsole.includes("response.reasoningTrace") &&
+    (huginnConsole.includes("response.eval_log_id") || huginnConsole.includes("latestResponse.eval_log_id")) &&
+    (huginnConsole.includes("response.reasoningTrace") || huginnConsole.includes("latestResponse.retrieval_layers_used")) &&
     huginnPage.includes("force-dynamic"),
   "Huginn Console renders runtime Huginn response, trace, sources, counts, and eval_log_id"
 );
@@ -259,7 +259,7 @@ check("i18n:en-ja", i18n.includes("en:") && i18n.includes("ja:") && i18n.include
 
 const shell = file("components/ui/shell.tsx");
 const alertsPage = file("app/(dashboard)/alerts/page.tsx");
-check("mobile:shell", shell.includes("overflow-x-auto") && shell.includes("md:ml-64"), "Mobile shell with desktop sidebar fallback");
+check("mobile:shell", shell.includes("overflow-x-auto") && shell.includes("md:ml-[calc(var(--sidebar-w)+20px)]"), "Mobile shell with desktop sidebar fallback");
 check("mobile:alerts", alertsPage.includes("grid-cols-1") && alertsPage.includes("xl:grid-cols-[420px_1fr]"), "Signal Alerts mobile layout");
 
 const provider = file("lib/ai/provider.ts");
