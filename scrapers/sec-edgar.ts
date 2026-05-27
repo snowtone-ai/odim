@@ -1,4 +1,5 @@
 import type { RawSignal } from "../lib/pipeline/types.ts";
+import { fetchWithTimeout } from "./common.ts";
 
 type SecRecentFilings = {
   accessionNumber?: string[];
@@ -132,7 +133,7 @@ export async function fetchSecEdgarSignals(options: SecEdgarOptions): Promise<Ra
   const batches = await Promise.all(
     options.ciks.map(async (cik) => {
       const normalizedCik = normalizeCik(cik);
-      const response = await fetchImpl(`${baseUrl}/CIK${normalizedCik}.json`, {
+      const response = await fetchWithTimeout(fetchImpl, `${baseUrl}/CIK${normalizedCik}.json`, {
         headers: {
           "user-agent": userAgent,
           accept: "application/json"
@@ -147,7 +148,7 @@ export async function fetchSecEdgarSignals(options: SecEdgarOptions): Promise<Ra
       for (const file of payload.filings?.files?.slice(0, historicalFileLimit) ?? []) {
         if (!file.name || signals.length >= limit) break;
         const fileUrl = historicalSubmissionUrl(baseUrl, file.name);
-        const fileResponse = await fetchImpl(fileUrl, {
+        const fileResponse = await fetchWithTimeout(fetchImpl, fileUrl, {
           headers: {
             "user-agent": userAgent,
             accept: "application/json"

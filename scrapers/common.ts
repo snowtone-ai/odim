@@ -47,8 +47,23 @@ export function applyPagingToUrl(feedUrl: string, options: { limit?: number; off
   return url.toString();
 }
 
+export async function fetchWithTimeout(fetchImpl: typeof fetch, url: string, init: RequestInit = {}, timeoutMs = 30_000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetchImpl(url, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error(`${url} request timed out after ${timeoutMs}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function fetchJsonOrCsvRecords(fetchImpl: typeof fetch, feedUrl: string, headers: Record<string, string> = {}) {
-  const response = await fetchImpl(feedUrl, {
+  const response = await fetchWithTimeout(fetchImpl, feedUrl, {
     headers: { accept: "application/json,text/csv;q=0.9,*/*;q=0.1", ...headers }
   });
   if (!response.ok) throw new Error(`${feedUrl} request failed: ${response.status}`);
