@@ -22,6 +22,26 @@ export type AlertRule = {
   createdAt: string;
 };
 
+export type IngestionRun = {
+  id: string;
+  mode: "daily" | "backfill" | "dry-run";
+  status: "running" | "succeeded" | "failed";
+  rawSignalCount: number;
+  alertCount: number;
+  sourceLimit: number;
+  startedAt: string;
+  finishedAt?: string;
+  error?: string;
+};
+
+export type SourceWatermark = {
+  sourceId: string;
+  mode: string;
+  lastSuccessAt: string;
+  lastObservedAt?: string;
+  rawSignalCount: number;
+};
+
 const demoOrgId = "demo-org";
 
 const fallbackMembers: OrgMember[] = [
@@ -63,6 +83,53 @@ const fallbackAlertRules: AlertRule[] = [
   }
 ];
 
+const fallbackIngestionRuns: IngestionRun[] = [
+  {
+    id: deterministicUuid("ingestion_run", "fallback-daily"),
+    mode: "daily",
+    status: "succeeded",
+    rawSignalCount: 13,
+    alertCount: 4,
+    sourceLimit: 50,
+    startedAt: "2026-05-27T08:17:00.000Z",
+    finishedAt: "2026-05-27T08:18:12.000Z"
+  },
+  {
+    id: deterministicUuid("ingestion_run", "fallback-backfill"),
+    mode: "backfill",
+    status: "succeeded",
+    rawSignalCount: 500,
+    alertCount: 37,
+    sourceLimit: 500,
+    startedAt: "2026-05-26T01:00:00.000Z",
+    finishedAt: "2026-05-26T01:08:42.000Z"
+  }
+];
+
+const fallbackSourceWatermarks: SourceWatermark[] = [
+  {
+    sourceId: "sec-edgar",
+    mode: "backfill",
+    lastSuccessAt: "2026-05-26T01:08:42.000Z",
+    lastObservedAt: "2026-05-20T00:00:00.000Z",
+    rawSignalCount: 120
+  },
+  {
+    sourceId: "ferc-elibrary",
+    mode: "daily",
+    lastSuccessAt: "2026-05-27T08:18:12.000Z",
+    lastObservedAt: "2026-05-19T00:00:00.000Z",
+    rawSignalCount: 48
+  },
+  {
+    sourceId: "eia-electricity",
+    mode: "backfill",
+    lastSuccessAt: "2026-05-26T01:08:42.000Z",
+    lastObservedAt: "2026-04-01T00:00:00.000Z",
+    rawSignalCount: 100
+  }
+];
+
 function effectiveOrgId(context: OrgContext) {
   return context.orgId ?? demoOrgId;
 }
@@ -73,7 +140,9 @@ function fallbackAdminSettings(orgId: string) {
     org: { id: orgId, name: "Odim Demo Fund", tier: "intelligence" },
     members: fallbackMembers.filter((member) => member.orgId === orgId),
     apiKeys: [redactApiKey({ ...fallbackApiKey, orgId })],
-    alertRules: fallbackAlertRules.map((rule) => ({ ...rule, orgId }))
+    alertRules: fallbackAlertRules.map((rule) => ({ ...rule, orgId })),
+    ingestionRuns: fallbackIngestionRuns,
+    sourceWatermarks: fallbackSourceWatermarks
   };
 }
 
@@ -103,7 +172,7 @@ export async function getAdminSettings(context: OrgContext = {}) {
   }
 
   const client = createServerSupabaseReadClient();
-  const [orgResult, usersResult, apiKeysResult, alertRulesResult] = await Promise.all([
+  const [orgResult, usersResult, apiKeysResult, alertRulesResult, ingestionRunsResult, sourceWatermarksResult] = await Promise.all([
     client.from("orgs").select("id, name, tier").eq("id", orgId).single(),
     client.from("users").select("id, org_id, display_name, role").eq("org_id", orgId).limit(100),
     client
@@ -118,10 +187,26 @@ export async function getAdminSettings(context: OrgContext = {}) {
       .select("id, org_id, name, layer, min_confidence, destination, enabled, created_at")
       .or(tenantOrPublicFilter("org_id", orgId))
       .order("created_at", { ascending: false })
-      .limit(100)
+      .limit(100),
+    client
+      .from("ingestion_runs")
+      .select("id, mode, status, source_limit, raw_signal_count, alert_count, error, started_at, finished_at")
+      .order("started_at", { ascending: false })
+      .limit(10),
+    client
+      .from("source_watermarks")
+      .select("source_id, mode, last_success_at, last_observed_at, raw_signal_count")
+      .order("updated_at", { ascending: false })
+      .limit(25)
   ]);
 
-  const firstError = orgResult.error ?? usersResult.error ?? apiKeysResult.error ?? alertRulesResult.error;
+  const firstError =
+    orgResult.error ??
+    usersResult.error ??
+    apiKeysResult.error ??
+    alertRulesResult.error ??
+    ingestionRunsResult.error ??
+    sourceWatermarksResult.error;
   if (firstError) {
     if (shouldFallbackFromSupabaseError(firstError.message)) return fallbackAdminSettings(orgId);
     throw new Error(`admin settings read failed: ${firstError.message}`);
@@ -156,6 +241,24 @@ export async function getAdminSettings(context: OrgContext = {}) {
       destination: ["email", "slack", "api"].includes(String(row.destination)) ? row.destination : "api",
       enabled: Boolean(row.enabled),
       createdAt: String(row.created_at)
+    })),
+    ingestionRuns: (ingestionRunsResult.data ?? []).map((row) => ({
+      id: String(row.id),
+      mode: ["daily", "backfill", "dry-run"].includes(String(row.mode)) ? row.mode : "daily",
+      status: ["running", "succeeded", "failed"].includes(String(row.status)) ? row.status : "failed",
+      rawSignalCount: Number(row.raw_signal_count ?? 0),
+      alertCount: Number(row.alert_count ?? 0),
+      sourceLimit: Number(row.source_limit ?? 0),
+      startedAt: String(row.started_at),
+      finishedAt: row.finished_at ? String(row.finished_at) : undefined,
+      error: row.error ? String(row.error) : undefined
+    })),
+    sourceWatermarks: (sourceWatermarksResult.data ?? []).map((row) => ({
+      sourceId: String(row.source_id),
+      mode: String(row.mode ?? "daily"),
+      lastSuccessAt: String(row.last_success_at),
+      lastObservedAt: row.last_observed_at ? String(row.last_observed_at) : undefined,
+      rawSignalCount: Number(row.raw_signal_count ?? 0)
     }))
   };
 }

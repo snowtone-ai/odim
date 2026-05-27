@@ -33,6 +33,7 @@ Odim is a multi-agent intelligence system that ingests real-world signals (SEC, 
 | Autonomous agent | `lib/munin/dream.ts` | Daily synthesis loop |
 | Scraper runner | `scrapers/run.ts` | `runScrape` called by `daily-scrape.yml`; supports daily/backfill/dry-run |
 | Settings UI | `components/ui/seed-memory-manager.tsx` | Fact/opinion CRUD |
+| Ingestion operations UI | `app/(dashboard)/settings/page.tsx` | Recent scrape/backfill run status and source watermarks |
 
 ## Core Modules
 | Module | Responsibility | Key dependencies |

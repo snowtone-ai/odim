@@ -235,6 +235,8 @@ test("admin repository fallback exposes org, members, alert rules, and redacted 
     assert.ok(settings.members.some((member) => member.role === "admin"));
     assert.ok(settings.apiKeys.every((key) => !("keyHash" in key)));
     assert.ok(settings.alertRules.every((rule) => rule.orgId === "demo-org"));
+    assert.ok(settings.ingestionRuns.some((run) => run.mode === "backfill"));
+    assert.ok(settings.sourceWatermarks.some((watermark) => watermark.sourceId === "sec-edgar"));
 
     const created = await createApiKey({ orgId: "demo-org" }, { name: "Agent key", createdBy: "demo-admin" });
     assert.equal(created.source, "fallback");

@@ -19,6 +19,7 @@
 - EIA, PatentsView, and configured JSON/CSV sources support paged backfill requests; configured feeds can use `{limit}`, `{offset}`, and `{page}` URL placeholders.
 - FERC, building permits, cloud regions, water districts, USGS minerals, port statistics, narrative, state PUC, and FAA feed adapters now accept the same page/offset/limit URL controls for backfill.
 - SEC EDGAR backfill now follows `filings.files` historical submission files instead of only reading `filings.recent`; daily mode remains recent-only.
+- Settings now surfaces recent ingestion runs and source watermarks so daily/backfill operations are visible without querying Supabase directly.
 - Added `supabase/migrations/0005_ingestion_operations.sql` with `ingestion_runs` and `source_watermarks`.
 - Default migration runner now applies 0001–0005, including AI rate limits and ingestion operations.
 - Pipeline DB upserts now use durable conflict keys: raw signals by fingerprint, alerts/audit by dedupe key, ontology by id.

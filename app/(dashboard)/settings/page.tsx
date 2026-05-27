@@ -10,6 +10,11 @@ import { auditEvents } from "@/lib/data";
 
 const defaultSettingsOrgId = process.env.PAID_SOURCE_ORG_ID || "11111111-1111-4111-8111-111111111111";
 
+function shortDate(value?: string) {
+  if (!value) return "not recorded";
+  return value.slice(0, 10);
+}
+
 export default async function SettingsPage() {
   const locale = await getLocale();
   const messages = getMessages(locale);
@@ -105,6 +110,51 @@ export default async function SettingsPage() {
             labels={screen.seed}
             orgId={defaultSettingsOrgId}
           />
+        </Panel>
+
+        <Panel title="Ingestion Operations">
+          <div className="mono text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
+            scheduled scrape / backfill observability
+          </div>
+          <div className="mt-4 grid gap-3">
+            {settings.ingestionRuns.map((run) => (
+              <div
+                className="pb-3"
+                style={{ borderBottom: "1px solid var(--line-faint)" }}
+                key={run.id}
+              >
+                <div className="flex items-center justify-between gap-3 text-[13px]">
+                  <span className="mono uppercase" style={{ color: "var(--text-primary)" }}>
+                    {run.mode} / {run.status}
+                  </span>
+                  <span className="mono shrink-0" style={{ color: run.status === "failed" ? "var(--critical)" : "var(--rune)" }}>
+                    {run.rawSignalCount} signals
+                  </span>
+                </div>
+                <div className="mono mt-1 text-[10px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
+                  {shortDate(run.startedAt)} · limit {run.sourceLimit} · {run.alertCount} alerts
+                </div>
+                {run.error ? (
+                  <div className="mt-2 text-[12px]" style={{ color: "var(--critical)" }}>
+                    {run.error}
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 grid gap-2">
+            {settings.sourceWatermarks.map((watermark) => (
+              <div
+                className="grid grid-cols-[1fr_auto_auto] items-center gap-3 py-2 text-[12px]"
+                style={{ borderBottom: "1px solid var(--line-faint)" }}
+                key={watermark.sourceId}
+              >
+                <span className="truncate" style={{ color: "var(--text-primary)" }}>{watermark.sourceId}</span>
+                <span className="mono" style={{ color: "var(--text-tertiary)" }}>{shortDate(watermark.lastObservedAt)}</span>
+                <span className="mono" style={{ color: "var(--rune)" }}>{watermark.rawSignalCount}</span>
+              </div>
+            ))}
+          </div>
         </Panel>
 
         <Panel title={screen.panels.auditLog}>
