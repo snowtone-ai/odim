@@ -4,7 +4,12 @@ export type Locale = (typeof locales)[number];
 export const messages = {
   en: {
     common: {
-      live: "Live · Source-backed"
+      live: "Live · Source-backed",
+      errorBoundary: {
+        title: "Dashboard error",
+        message: "The current view failed to render.",
+        retry: "Retry"
+      }
     },
     shell: {
       productCategory: "Reality Intelligence OS",
@@ -97,7 +102,8 @@ export const messages = {
           error: "Eval request failed"
         },
         emptyState: "Ask Huginn a question to begin intelligence analysis.",
-        showOnMap: "Show on Map"
+        showOnMap: "Show on Map",
+        webSearch: "Web Search"
       },
       settings: {
         title: "Settings",
@@ -137,7 +143,12 @@ export const messages = {
   },
   ja: {
     common: {
-      live: "ライブ / 出典付き"
+      live: "ライブ / 出典付き",
+      errorBoundary: {
+        title: "ダッシュボードエラー",
+        message: "現在のビューを表示できませんでした。",
+        retry: "再試行"
+      }
     },
     shell: {
       productCategory: "Reality Intelligence OS",
@@ -230,7 +241,8 @@ export const messages = {
           error: "送信に失敗しました"
         },
         emptyState: "Huginnに質問して、インテリジェンス分析を開始してください。",
-        showOnMap: "マップで表示"
+        showOnMap: "マップで表示",
+        webSearch: "Web検索"
       },
       settings: {
         title: "設定",
