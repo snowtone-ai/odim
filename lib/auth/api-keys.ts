@@ -20,6 +20,40 @@ export type ApiKeyIssueResult = {
   record: ApiKeyRecord;
 };
 
+export const DEFAULT_API_KEY_SCOPES = ["huginn:query", "alerts:read", "entities:read"] as const;
+
+export const ALLOWED_API_KEY_SCOPES = [
+  "huginn:query",
+  "signals:read",
+  "entities:read",
+  "alerts:read",
+  "audit:read",
+  "settings:read",
+  "admin:read",
+  "admin:write",
+  "read:signals",
+  "read:entities",
+  "read:alerts",
+  "read:audit"
+] as const;
+
+const allowedApiKeyScopes = new Set<string>(ALLOWED_API_KEY_SCOPES);
+
+export function resolveIssuableScopes(scopes?: string[]) {
+  const requested = scopes?.length ? scopes : [...DEFAULT_API_KEY_SCOPES];
+  for (const scope of requested) {
+    if (!allowedApiKeyScopes.has(scope)) {
+      throw new Error(`API key scope is not issuable: ${scope}`);
+    }
+  }
+  return requested;
+}
+
+export function canIssueScopes(issuerScopes: string[], requestedScopes: string[]) {
+  if (issuerScopes.includes("admin:*")) return true;
+  return requestedScopes.every((scope) => issuerScopes.includes(scope));
+}
+
 export function isCommercialProductionEnv(env: NodeJS.ProcessEnv = process.env) {
   return isProductionRuntime(env);
 }
@@ -54,6 +88,7 @@ export function issueApiKey(input: {
 }): ApiKeyIssueResult {
   if (!input.orgId) throw new Error("orgId is required to issue an API key");
   if (!input.name.trim()) throw new Error("API key name is required");
+  const scopes = resolveIssuableScopes(input.scopes);
 
   const secret = (input.tokenBytes ?? randomBytes(24)).toString("base64url");
   const token = `odim_live_${secret}`;
@@ -65,7 +100,7 @@ export function issueApiKey(input: {
     name: input.name.trim(),
     prefix,
     keyHash: hashToken(token),
-    scopes: input.scopes?.length ? input.scopes : ["huginn:query", "alerts:read", "entities:read"],
+    scopes,
     createdBy: input.createdBy,
     createdAt
   };

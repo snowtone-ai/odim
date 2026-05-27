@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { canIssueScopes, resolveIssuableScopes } from "@/lib/auth/api-keys";
 import { authorizeApiRequest } from "@/lib/auth/request";
 import { createApiKey, getAdminSettings, revokeApiKey } from "@/lib/repositories/admin";
 
@@ -22,10 +23,19 @@ export async function POST(request: Request) {
     if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
     const body = (await request.json().catch(() => ({}))) as { name?: string; scopes?: string[]; createdBy?: string };
     if (!body.name) return NextResponse.json({ error: "name is required" }, { status: 400 });
+    let scopes: string[];
+    try {
+      scopes = resolveIssuableScopes(body.scopes);
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid API key scopes" }, { status: 400 });
+    }
+    if (auth.mode === "api-key" && !canIssueScopes(auth.scopes, scopes)) {
+      return NextResponse.json({ error: "Requested scopes exceed issuer permissions" }, { status: 403 });
+    }
     return NextResponse.json(
       await createApiKey(auth.context, {
         name: body.name,
-        scopes: body.scopes,
+        scopes,
         createdBy: body.createdBy
       }),
       { status: 201 }

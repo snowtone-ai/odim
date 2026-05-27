@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { issueApiKey, redactApiKey, toApiKeyRow, verifyApiKey } from "../lib/auth/api-keys.ts";
+import { canIssueScopes, issueApiKey, redactApiKey, resolveIssuableScopes, toApiKeyRow, verifyApiKey } from "../lib/auth/api-keys.ts";
 import { authorizeApiRequest, resetApiAuthRateLimit } from "../lib/auth/request.ts";
 import { createApiKey, getAdminSettings, revokeApiKey } from "../lib/repositories/admin.ts";
 
@@ -226,6 +226,18 @@ test("API auth forbidden response does not disclose required scope names", async
     }
     globalThis.fetch = previousFetch;
   }
+});
+
+test("API key issuance rejects admin wildcard and scope escalation", async () => {
+  const orgId = "11111111-1111-4111-8111-111111111111";
+  assert.throws(
+    () => issueApiKey({ orgId, name: "Wildcard", scopes: ["admin:*"] }),
+    /API key scope is not issuable/
+  );
+  assert.throws(() => resolveIssuableScopes(["admin:*"]), /API key scope is not issuable/);
+  assert.equal(canIssueScopes(["admin:write"], ["alerts:read"]), false);
+  assert.equal(canIssueScopes(["admin:*"], ["alerts:read"]), true);
+  assert.equal(canIssueScopes(["alerts:read", "entities:read"], ["alerts:read"]), true);
 });
 
 test("admin repository fallback exposes org, members, alert rules, and redacted api keys", async () => {
