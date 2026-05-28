@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+
+const ACCEPTED_SEEDS = ".txt,.md,.json,.csv,.ts,.tsx,.js,.jsx,.py,.yaml,.yml,.toml";
+const MAX_SEED_BYTES = 100 * 1024;
 
 type SeedMemoryView = {
   id: string;
@@ -38,6 +41,23 @@ export function SeedMemoryManager({
   const [editingContent, setEditingContent] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > MAX_SEED_BYTES) {
+      setError(`File too large (max ${MAX_SEED_BYTES / 1024} KB)`);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = (ev.target?.result as string) ?? "";
+      setNewContent((prev) => (prev ? `${prev}\n\n` : "") + text);
+    };
+    reader.readAsText(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
 
   async function requestSeedMemory(path: string, init: RequestInit) {
     setPending(true);
@@ -131,6 +151,31 @@ export function SeedMemoryManager({
               {kind === "opinion" ? labels.opinion : labels.fact}
             </button>
           ))}
+          {/* File upload */}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1.5 rounded-[var(--radius-sm)] px-3 py-1.5 text-[11px] transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:text-[var(--text-secondary)]"
+            style={{
+              background: "var(--ink-750)",
+              border: "1px solid var(--line-faint)",
+              color: "var(--text-tertiary)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)"
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+            </svg>
+            Attach file
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept={ACCEPTED_SEEDS}
+            onChange={handleFileUpload}
+          />
           <button
             className="rounded-[var(--radius-sm)] px-3 py-1.5 text-[11px] font-medium text-[var(--text-primary)] transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] disabled:opacity-40"
             style={{

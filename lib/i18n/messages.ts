@@ -112,7 +112,7 @@ export const messages = {
           apiKeys: "API Keys",
           permissions: "Team Permissions",
           ontology: "Ontology Explorer",
-          seedMemory: "Seed Memory",
+          customKnowledge: "Huginn Custom Knowledge",
           auditLog: "Audit Trail"
         },
         copy: {
@@ -120,19 +120,21 @@ export const messages = {
           apiKeys: "External AI agent access uses org-scoped API routes, extendable to MCP.",
           permissions: "Org roles: analyst / admin.",
           ontology: "Advanced object, link, and action type inspection.",
-          seedMemory: "Seed memories are MVCC records. Fact seeds enter Munin core; opinion seeds stay physically separate."
+          customKnowledge: "Source-backed facts and separated opinions that directly inform Huginn's analysis.",
+          ingestion: "Scheduled scrape runs, backfill jobs, and source watermark tracking.",
+          auditLog: "Security and action events across the organization."
         },
         seed: {
-          fact: "Fact seed",
-          opinion: "Opinion seed",
+          fact: "Fact",
+          opinion: "Opinion",
           create: "Create",
           edit: "Edit",
           delete: "Retire",
           save: "Save",
           cancel: "Cancel",
-          content: "Add a source-backed fact seed or a separated opinion seed",
-          empty: "No active seed memories.",
-          error: "Seed memory request failed"
+          content: "Add a source-backed fact or separated opinion to Huginn's knowledge base",
+          empty: "No active knowledge entries.",
+          error: "Knowledge request failed"
         },
         language: {
           panel: "Language",
@@ -251,7 +253,7 @@ export const messages = {
           apiKeys: "APIキー",
           permissions: "チーム権限",
           ontology: "オントロジー",
-          seedMemory: "シードメモリ",
+          customKnowledge: "Huginn カスタムナレッジ",
           auditLog: "監査ログ"
         },
         copy: {
@@ -259,19 +261,21 @@ export const messages = {
           apiKeys: "外部AIエージェントのアクセスはAPIファーストで設計されており、MCPへの拡張にも対応しています。",
           permissions: "組織ロール：アナリスト / 管理者",
           ontology: "オブジェクト・リンク・アクションタイプの高度な検査機能です。",
-          seedMemory: "シードメモリはMVCCで管理されます。ファクトシードはMuninコアに、意見シードは別テーブルに分離されます。"
+          customKnowledge: "HuginnのAI分析に活用する出典付きファクトと意見シードを管理します。",
+          ingestion: "スケジュール済みスクレイプ・補完ジョブ・ウォーターマークの監視です。",
+          auditLog: "組織全体のセキュリティ・操作イベントです。"
         },
         seed: {
-          fact: "ファクトシード",
-          opinion: "意見シード",
+          fact: "ファクト",
+          opinion: "意見",
           create: "作成",
           edit: "編集",
           delete: "削除",
           save: "保存",
           cancel: "キャンセル",
-          content: "出典付きのファクトシード、または意見シードを追加してください",
-          empty: "シードメモリがありません。",
-          error: "シードメモリの操作に失敗しました"
+          content: "出典付きのファクト、または意見をHuginnのナレッジベースに追加してください",
+          empty: "ナレッジがありません。",
+          error: "ナレッジ操作に失敗しました"
         },
         language: {
           panel: "言語設定",

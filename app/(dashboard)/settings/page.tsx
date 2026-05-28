@@ -1,7 +1,8 @@
-import { Panel } from "@/components/ui/panel";
 import { Screen } from "@/components/ui/screen";
 import { SeedMemoryManager } from "@/components/ui/seed-memory-manager";
 import { LocaleSwitcher } from "@/components/ui/locale-switcher";
+import { SettingsShell, SETTINGS_ICONS } from "@/components/ui/settings-shell";
+import type { SettingsSection } from "@/components/ui/settings-shell";
 import { getMessages } from "@/lib/i18n/messages";
 import { getLocale } from "@/lib/i18n/locale";
 import { getAdminSettings } from "@/lib/repositories/admin";
@@ -15,7 +16,6 @@ function shortDate(value?: string) {
   return value.slice(0, 10) + " UTC";
 }
 
-// M-1: scrape が "running" のまま 2 時間以上経過している場合をスタックとみなす
 function isStuckRunning(startedAt: string): boolean {
   return Date.now() - new Date(startedAt).getTime() > 2 * 60 * 60 * 1000;
 }
@@ -30,11 +30,14 @@ export default async function SettingsPage() {
     ? `${settings.org.name} / ${settings.org.tier}`
     : locale === "ja" ? "組織未設定 / フォールバック" : "org not configured / fallback";
 
-  return (
-    <Screen title={screen.title}>
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-
-        <Panel title={screen.panels.alertRules}>
+  const sections: SettingsSection[] = [
+    {
+      id: "alertRules",
+      title: screen.panels.alertRules,
+      description: screen.copy.alertRules,
+      icon: SETTINGS_ICONS.alertRules,
+      content: (
+        <>
           <div className="mono text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
             {settings.source} · {locale === "ja" ? "出典バックドルール" : "source-backed rules"}
           </div>
@@ -52,14 +55,23 @@ export default async function SettingsPage() {
                   </span>
                 </div>
                 <div className="mono mt-1 text-[10px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
-                  {rule.layer} · {rule.destination} · {rule.enabled ? (locale === "ja" ? "有効" : "enabled") : (locale === "ja" ? "無効" : "disabled")}
+                  {rule.layer} · {rule.destination} · {rule.enabled
+                    ? (locale === "ja" ? "有効" : "enabled")
+                    : (locale === "ja" ? "無効" : "disabled")}
                 </div>
               </div>
             ))}
           </div>
-        </Panel>
-
-        <Panel title={screen.panels.apiKeys}>
+        </>
+      )
+    },
+    {
+      id: "apiKeys",
+      title: screen.panels.apiKeys,
+      description: screen.copy.apiKeys,
+      icon: SETTINGS_ICONS.apiKeys,
+      content: (
+        <>
           <div className="mono text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
             {locale === "ja" ? "ハッシュ済みキー / ワンタイム発行" : "hashed keys / one-time token issue"}
           </div>
@@ -80,9 +92,16 @@ export default async function SettingsPage() {
               </div>
             ))}
           </div>
-        </Panel>
-
-        <Panel title={screen.panels.permissions}>
+        </>
+      )
+    },
+    {
+      id: "permissions",
+      title: screen.panels.permissions,
+      description: screen.copy.permissions,
+      icon: SETTINGS_ICONS.permissions,
+      content: (
+        <>
           <div className="mono text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
             {orgLabel}
           </div>
@@ -102,41 +121,46 @@ export default async function SettingsPage() {
               </div>
             ))}
           </div>
-        </Panel>
-
-        <Panel title={screen.panels.seedMemory}>
-          <SeedMemoryManager
-            initialSeeds={seeds.map((seed) => ({
-              id: seed.id,
-              kind: seed.kind,
-              content: seed.content,
-              orgId: seed.orgId
-            }))}
-            labels={screen.seed}
-            orgId={defaultSettingsOrgId}
-          />
-        </Panel>
-
-        <Panel title="Ingestion Operations">
-          {/* M-3: fallback 表示時は明示的にデモデータであることを示す */}
+        </>
+      )
+    },
+    {
+      id: "customKnowledge",
+      title: screen.panels.customKnowledge,
+      description: screen.copy.customKnowledge,
+      icon: SETTINGS_ICONS.customKnowledge,
+      content: (
+        <SeedMemoryManager
+          initialSeeds={seeds.map((seed) => ({
+            id: seed.id,
+            kind: seed.kind,
+            content: seed.content,
+            orgId: seed.orgId
+          }))}
+          labels={screen.seed}
+          orgId={defaultSettingsOrgId}
+        />
+      )
+    },
+    {
+      id: "ingestion",
+      title: locale === "ja" ? "取込オペレーション" : "Ingestion Operations",
+      description: screen.copy.ingestion,
+      icon: SETTINGS_ICONS.ingestion,
+      content: (
+        <>
           <div className="mono text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
             {settings.source} · scheduled scrape / backfill observability
           </div>
           <div className="mt-4 grid gap-3">
-            {/* H-2: service_role 権限不足などで Supabase から空が返った場合に警告 */}
             {settings.source === "supabase" && settings.ingestionRuns.length === 0 ? (
               <div className="mono text-[11px]" style={{ color: "var(--text-tertiary)" }}>
                 no runs recorded — if scrape has run, verify service_role permissions on ingestion_runs
               </div>
             ) : null}
             {settings.ingestionRuns.map((run) => {
-              // M-1: running のまま 2 時間以上経過していればスタックとみなして警告色
               const stuck = run.status === "running" && isStuckRunning(run.startedAt);
-              const statusColor = run.status === "failed" || stuck
-                ? "var(--critical)"
-                : run.status === "running"
-                ? "var(--rune)"
-                : "var(--rune)";
+              const statusColor = run.status === "failed" || stuck ? "var(--critical)" : "var(--rune)";
               return (
                 <div
                   className="pb-3"
@@ -181,26 +205,38 @@ export default async function SettingsPage() {
               </div>
             ))}
           </div>
-        </Panel>
-
-        <Panel title={screen.panels.auditLog}>
-          <div className="max-h-[400px] overflow-y-auto">
-            {auditEvents.map((event) => (
-              <div
-                className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3 py-2.5 text-[13px] transition-colors duration-[var(--dur-fast)] hover:bg-[var(--ink-750)]"
-                style={{ borderBottom: "1px solid var(--line-faint)" }}
-                key={event.id}
-              >
-                <span className="mono truncate text-[12px]" style={{ color: "var(--text-primary)" }}>{event.event}</span>
-                <span className="truncate" style={{ color: "var(--text-secondary)" }}>{event.actor}</span>
-                <span className="mono truncate text-[12px]" style={{ color: "var(--text-secondary)" }}>{event.source}</span>
-                <span className="mono text-right text-[12px]" style={{ color: "var(--rune)" }}>{event.confidence}</span>
-              </div>
-            ))}
-          </div>
-        </Panel>
-
-        <Panel title={screen.panels.ontology}>
+        </>
+      )
+    },
+    {
+      id: "auditLog",
+      title: screen.panels.auditLog,
+      description: screen.copy.auditLog,
+      icon: SETTINGS_ICONS.auditLog,
+      content: (
+        <div className="max-h-[420px] overflow-y-auto">
+          {auditEvents.map((event) => (
+            <div
+              className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3 py-2.5 text-[13px] transition-colors duration-[var(--dur-fast)] hover:bg-[var(--ink-750)]"
+              style={{ borderBottom: "1px solid var(--line-faint)" }}
+              key={event.id}
+            >
+              <span className="mono truncate text-[12px]" style={{ color: "var(--text-primary)" }}>{event.event}</span>
+              <span className="truncate" style={{ color: "var(--text-secondary)" }}>{event.actor}</span>
+              <span className="mono truncate text-[12px]" style={{ color: "var(--text-secondary)" }}>{event.source}</span>
+              <span className="mono text-right text-[12px]" style={{ color: "var(--rune)" }}>{event.confidence}</span>
+            </div>
+          ))}
+        </div>
+      )
+    },
+    {
+      id: "ontology",
+      title: screen.panels.ontology,
+      description: screen.copy.ontology,
+      icon: SETTINGS_ICONS.ontology,
+      content: (
+        <>
           <div className="mono text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
             {locale === "ja" ? "公開・組織別分離" : "public-or-org isolation"}
           </div>
@@ -212,18 +248,28 @@ export default async function SettingsPage() {
           <div className="mono mt-4 text-[10px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
             {locale === "ja" ? "出典バックドコントロール / RLS適用" : "source-backed control / rls-backed"}
           </div>
-        </Panel>
-
-        <Panel title={screen.language.panel}>
-          <div className="flex items-center justify-between gap-4">
-            <div className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
-              {screen.language.description}
-            </div>
-            <LocaleSwitcher current={locale} />
+        </>
+      )
+    },
+    {
+      id: "language",
+      title: screen.language.panel,
+      description: screen.language.description,
+      icon: SETTINGS_ICONS.language,
+      content: (
+        <div className="flex items-center justify-between gap-4">
+          <div className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
+            {screen.language.description}
           </div>
-        </Panel>
+          <LocaleSwitcher current={locale} />
+        </div>
+      )
+    }
+  ];
 
-      </div>
+  return (
+    <Screen title={screen.title}>
+      <SettingsShell sections={sections} />
     </Screen>
   );
 }

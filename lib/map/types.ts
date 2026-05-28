@@ -10,6 +10,7 @@ export type LayerKey =
 export type MapEntity = {
   id: string;
   name: string;
+  description?: string;
   score: number;
   confidence: number;
   lat: number;

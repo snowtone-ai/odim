@@ -1,6 +1,5 @@
 "use client";
 
-import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import type { Map as MapType, GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from "maplibre-gl";
 import { DEMO_ENTITIES } from "@/lib/map/entities";
@@ -33,6 +32,16 @@ const LAYER_COLORS: Record<LayerKey, string> = {
 const LAYER_KEYS: LayerKey[] = [
   "energy", "cash", "land", "compute", "water", "raw_materials", "logistics"
 ];
+
+const LAYER_DISPLAY: Record<LayerKey, string> = {
+  energy:        "Energy",
+  cash:          "Capital",
+  land:          "Land",
+  compute:       "Compute",
+  water:         "Water",
+  raw_materials: "Materials",
+  logistics:     "Logistics"
+};
 
 // OpenFreeMap Liberty — colorful OSM vector tiles, no API key required
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
@@ -170,6 +179,7 @@ const ICON_DRAWERS: Record<LayerKey, IconDrawer> = {
 type EntityProperties = {
   id: string;
   name: string;
+  description: string;
   score: number;
   confidence: number;
   layer: LayerKey;
@@ -196,6 +206,7 @@ function buildEntityCollection(entities: MapEntity[]) {
       properties: {
         id: e.id,
         name: e.name,
+        description: e.description ?? "",
         score: e.score,
         confidence: e.confidence,
         layer: e.layer,
@@ -375,7 +386,7 @@ export function RealityMap({
         container: containerRef.current,
         style: MAP_STYLE,
         center: initialCenter ? [initialCenter.lng, initialCenter.lat] : [-98.6, 39.8],
-        zoom: initialCenter?.zoom ?? 4,
+        zoom: initialCenter?.zoom ?? 3,
         minZoom: 1,
         maxZoom: 16,
         attributionControl: false
@@ -623,14 +634,15 @@ export function RealityMap({
           popupRef.current
             ?.setLngLat(coords)
             .setHTML(
-              `<div style="background:rgba(10,12,16,0.94);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;min-width:190px;box-shadow:0 6px 20px rgba(0,0,0,0.5);">
-                <div style="font-size:11px;font-weight:500;color:#dde1ea;letter-spacing:0.01em;line-height:1.4;">${escapeHtml(props.name)}</div>
-                <div style="display:flex;align-items:center;gap:10px;margin-top:7px;">
+              `<div style="background:rgba(10,12,16,0.94);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;min-width:210px;max-width:260px;box-shadow:0 6px 20px rgba(0,0,0,0.5);">
+                <div style="font-size:12px;font-weight:600;color:#dde1ea;letter-spacing:0.01em;line-height:1.4;">${escapeHtml(props.name)}</div>
+                ${props.description ? `<div style="font-size:11px;color:#8892a4;margin-top:5px;line-height:1.5;">${escapeHtml(props.description)}</div>` : ""}
+                <div style="display:flex;align-items:center;gap:10px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,0.06);">
                   <span style="font-family:monospace;font-size:11px;font-weight:500;color:${color};">Score ${props.score}</span>
                   <span style="font-family:monospace;font-size:10px;color:#5c6780;">${Math.round(props.confidence * 100)}% conf.</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:5px;margin-top:6px;">
-                  <span style="width:6px;height:6px;border-radius:50%;background:${color};box-shadow:0 0 5px ${color}60;display:inline-block;"></span>
+                  <span style="width:6px;height:6px;border-radius:50%;background:${color};box-shadow:0 0 5px ${color}60;display:inline-block;flex-shrink:0;"></span>
                   <span style="font-family:monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:#404c61;">${escapeHtml(props.layer.replace("_", " "))}</span>
                 </div>
               </div>`
@@ -688,11 +700,63 @@ export function RealityMap({
           }
         });
 
-        map.on("mouseenter", "clusters", () => {
+        function buildClusterHTML(count: number, layerMap: Map<string, number> | null): string {
+          const layerRows = layerMap
+            ? Array.from(layerMap.entries())
+                .sort((a, b) => b[1] - a[1])
+                .map(([key, cnt]) => {
+                  const color = LAYER_COLORS[key as LayerKey] ?? "#888";
+                  const label = LAYER_DISPLAY[key as LayerKey] ?? key;
+                  return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:5px;">
+                    <div style="display:flex;align-items:center;gap:5px;">
+                      <span style="width:6px;height:6px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0;"></span>
+                      <span style="font-family:monospace;font-size:10px;color:#8892a4;">${escapeHtml(label)}</span>
+                    </div>
+                    <span style="font-family:monospace;font-size:11px;font-weight:600;color:${color};">${cnt}</span>
+                  </div>`;
+                })
+                .join("")
+            : `<div style="font-family:monospace;font-size:10px;color:#404c61;margin-top:5px;">Loading…</div>`;
+
+          return `<div style="background:rgba(10,12,16,0.94);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;min-width:190px;box-shadow:0 6px 20px rgba(0,0,0,0.5);">
+            <div style="font-family:monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:#5c6780;margin-bottom:4px;">Substrate Cluster</div>
+            <div style="font-size:16px;font-weight:700;color:#dde1ea;">${count} signals</div>
+            ${layerRows}
+            <div style="font-family:monospace;font-size:9px;color:#404c61;margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.05);">Click to zoom in</div>
+          </div>`;
+        }
+
+        map.on("mousemove", "clusters", (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
           map.getCanvas().style.cursor = "pointer";
+          const feature = e.features?.[0];
+          if (!feature) return;
+          const count = feature.properties?.point_count as number;
+          const clusterId = feature.properties?.cluster_id as number;
+          const coords = (feature.geometry as unknown as { coordinates: [number, number] }).coordinates;
+
+          // Show loading state immediately
+          popupRef.current
+            ?.setLngLat(coords)
+            .setHTML(buildClusterHTML(count, null))
+            .addTo(map);
+
+          // Fetch layer breakdown asynchronously
+          const source = map.getSource("entities") as GeoJSONSource;
+          source.getClusterLeaves(clusterId, count, 0).then((leaves) => {
+            const layerMap = new Map<string, number>();
+            for (const leaf of leaves) {
+              const layer = (leaf.properties as EntityProperties).layer as LayerKey;
+              layerMap.set(layer, (layerMap.get(layer) ?? 0) + 1);
+            }
+            // Only update if popup is still showing (mouse still on cluster)
+            if (popupRef.current?.isOpen()) {
+              popupRef.current.setHTML(buildClusterHTML(count, layerMap));
+            }
+          }).catch(() => {});
         });
         map.on("mouseleave", "clusters", () => {
           map.getCanvas().style.cursor = "";
+          popupRef.current?.remove();
         });
 
         setLoaded(true);
