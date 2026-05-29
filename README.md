@@ -20,8 +20,8 @@ While the market watches press releases and earnings calls, Odim monitors the ph
 | Map | MapLibre GL v5 · OpenFreeMap vector tiles |
 | AI | Google Gemini (Huginn query cascade + Munin memory) |
 | Database | Supabase (PostgreSQL + Row-Level Security) |
-| Ingestion | Custom scrapers — SEC/EDGAR, EIA, FERC, PatentsView, USGS, port statistics, building permits |
-| Auth | API key + org-scoped sessions |
+| Ingestion | Custom scrapers — SEC/EDGAR, FERC, EIA, FRED, Federal Register, EDINET, Companies House, USAspending, OpenSanctions, FEMA, SAM.gov, NRC, PatentsView, USGS, port statistics, building permits |
+| Auth | API key + SSO + org-scoped sessions |
 | CI | GitHub Actions (lint · typecheck · test · build · release audit) |
 
 ---
@@ -35,6 +35,7 @@ While the market watches press releases and earnings calls, Odim monitors the ph
 | Signal Alerts | Alert feed with chain evidence and confidence scoring |
 | Huginn | Interactive AI query with reasoning trace, web search toggle, file attachment |
 | Settings | API keys, audit trail, Huginn Custom Knowledge (seed memory) |
+| Custom Dashboard | Drag-and-drop builder, persistent layouts, org-scoped panel config |
 
 ---
 
@@ -69,7 +70,7 @@ Required environment variables: see `.env.example`.
 pnpm dev          # start dev server
 pnpm typecheck    # TypeScript check
 pnpm lint         # ESLint
-pnpm test         # Vitest (78 tests)
+pnpm test         # Vitest (94 tests)
 pnpm build        # production build
 pnpm verify       # full pre-release check
 ```

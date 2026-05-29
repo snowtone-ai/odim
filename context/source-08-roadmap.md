@@ -57,12 +57,41 @@
 - 追加: EntityLink（画面間ナビ）— 完了
 - **受け入れ基準**: 全5画面が `07-DESIGN.md` 準拠で動作し、画面遷移が「ぬるっと」している。✓ 達成（pnpm build / typecheck / test 49/49 パス）。
 
-### Phase F：仕上げ・監査
-- 認証・組織管理・RLSの最終確認。
-- i18n（日英）完成。
-- モバイル対応（Alert画面）。
+### Phase F：仕上げ・監査 — v3.1+ で実装
+拡張スコープ（Phase 7–9）として以下を実装・完了：
+
+#### Phase 7: Data Foundation（T200–T215）✓ 完了
+- SEC拡張スクレイパー（Form 4, 8-K, 13D/G, 13F）。
+- FRED, 連邦官報(Federal Register), EDINET, Companies House, USAspending。
+- Munin Dream の夜間合成、Morning Brief の日次差分パネル。
+- CSV/JSON エクスポートAPI、グローバルキーボード操作、保存検索バー。
+- Verification: `pnpm typecheck`, `pnpm lint`, `pnpm test` (84/84), `pnpm build`, `pnpm scrape:dry-run`。
+
+#### Phase 8: Intelligence & Differentiation（T220–T229）✓ 完了
+- 較正(Calibration), 帰属(Attribution), 異常検知(Anomaly Detection), 感情乖離(Sentiment Divergence)。
+- 部門ローテーション(Sector Rotation) パイプラインモジュール。
+- Entity Workstation に比較モード・キーボード同期選択・異常バッジ・乖離サーフェシング。
+- Reality Map に地理的ドリルダウンオーバーレイ。
+- ブラウザ通知プロンプト＋ポーリングベースプッシュキュー。
+- Verification: `pnpm typecheck`, `pnpm lint`, `pnpm test` (90/90), `pnpm build`, `pnpm scrape:dry-run`。
+
+#### Phase 9: Institutional Grade（T230–T237）✓ 完了
+- バージョン付きREST API（`app/api/v1/`）、スコープ付きキー認証、ページネーション、エンドポイント単位のレート制限。
+- SSO セッション配線（`lib/auth/sso.ts`, `app/api/auth/callback/route.ts`, `middleware.ts`）。
+- エンタープライズログインハンドオフスクリーン。
+- カスタムダッシュボードビルダーの永続化、`/custom` ルート。
+- マルチプロバイダ Huginn アンサンブル＋確定的バックテスティング CLI/レポート。
+- OpenSanctions, FEMA, SAM.gov, NRC スクレイパーと iso キュー対応。
+- ブラウザ通知の Web Push 永続配信化、MapLibre 地理集約レイヤー。
+- ローカル/ステージング/本番 Supabase 選択、マイグレーション `0009_push_subscriptions.sql`。
+- Verification: `pnpm typecheck`, `pnpm lint`, `pnpm test` (94/94), `pnpm build`, `pnpm scrape:dry-run`。
+
+#### Phase 10: Long-term Stability & Commercial Operations（現在進行中）
+- 最終セキュリティ監査（組織分離・出典追跡の検証）。
+- コード Review & 信頼性向上（エラーハンドリング・監視・ロギング）。
+- ドキュメント完備（API リファレンス、運用ガイド）。
 - パフォーマンス最適化（無料枠のレート制限内に収める）。
-- セキュリティ監査（組織分離・出典追跡の検証）。
+- モバイル対応（Alert画面を中心に）。
 - **受け入れ基準**: 「無料枠で動く完全な商用品質プロダクト」が完成。事業化＝APIキー差し替えのみ。
 
 ---

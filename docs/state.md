@@ -2,11 +2,11 @@
 
 ## Current
 - Branch: main
-- Active task: Phase 9 complete (T230-T237) with residual-risk remediation for browser push and geographic drill-down
-- Current executor: Codex
+- Active task: Phase 9+ UI polish — Huginn Quick Templates editor, shell layout refinements, gap analysis and entity workstation improvements
+- Current executor: Claude Code
 - Write lock: none
 - Coordinator: CEO Agent
-- Latest verification pointer: Phase 9 complete (`pnpm typecheck`, `pnpm lint`, `pnpm test` 94/94, `pnpm build`, `pnpm scrape:dry-run`)
+- Latest verification pointer: `pnpm typecheck` ✓ | `pnpm test` 94/94 ✓ (updated mobile-layout assertion to +12px) | `pnpm build` ✓
 - Verification mode: standard
 
 ## Completed after v3.0
