@@ -1,5 +1,7 @@
 import { buildFixtureRawSignals } from "./pipeline/fixtures.ts";
 import { buildIngestionPlan } from "./pipeline/ontologize.ts";
+import { detectAnomalies } from "./pipeline/anomaly.ts";
+import { computeDivergenceIndex } from "./pipeline/sentiment.ts";
 
 const fixturePlan = buildIngestionPlan(buildFixtureRawSignals());
 
@@ -34,17 +36,60 @@ function formatCommitted(value: unknown) {
 
 export const entities = fixturePlan.ontologyObjects
   .filter((object) => object.objectType === "decision_maker")
-  .slice(0, 6)
-  .map((object, index) => ({
-    id: object.id,
-    name: String(object.attributes.name ?? "Unknown entity"),
-    score: Number(object.attributes.reality_score) > 0 ? Number(object.attributes.reality_score) : 62 + index * 4,
-    committed: formatCommitted(object.attributes.amount_usd),
-    lead: 72 + index * 11,
-    confidence: 0.62 + index * 0.04
-  }));
+  .slice(0, 12)
+  .map((object, index) => {
+    const name = String(object.attributes.name ?? "Unknown entity");
+    const relatedSignals = fixturePlan.rawSignals.filter((signal) => {
+      const fields = [
+        signal.payload.companyName,
+        signal.payload.applicantRaw,
+        signal.payload.applicant,
+        signal.payload.provider,
+        signal.payload.entityName,
+        signal.payload.subjectCompany
+      ]
+        .filter(Boolean)
+        .map((value) => String(value).toLowerCase());
+      const lowerName = name.toLowerCase();
+      return fields.some((value) => value.includes(lowerName) || lowerName.includes(value));
+    });
+    const narrativeSignals = relatedSignals.filter((signal) => signal.layer === "narrative").length;
+    const realitySignals = relatedSignals.filter((signal) => signal.layer !== "narrative").length;
+    const divergence = computeDivergenceIndex(
+      Number(object.attributes.reality_score) > 0 ? Number(object.attributes.reality_score) : 62 + index * 4,
+      Math.max(-1, Math.min(1, (narrativeSignals - realitySignals) / Math.max(1, relatedSignals.length)))
+    );
+    const layers = relatedSignals.reduce<Record<string, number>>((acc, signal) => {
+      acc[signal.layer] = (acc[signal.layer] ?? 0) + 1;
+      return acc;
+    }, {});
+    const anomaly = detectAnomalies(fixturePlan.rawSignals, object.id, name)[0];
+    return {
+      id: object.id,
+      name,
+      score: Number(object.attributes.reality_score) > 0 ? Number(object.attributes.reality_score) : 62 + index * 4,
+      committed: formatCommitted(object.attributes.amount_usd),
+      lead: Math.max(5, Math.round(Number(object.attributes.narrative_gap ?? 1) * 20) + index * 3),
+      confidence: Number(object.attributes.confidence) > 0 ? Number(object.attributes.confidence) : 0.62 + index * 0.02,
+      signalCount: relatedSignals.length,
+      divergence,
+      layers,
+      sector:
+        /solar|wind|power|hydrogen|battery|grid/i.test(name) ? "energy" :
+        /data center|cloud|fab|chip|ai/i.test(name) ? "compute" :
+        /port|logistics|warehouse|terminal|hub/i.test(name) ? "logistics" :
+        /water|desal|reclaim/i.test(name) ? "water" :
+        /lithium|copper|nickel|mine|ore/i.test(name) ? "raw_materials" :
+        /fund|capital|partners|vision/i.test(name) ? "cash" :
+        /land|campus|construction|city/i.test(name) ? "land" :
+        "general",
+      scoreHistory: [Math.max(10, index * 2 + 48), Math.max(12, index * 2 + 54), Math.max(15, index * 2 + 58), Number(object.attributes.reality_score) > 0 ? Number(object.attributes.reality_score) : 62 + index * 4],
+      anomaly
+    };
+  });
 
 export const alerts = fixturePlan.alerts.map((alert) => ({
+  id: alert.id,
   priority: alert.priority,
   title: alert.title,
   source: alert.evidence[0]?.sourceId ?? "source-backed",
@@ -59,7 +104,9 @@ export const auditEvents = fixturePlan.auditEvents.slice(0, 12).map((event) => (
   actor: event.actor,
   confidence: event.confidence,
   source: event.sourceRefs[0]?.sourceId ?? "source-backed",
-  detail: event.detail
+  detail: event.detail,
+  createdAt: event.createdAt,
+  objectId: event.objectId ?? ""
 }));
 
 export const signals = fixturePlan.rawSignals.map((signal) => ({

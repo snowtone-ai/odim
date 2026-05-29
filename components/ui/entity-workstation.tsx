@@ -1,10 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Confidence } from "@/components/ui/confidence";
 import { FavoriteButton } from "@/components/ui/favorite-button";
 import { GapAnalysisModal } from "@/components/ui/gap-analysis-modal";
+import { CascadeMapModal } from "@/components/ui/cascade-map-modal";
+import { Sparkline } from "@/components/ui/sparkline";
+import { ExportButton } from "@/components/ui/export-button";
+import { SavedSearchBar } from "@/components/ui/saved-search-bar";
+import { EntityCompare } from "@/components/ui/entity-compare";
+import { AnomalyBadge } from "@/components/ui/anomaly-badge";
 import { useFavorites } from "@/lib/stores/favorites";
+import { detectSectorRotation } from "@/lib/pipeline/sector-rotation";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -15,6 +22,12 @@ type Entity = {
   committed: string;
   lead: number;
   confidence: number;
+  sector?: string;
+  signalCount?: number;
+  divergence?: number;
+  layers?: Record<string, number>;
+  scoreHistory?: number[];
+  anomaly?: { severity: "anomaly" | "critical"; zScore: number } | null;
 };
 
 type LayerStat = {
@@ -49,6 +62,16 @@ type Messages = {
     filterWatched: string;
     dailyBrief: string;
     narrativeGap: string;
+    search: string;
+    sortBy: string;
+    sortScore: string;
+    sortGap: string;
+    sortConfidence: string;
+    sortName: string;
+    cascadeMap?: string;
+    cascadeMapTitle?: string;
+    lowCoverage?: string;
+    cascadeClose?: string;
   };
   layers: string[];
 };
@@ -110,11 +133,117 @@ export function EntityWorkstation({
   const [filterTab, setFilterTab] = useState<"all" | "watched">("all");
   const [selectedId, setSelectedId] = useState<string>(entities[0]?.id ?? "");
   const [showGapAnalysis, setShowGapAnalysis] = useState(false);
+  const [cascadeEntityId, setCascadeEntityId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortKey, setSortKey] = useState<"score" | "gap" | "confidence" | "name">("score");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const displayed =
-    filterTab === "watched"
-      ? entities.filter((e) => favorites.has(e.id))
-      : entities;
+  const displayed = useMemo(() => {
+    let base =
+      filterTab === "watched"
+        ? entities.filter((e) => favorites.has(e.id))
+        : entities;
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      base = base.filter((e) => e.name.toLowerCase().includes(q));
+    }
+
+    return [...base].sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === "score") cmp = a.score - b.score;
+      else if (sortKey === "gap") cmp = a.lead - b.lead;
+      else if (sortKey === "confidence") cmp = a.confidence - b.confidence;
+      else if (sortKey === "name") cmp = a.name.localeCompare(b.name);
+      return sortDirection === "desc" ? -cmp : cmp;
+    });
+  }, [entities, filterTab, favorites, searchQuery, sortKey, sortDirection]);
+
+  const sectorRotations = useMemo(() => detectSectorRotation(displayed), [displayed]);
+
+  function toggleSort(key: typeof sortKey) {
+    if (sortKey === key) {
+      setSortDirection((d) => (d === "desc" ? "asc" : "desc"));
+    } else {
+      setSortKey(key);
+      setSortDirection("desc");
+    }
+  }
+
+  function toggleCompare(entityId: string) {
+    setCompareIds((current) => {
+      if (current.includes(entityId)) return current.filter((id) => id !== entityId);
+      if (current.length >= 4) return [...current.slice(1), entityId];
+      return [...current, entityId];
+    });
+  }
+
+  useEffect(() => {
+    if (!displayed.length) {
+      setSelectedId("");
+      return;
+    }
+    if (!displayed.some((entity) => entity.id === selectedId)) {
+      setSelectedId(displayed[0].id);
+    }
+  }, [displayed, selectedId]);
+
+  useEffect(() => {
+    function onListNav(event: Event) {
+      const detail = (event as CustomEvent<{ key?: string }>).detail;
+      const currentIndex = Math.max(0, displayed.findIndex((entity) => entity.id === selectedId));
+      if (!displayed.length) return;
+      if (detail?.key === "j" || detail?.key === "n") {
+        setSelectedId(displayed[Math.min(displayed.length - 1, currentIndex + 1)].id);
+      }
+      if (detail?.key === "k" || detail?.key === "p") {
+        setSelectedId(displayed[Math.max(0, currentIndex - 1)].id);
+      }
+    }
+
+    function onListOpen() {
+      if (selectedId) setShowGapAnalysis(true);
+    }
+
+    function onEscape() {
+      setShowGapAnalysis(false);
+      setCascadeEntityId(null);
+      setCompareMode(false);
+    }
+
+    function onFocusSearch() {
+      searchInputRef.current?.focus();
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
+      if (event.key === "c") {
+        event.preventDefault();
+        setCompareMode((current) => !current);
+      }
+      if (event.key === " ") {
+        event.preventDefault();
+        if (selectedId) toggleCompare(selectedId);
+      }
+    }
+
+    window.addEventListener("odim:list-nav", onListNav as EventListener);
+    window.addEventListener("odim:list-open", onListOpen);
+    window.addEventListener("odim:list-escape", onEscape);
+    window.addEventListener("odim:focus-search", onFocusSearch);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("odim:list-nav", onListNav as EventListener);
+      window.removeEventListener("odim:list-open", onListOpen);
+      window.removeEventListener("odim:list-escape", onEscape);
+      window.removeEventListener("odim:focus-search", onFocusSearch);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [displayed, selectedId]);
 
   const selected = entities.find((e) => e.id === selectedId) ?? entities[0];
 
@@ -123,6 +252,41 @@ export function EntityWorkstation({
 
   return (
     <div className="flex flex-col gap-4">
+      <SavedSearchBar
+        type="entity"
+        currentQuery={searchQuery}
+        currentFilters={{ sortKey, sortDirection, filterTab }}
+        onApply={(entry) => {
+          setSearchQuery(entry.query);
+          setSortKey((entry.filters.sortKey as typeof sortKey) ?? "score");
+          setSortDirection((entry.filters.sortDirection as typeof sortDirection) ?? "desc");
+          setFilterTab((entry.filters.filterTab as typeof filterTab) ?? "all");
+        }}
+      />
+
+      {sectorRotations.length ? (
+        <div
+          className="rounded-[var(--radius-md)] px-4 py-3"
+          style={{ background: "var(--ink-850)", border: "1px solid var(--line-faint)", boxShadow: "var(--shadow-inset)" }}
+        >
+          <div className="mono mb-2 text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
+            Sector Rotation
+          </div>
+          <div className="grid gap-2 md:grid-cols-2">
+            {sectorRotations.slice(0, 4).map((rotation) => (
+              <div key={`${rotation.fromSector}-${rotation.toSector}`} className="rounded-[var(--radius-sm)] px-3 py-2" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--line-faint)" }}>
+                <div className="flex items-center justify-between gap-2">
+                  <span style={{ color: "var(--text-primary)" }}>{rotation.fromSector} → {rotation.toSector}</span>
+                  <span className="mono" style={{ color: "var(--rune)" }}>{rotation.magnitude}</span>
+                </div>
+                <div className="mono mt-1 text-[10px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>
+                  {Math.round(rotation.confidence * 100)}% confidence
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {/* ── Layer Activity Strip ──────────────────────────────────────── */}
       <div
@@ -201,26 +365,96 @@ export function EntityWorkstation({
             >
               {messages.entity.panels.entities}
             </span>
-            <div
-              className="flex rounded-[var(--radius-xs)] p-0.5"
-              style={{ background: "var(--ink-750)", border: "1px solid var(--line-faint)" }}
+            <div className="flex items-center gap-2">
+              <ExportButton type="entities" />
+              <button
+                type="button"
+                onClick={() => setCompareMode((current) => !current)}
+                className="mono rounded-[var(--radius-sm)] px-2 py-1 text-[9px] uppercase tracking-[0.1em]"
+                style={{ background: compareMode ? "var(--rune-wash)" : "var(--surface-secondary)", border: "1px solid var(--line-faint)", color: compareMode ? "var(--rune)" : "var(--text-tertiary)" }}
+              >
+                Compare
+              </button>
+              <div
+                className="flex rounded-[var(--radius-xs)] p-0.5"
+                style={{ background: "var(--ink-750)", border: "1px solid var(--line-faint)" }}
+              >
+                {(["all", "watched"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setFilterTab(tab)}
+                    className="mono rounded-[2px] px-2 py-0.5 text-[9px] uppercase tracking-[0.1em] transition-all duration-[var(--dur-fast)]"
+                    style={{
+                      background: filterTab === tab ? "var(--ink-600)" : "transparent",
+                      color: filterTab === tab ? "var(--text-primary)" : "var(--text-quaternary)",
+                      border: filterTab === tab ? "1px solid var(--line-soft)" : "1px solid transparent"
+                    }}
+                  >
+                    {tab === "all" ? messages.entity.filterAll : messages.entity.filterWatched}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Search bar */}
+          <div className="px-3 py-2" style={{ borderBottom: "1px solid var(--line-faint)" }}>
+            <input
+              ref={searchInputRef}
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={messages.entity.search}
+              className="w-full rounded-[var(--radius-sm)] px-2.5 py-1.5 text-[12px] outline-none"
+              style={{
+                height: "36px",
+                background: "var(--surface-secondary)",
+                border: "1px solid var(--line-faint)",
+                color: "var(--text-primary)",
+              }}
+            />
+          </div>
+
+          {/* Sort controls */}
+          <div
+            className="flex items-center gap-1 overflow-x-auto px-3 py-1.5"
+            style={{ borderBottom: "1px solid var(--line-faint)" }}
+          >
+            <span
+              className="mono shrink-0 text-[9px] uppercase tracking-[0.1em]"
+              style={{ color: "var(--text-tertiary)" }}
             >
-              {(["all", "watched"] as const).map((tab) => (
+              {messages.entity.sortBy}
+            </span>
+            {(
+              [
+                ["score", messages.entity.sortScore],
+                ["gap", messages.entity.sortGap],
+                ["confidence", messages.entity.sortConfidence],
+                ["name", messages.entity.sortName],
+              ] as const
+            ).map(([key, label]) => {
+              const active = sortKey === key;
+              return (
                 <button
-                  key={tab}
+                  key={key}
                   type="button"
-                  onClick={() => setFilterTab(tab)}
-                  className="mono rounded-[2px] px-2 py-0.5 text-[9px] uppercase tracking-[0.1em] transition-all duration-[var(--dur-fast)]"
+                  onClick={() => toggleSort(key)}
+                  className="mono shrink-0 rounded px-1.5 py-0.5 text-[9px] uppercase tracking-[0.1em] transition-colors duration-[var(--dur-fast)]"
                   style={{
-                    background: filterTab === tab ? "var(--ink-600)" : "transparent",
-                    color: filterTab === tab ? "var(--text-primary)" : "var(--text-quaternary)",
-                    border: filterTab === tab ? "1px solid var(--line-soft)" : "1px solid transparent"
+                    background: active ? "var(--rune-wash)" : "transparent",
+                    color: active ? "var(--rune)" : "var(--text-tertiary)",
+                    border: active ? "1px solid rgba(201,169,97,0.2)" : "1px solid transparent",
                   }}
                 >
-                  {tab === "all" ? messages.entity.filterAll : messages.entity.filterWatched}
+                  {label}
+                  {active && (
+                    <span className="ml-0.5">{sortDirection === "desc" ? "↓" : "↑"}</span>
+                  )}
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
 
           {/* Entity rows */}
@@ -232,6 +466,7 @@ export function EntityWorkstation({
             ) : (
               displayed.map((entity) => {
                 const isSelected = selectedId === entity.id;
+                const compared = compareIds.includes(entity.id);
                 return (
                   <div
                     key={entity.id}
@@ -243,6 +478,20 @@ export function EntityWorkstation({
                       paddingLeft: isSelected ? "calc(1rem - 0px)" : "calc(1rem + 2px)"
                     }}
                   >
+                    {/* Cascade map button */}
+                    <button
+                      type="button"
+                      aria-label={messages.entity.cascadeMap ?? "Cascade"}
+                      onClick={() => setCascadeEntityId(entity.id)}
+                      className="shrink-0 flex h-5 w-5 items-center justify-center rounded transition-colors mr-2 hover:text-[var(--rune)]"
+                      style={{ color: "var(--rune-dim)", background: "transparent" }}
+                    >
+                      <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                        <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.2" />
+                        <line x1="5.5" y1="2" x2="5.5" y2="9" stroke="currentColor" strokeWidth="1.2" />
+                        <line x1="2" y1="5.5" x2="9" y2="5.5" stroke="currentColor" strokeWidth="1.2" />
+                      </svg>
+                    </button>
                     <button
                       type="button"
                       onClick={() => setSelectedId(entity.id)}
@@ -255,7 +504,7 @@ export function EntityWorkstation({
                         {entity.name}
                       </div>
                       <div
-                        className="mono mt-1 text-[10px]"
+                        className="mono mt-1 flex items-center gap-2 text-[10px] flex-wrap"
                         style={{ color: "var(--text-tertiary)" }}
                       >
                         Score {entity.score}
@@ -263,7 +512,22 @@ export function EntityWorkstation({
                         <span style={{ color: isSelected ? "var(--rune-dim)" : "var(--text-tertiary)" }}>
                           {Math.round(entity.confidence * 100)}%
                         </span>
+                        {entity.divergence !== undefined ? <span>D {Math.round(entity.divergence * 100)}</span> : null}
+                        <Sparkline data={entity.scoreHistory ?? [entity.score - 4, entity.score - 2, entity.score + 1, entity.score]} width={40} height={14} />
+                        {entity.anomaly ? <AnomalyBadge severity={entity.anomaly.severity} zScore={entity.anomaly.zScore} /> : null}
                       </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleCompare(entity.id)}
+                      className="mono mr-2 rounded px-1.5 py-1 text-[9px] uppercase tracking-[0.1em]"
+                      style={{
+                        background: compared ? "var(--rune-wash)" : "transparent",
+                        border: `1px solid ${compared ? "rgba(201,169,97,0.25)" : "var(--line-faint)"}`,
+                        color: compared ? "var(--rune)" : "var(--text-tertiary)"
+                      }}
+                    >
+                      {compared ? "On" : "Cmp"}
                     </button>
                     <FavoriteButton id={entity.id} category="entity" label={entity.name} size={13} />
                   </div>
@@ -274,7 +538,19 @@ export function EntityWorkstation({
         </div>
 
         {/* ── Entity Detail ────────────────────────────────────────────── */}
-        {selected ? (
+        {compareMode ? (
+          <EntityCompare
+            entities={displayed
+              .filter((entity) => compareIds.includes(entity.id))
+              .map((entity) => ({
+                ...entity,
+                divergence: entity.divergence ?? 0,
+                signalCount: entity.signalCount ?? 0,
+                layers: entity.layers ?? {}
+              }))}
+            onRemove={(id) => toggleCompare(id)}
+          />
+        ) : selected ? (
           <div
             className="overflow-hidden rounded-[var(--radius-lg)]"
             style={{
@@ -370,6 +646,11 @@ export function EntityWorkstation({
                 <div className="mt-4">
                   <Confidence value={selected.confidence} />
                 </div>
+                {selected.divergence !== undefined ? (
+                  <div className="mono mt-3 text-[10px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>
+                    Divergence {Math.round(selected.divergence * 100)} / Signals {selected.signalCount ?? 0}
+                  </div>
+                ) : null}
               </div>
 
               <Divider />
@@ -456,6 +737,19 @@ export function EntityWorkstation({
           onClose={() => setShowGapAnalysis(false)}
         />
       )}
+
+      <CascadeMapModal
+        open={!!cascadeEntityId}
+        entityId={cascadeEntityId}
+        onClose={() => setCascadeEntityId(null)}
+        messages={{
+          cascadeMapTitle: messages.entity.cascadeMapTitle ?? "3-Level Cascade Map",
+          cascadeClose: messages.entity.cascadeClose ?? "Close",
+          lowCoverage: messages.entity.lowCoverage ?? "Low Cov.",
+          loading: "Loading…",
+          errorRetry: "Retry"
+        }}
+      />
     </div>
   );
 }

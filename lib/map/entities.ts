@@ -1,4 +1,4 @@
-import type { MapEntity } from "./types";
+import type { MapEntity, LayerKey } from "./types";
 
 export const DEMO_ENTITIES: MapEntity[] = [
   // ── Compute (6) ───────────────────────────────────────────────
@@ -433,3 +433,44 @@ export const DEMO_ENTITIES: MapEntity[] = [
     connectionIds: []
   }
 ];
+
+export type TimeRange = "7d" | "30d" | "90d" | "1y" | "all";
+
+export type EntityFilterOptions = {
+  timeRange: TimeRange;
+  minConfidence: number;
+};
+
+function timeRangeCutoff(range: TimeRange): number | null {
+  const now = Date.now();
+  if (range === "7d") return now - 7 * 24 * 60 * 60 * 1000;
+  if (range === "30d") return now - 30 * 24 * 60 * 60 * 1000;
+  if (range === "90d") return now - 90 * 24 * 60 * 60 * 1000;
+  if (range === "1y") return now - 365 * 24 * 60 * 60 * 1000;
+  return null;
+}
+
+export function filterEntities(
+  entities: MapEntity[],
+  options: EntityFilterOptions
+): MapEntity[] {
+  const cutoff = timeRangeCutoff(options.timeRange);
+  const minConf = options.minConfidence / 100;
+  return entities.filter((entity) => {
+    if (entity.confidence < minConf) return false;
+    if (cutoff !== null && entity.observedAt) {
+      const t = Date.parse(entity.observedAt);
+      if (!Number.isNaN(t) && t < cutoff) return false;
+    }
+    return true;
+  });
+}
+
+export function isNewEntity(entity: MapEntity): boolean {
+  if (!entity.observedAt) return false;
+  const t = Date.parse(entity.observedAt);
+  if (Number.isNaN(t)) return false;
+  return Date.now() - t <= 48 * 60 * 60 * 1000;
+}
+
+export { type LayerKey };

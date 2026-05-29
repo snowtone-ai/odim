@@ -2,11 +2,11 @@
 
 ## Current
 - Branch: main
-- Active task: release-critical refactoring complete
-- Current executor: Codex CEO Agent
+- Active task: Phase 9 complete (T230-T237) with residual-risk remediation for browser push and geographic drill-down
+- Current executor: Codex
 - Write lock: none
 - Coordinator: CEO Agent
-- Latest verification pointer: release-critical refactoring verified (pnpm typecheck clean, pnpm lint clean, 78/78 tests pass, pnpm build success, release audit 91 checks passed)
+- Latest verification pointer: Phase 9 complete (`pnpm typecheck`, `pnpm lint`, `pnpm test` 94/94, `pnpm build`, `pnpm scrape:dry-run`)
 - Verification mode: standard
 
 ## Completed after v3.0
@@ -96,3 +96,30 @@
 ## Current Blocker
 - Dev server background launch still fails in sandbox (Node/Windows spawn EINVAL); pnpm build is verified fallback.
 - Supabase: single-environment (main/production-tagged); staging URL may match production until dedicated project created.
+
+## Completed after v3.0
+
+### Phase 7: Data Foundation
+- Added SEC expansion scrapers for Form 4, 8-K, 13D/G, and 13F dry-run coverage.
+- Added new public-source adapters for FRED, Federal Register, EDINET, Companies House, and USAspending.
+- Enabled Phase 7 configured sources and expanded daily scrape workflow/environment coverage.
+- Ingestion now computes entity scores via `lib/pipeline/scoring.ts`, records freshness SLA checks, and exposes dry-run source reports for all fixture-backed sources.
+- Added Morning Brief daily diff panel, CSV/JSON export API/button, global keyboard nav shell hook, and persisted saved-search bars for Huginn and Entity views.
+- Verification: `pnpm typecheck`, `pnpm lint`, `pnpm test` (84/84), `pnpm build`, `pnpm scrape:dry-run`.
+
+### Phase 8: Intelligence & Differentiation
+- Added calibration, attribution, anomaly detection, sentiment divergence, and sector rotation pipeline modules.
+- Entity workstation now supports compare mode, keyboard-synced selection, anomaly badges, divergence surfacing, and sector rotation summaries.
+- Reality Map now includes geographic drill-down overlays; Settings adds calibration / attribution visibility and audit export controls.
+- Added browser notification prompt + polling-backed push queue route, and enabled CAISO/SPP queue coverage in source config/workflow/env docs.
+- Hardened SEC residual-risk area by expanding Form 4 / 13F / 13D-G parser tolerance for nested XML and text variants.
+- Verification: `pnpm typecheck`, `pnpm lint`, `pnpm test` (90/90), `pnpm build`, `pnpm scrape:dry-run`.
+
+### Phase 9: Institutional Grade
+- Added versioned REST API routes under `app/api/v1/` with scoped-key auth, pagination, and per-endpoint rate limiting.
+- Added SSO session plumbing (`lib/auth/sso.ts`, `app/api/auth/callback/route.ts`, `middleware.ts`) and a minimal enterprise login handoff screen.
+- Added custom dashboard builder persistence and `/custom` route, multi-provider Huginn ensemble support, and deterministic backtesting CLI/reporting.
+- Expanded source coverage with OpenSanctions, FEMA, SAM.gov, and NRC scrapers and wired them into dry-run/live scrape flow.
+- Reworked browser notifications to persistent Web Push subscription delivery and moved geographic drill-down onto dedicated MapLibre aggregation layers by zoom band.
+- Added runtime environment separation for local/staging/production Supabase selection plus migration `0009_push_subscriptions.sql`.
+- Verification: `pnpm typecheck`, `pnpm lint`, `pnpm test` (94/94), `pnpm build`, `pnpm scrape:dry-run`.

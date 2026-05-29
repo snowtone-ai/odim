@@ -17,6 +17,7 @@ export default async function HuginnPage() {
     <Screen title={screen.title}>
       <HuginnConsole
         defaultOrgId={defaultHuginnOrgId}
+        locale={locale}
         cascadeLayers={screen.cascadeLayers}
         memoryRecords={screen.memoryRecords}
         panelLabels={screen.panels}
@@ -27,6 +28,8 @@ export default async function HuginnPage() {
         emptyStateText={screen.emptyState}
         showOnMapLabel={screen.showOnMap}
         webSearchLabel={screen.webSearch}
+        presetsLabel={screen.presets}
+        historyLabels={{ recentQueries: screen.recentQueries, clearHistory: screen.clearHistory }}
         action={submitHuginnQuestion}
       />
     </Screen>

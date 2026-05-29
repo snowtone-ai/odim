@@ -1,8 +1,12 @@
 import { RealityMap } from "@/components/ui/reality-map";
+import { DailyDiffPanel } from "@/components/ui/daily-diff";
 import { alerts, layerActivity } from "@/lib/data";
 import { getMessages } from "@/lib/i18n/messages";
 import { getLocale } from "@/lib/i18n/locale";
 import type { LayerKey } from "@/lib/map/types";
+import { buildFixtureRawSignals } from "@/lib/pipeline/fixtures";
+import { buildIngestionPlan } from "@/lib/pipeline/ontologize";
+import { computeDailyDiff } from "@/lib/pipeline/diff";
 
 const VALID_LAYERS: Set<string> = new Set([
   "energy", "cash", "land", "compute", "water", "raw_materials", "logistics"
@@ -23,6 +27,9 @@ export default async function RealityMapPage(
   const initialCenter = lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng)
     ? { lat, lng, zoom: Number.isFinite(zoom ?? NaN) ? zoom : undefined }
     : undefined;
+  const todayPlan = buildIngestionPlan(buildFixtureRawSignals());
+  const yesterdayPlan = buildIngestionPlan(buildFixtureRawSignals().slice(0, -3));
+  const diff = computeDailyDiff(todayPlan, yesterdayPlan);
 
   return (
     <section className="flex h-screen flex-col">
@@ -52,12 +59,17 @@ export default async function RealityMapPage(
       <div className="grid min-h-0 flex-1 grid-cols-1 xl:grid-cols-[1fr_280px]">
         {/* Map — full bleed, no panel wrapper */}
         <div className="relative min-h-[400px]">
+          <div className="absolute inset-x-3 top-3 z-20">
+            <DailyDiffPanel diff={diff} />
+          </div>
           <RealityMap
             layerLabels={[...messages.layers]}
             selectLabel={screen.panels.layers}
             searchHint={screen.searchHint}
             initialFilter={initialFilter}
             initialCenter={initialCenter}
+            tooltipLabels={screen.tooltip}
+            filterLabels={screen.filters}
           />
         </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import type { ClientHuginnResponse } from "@/app/actions/huginn";
 
 type Labels = {
@@ -16,6 +16,7 @@ type Props = {
   action: (question: string, orgId: string) => Promise<ClientHuginnResponse>;
   onSubmit: (question: string) => void;
   loading: boolean;
+  prefillValue?: string;
 };
 
 type AttachedFile = {
@@ -26,11 +27,12 @@ type AttachedFile = {
 const ACCEPTED = ".txt,.md,.json,.csv,.ts,.tsx,.js,.jsx,.py,.yaml,.yml,.toml,.xml,.html,.css";
 const MAX_BYTES = 150 * 1024; // 150 KB per file
 
-export function HuginnInput({ labels, onSubmit, loading }: Readonly<Props>) {
+export function HuginnInput({ labels, onSubmit, loading, prefillValue }: Readonly<Props>) {
   const [question, setQuestion] = useState("");
   const [files, setFiles] = useState<AttachedFile[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const prevPrefillRef = useRef<string | undefined>(undefined);
 
   const adjustHeight = useCallback(() => {
     const el = textareaRef.current;
@@ -38,6 +40,15 @@ export function HuginnInput({ labels, onSubmit, loading }: Readonly<Props>) {
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
   }, []);
+
+  useEffect(() => {
+    if (prefillValue && prefillValue !== prevPrefillRef.current) {
+      prevPrefillRef.current = prefillValue;
+      setQuestion(prefillValue);
+      adjustHeight();
+      setTimeout(() => textareaRef.current?.focus(), 0);
+    }
+  }, [prefillValue, adjustHeight]);
 
   function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();

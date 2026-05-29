@@ -37,7 +37,25 @@ export const messages = {
           liveFeed: "Live Signal Feed"
         },
         globeNote: "Zoom to explore substrate signals from macro to parcel level",
-        searchHint: "Search entities…"
+        searchHint: "Search entities…",
+        tooltip: {
+          activeSignals: "Active Signals",
+          topEntity: "Top Entity",
+          gap: "Reality Gap",
+          capital: "Capital (30d)"
+        },
+        filters: {
+          label: "Filters",
+          timeRange: "Time Range",
+          confidence: "Min Confidence",
+          "7d": "7d",
+          "30d": "30d",
+          "90d": "90d",
+          "1y": "1y",
+          all: "All",
+          newBadge: "New"
+        },
+        alertOverlay: "Alerts"
       },
       entity: {
         title: "Entity Intelligence",
@@ -54,14 +72,28 @@ export const messages = {
         filterAll: "All",
         filterWatched: "Watched",
         dailyBrief: "Daily Brief",
-        narrativeGap: "Narrative–Reality Gap"
+        narrativeGap: "Narrative–Reality Gap",
+        search: "Search entities…",
+        sortBy: "Sort by",
+        sortScore: "Score",
+        sortGap: "Gap",
+        sortConfidence: "Confidence",
+        sortName: "Name",
+        cascadeMap: "Cascade",
+        cascadeMapTitle: "3-Level Cascade Map",
+        lowCoverage: "Low Cov.",
+        cascadeClose: "Close"
       },
       alerts: {
         title: "Signal Alerts",
         panels: {
           queue: "Alert Queue",
           chain: "Signal Chain"
-        }
+        },
+        markAllRead: "Mark all read",
+        unread: "Unread",
+        viewList: "List",
+        viewGrouped: "Grouped"
       },
       huginn: {
         title: "Huginn",
@@ -103,7 +135,11 @@ export const messages = {
         },
         emptyState: "Ask Huginn a question to begin intelligence analysis.",
         showOnMap: "Show on Map",
-        webSearch: "Web Search"
+        webSearch: "Web Search",
+        presets: "Quick Templates",
+        presetHint: "Fill input with a preset query",
+        recentQueries: "Recent Queries",
+        clearHistory: "Clear History"
       },
       settings: {
         title: "Settings",
@@ -139,6 +175,38 @@ export const messages = {
         language: {
           panel: "Language",
           description: "Interface language for all screens."
+        },
+        sourceHealth: {
+          title: "Data Source Health",
+          colSource: "Source",
+          colLastSuccess: "Last Success",
+          colSignals: "Signals",
+          colStatus: "Status",
+          statusHealthy: "Healthy",
+          statusStale: "Stale",
+          statusFailing: "Failing"
+        },
+        alertRuleBuilder: {
+          addRule: "Add Rule",
+          editRule: "Edit",
+          save: "Save",
+          cancel: "Cancel",
+          labelName: "Name",
+          labelLayer: "Layer",
+          labelMinConf: "Min Confidence",
+          labelPriority: "Priority",
+          labelDestination: "Destination",
+          labelEnabled: "Enabled",
+          deleteRule: "Delete"
+        },
+        webhook: {
+          title: "Slack Webhook",
+          configured: "Webhook configured",
+          notConfigured: "Webhook not configured (set SLACK_WEBHOOK_URL)",
+          testButton: "Send Test",
+          testSuccess: "Test sent",
+          testFailed: "Test failed",
+          minPriority: "Min priority"
         }
       }
     }
@@ -178,7 +246,25 @@ export const messages = {
           liveFeed: "ライブフィード"
         },
         globeNote: "ズームで基盤層シグナルをマクロから用地レベルまで探索",
-        searchHint: "エンティティを検索…"
+        searchHint: "エンティティを検索…",
+        tooltip: {
+          activeSignals: "アクティブシグナル",
+          topEntity: "上位エンティティ",
+          gap: "リアリティ乖離",
+          capital: "資本（30日）"
+        },
+        filters: {
+          label: "フィルター",
+          timeRange: "期間",
+          confidence: "最低信頼度",
+          "7d": "7日",
+          "30d": "30日",
+          "90d": "90日",
+          "1y": "1年",
+          all: "全期間",
+          newBadge: "新着"
+        },
+        alertOverlay: "アラート"
       },
       entity: {
         title: "エンティティ分析",
@@ -195,14 +281,28 @@ export const messages = {
         filterAll: "全て",
         filterWatched: "ウォッチ中",
         dailyBrief: "デイリーブリーフ",
-        narrativeGap: "ナラティブ乖離"
+        narrativeGap: "ナラティブ乖離",
+        search: "エンティティを検索…",
+        sortBy: "並び順",
+        sortScore: "スコア",
+        sortGap: "乖離",
+        sortConfidence: "信頼度",
+        sortName: "名前",
+        cascadeMap: "カスケード",
+        cascadeMapTitle: "3階層カスケードマップ",
+        lowCoverage: "カバレッジ不足",
+        cascadeClose: "閉じる"
       },
       alerts: {
         title: "アラート",
         panels: {
           queue: "アラートキュー",
           chain: "シグナルチェーン"
-        }
+        },
+        markAllRead: "全て既読にする",
+        unread: "未読",
+        viewList: "リスト",
+        viewGrouped: "グループ"
       },
       huginn: {
         title: "Huginn",
@@ -244,7 +344,11 @@ export const messages = {
         },
         emptyState: "Huginnに質問して、インテリジェンス分析を開始してください。",
         showOnMap: "マップで表示",
-        webSearch: "Web検索"
+        webSearch: "Web検索",
+        presets: "クイックテンプレート",
+        presetHint: "プリセットクエリを入力に反映",
+        recentQueries: "最近のクエリ",
+        clearHistory: "履歴を消去"
       },
       settings: {
         title: "設定",
@@ -280,6 +384,38 @@ export const messages = {
         language: {
           panel: "言語設定",
           description: "全画面の表示言語を切り替えます。"
+        },
+        sourceHealth: {
+          title: "データソース状態",
+          colSource: "ソース",
+          colLastSuccess: "最終成功",
+          colSignals: "シグナル数",
+          colStatus: "状態",
+          statusHealthy: "正常",
+          statusStale: "遅延",
+          statusFailing: "失敗"
+        },
+        alertRuleBuilder: {
+          addRule: "ルール追加",
+          editRule: "編集",
+          save: "保存",
+          cancel: "キャンセル",
+          labelName: "名前",
+          labelLayer: "レイヤー",
+          labelMinConf: "最低信頼度",
+          labelPriority: "優先度",
+          labelDestination: "送信先",
+          labelEnabled: "有効",
+          deleteRule: "削除"
+        },
+        webhook: {
+          title: "Slack Webhook",
+          configured: "Webhook設定済み",
+          notConfigured: "Webhook未設定（SLACK_WEBHOOK_URL を設定してください）",
+          testButton: "テスト送信",
+          testSuccess: "テスト送信完了",
+          testFailed: "テスト失敗",
+          minPriority: "最低優先度"
         }
       }
     }

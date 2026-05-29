@@ -1,4 +1,5 @@
 import { generateAnswer, type GenerateResponse } from "../ai/provider.ts";
+import { ensembleGenerate, getEnsembleConfig } from "../ai/ensemble.ts";
 import { isProductionRuntime } from "../env/runtime.ts";
 import { buildRecallMemoryDraft, searchMuninMemory, toMuninMemoryRow, type MuninMemory, type MuninOpinion, type RetrievedMemory } from "../munin/memory.ts";
 import { writeGate } from "../munin/write-gate.ts";
@@ -110,6 +111,10 @@ function formatContext(input: {
   const opinionLines = input.opinions
     .map((opinion) => `- [opinion ${opinion.isSeed ? "seed" : "past"}] ${opinion.content}`)
     .join("\n");
+  const realityCount = input.evidence.filter((item) => !item.isNarrative).length;
+  const narrativeCount = input.evidence.filter((item) => item.isNarrative).length;
+  const divergence =
+    Math.abs(realityCount - narrativeCount) / Math.max(1, Math.max(realityCount, narrativeCount));
 
   return [
     `org_id=${input.orgId}`,
@@ -121,6 +126,7 @@ function formatContext(input: {
     memoryLines || "- none",
     "Reality/Odim evidence:",
     evidenceLines || "- none",
+    `Narrative-reality divergence index: ${Math.round(divergence * 100) / 100}`,
     "Past opinions (only because uses_past_opinion=true):",
     input.plan.uses_past_opinion ? opinionLines || "- none" : "- excluded by default"
   ].join("\n");
@@ -174,11 +180,27 @@ export async function answerHuginnQuestion(input: HuginnQuestionInput): Promise<
         confidence: cascade.precomputed?.confidence ?? 0.7,
         sources: ["pre_computed_answers"]
       }
-    : await (input.generate ?? generateAnswer)({
-        question: input.question,
-        context: antiSycophancyPrefix + context,
-        orgId: input.orgId
-      });
+    : input.generate
+      ? await input.generate({
+          question: input.question,
+          context: antiSycophancyPrefix + context,
+          orgId: input.orgId
+        })
+      : await (() => {
+          const config = getEnsembleConfig();
+          if (config.providers.length > 1) {
+            return ensembleGenerate({
+              question: input.question,
+              context: antiSycophancyPrefix + context,
+              orgId: input.orgId
+            });
+          }
+          return generateAnswer({
+            question: input.question,
+            context: antiSycophancyPrefix + context,
+            orgId: input.orgId
+          });
+        })();
   const sourceRefs = buildSourceRefs(evidence);
   const sources = unique([
     ...generated.sources,

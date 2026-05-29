@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import type { Map as MapType, GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from "maplibre-gl";
-import { DEMO_ENTITIES } from "@/lib/map/entities";
+import { DEMO_ENTITIES, filterEntities, isNewEntity, type TimeRange } from "@/lib/map/entities";
 import { DEMO_CONNECTIONS } from "@/lib/map/connections";
-import type { LayerKey, MapEntity, MapConnection } from "@/lib/map/types";
+import type { LayerKey, MapEntity, MapConnection, MapAlert } from "@/lib/map/types";
+import { SubstrateTooltip, type SubstrateTooltipData } from "@/components/ui/substrate-tooltip";
+import { aggregateByGeo, buildGeoFeatureCollections, levelForZoom, zoomForLevel, type GeoLevel } from "@/lib/map/geo-drill";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -274,6 +276,30 @@ type LayerToggle = {
   enabled: boolean;
 };
 
+type FilterLabels = {
+  label: string;
+  timeRange: string;
+  confidence: string;
+  "7d": string;
+  "30d": string;
+  "90d": string;
+  "1y": string;
+  all: string;
+  newBadge: string;
+};
+
+const DEFAULT_FILTER_LABELS: FilterLabels = {
+  label: "Filters",
+  timeRange: "Time Range",
+  confidence: "Min Confidence",
+  "7d": "7d",
+  "30d": "30d",
+  "90d": "90d",
+  "1y": "1y",
+  all: "All",
+  newBadge: "New"
+};
+
 type Props = Readonly<{
   layerLabels: string[];
   selectLabel: string;
@@ -281,13 +307,31 @@ type Props = Readonly<{
   onEntitySelect?: (entity: MapEntity | null) => void;
   entities?: MapEntity[];
   connections?: MapConnection[];
+  alerts?: MapAlert[];
   /** Pre-filter to a specific layer (e.g. from Huginn navigation) */
   initialFilter?: LayerKey | null;
   /** Initial map center from Huginn region detection */
   initialCenter?: { lat: number; lng: number; zoom?: number };
+  tooltipLabels?: {
+    activeSignals: string;
+    topEntity: string;
+    gap: string;
+    capital: string;
+  };
+  filterLabels?: FilterLabels;
+  alertOverlayLabel?: string;
 }>;
 
 // ─── Component ────────────────────────────────────────────────────────────────
+
+const DEFAULT_TOOLTIP_LABELS = {
+  activeSignals: "Active Signals",
+  topEntity: "Top Entity",
+  gap: "Reality Gap",
+  capital: "Capital (30d)"
+};
+
+const GEO_LEVELS: GeoLevel[] = ["country", "state", "county", "site"];
 
 export function RealityMap({
   layerLabels,
@@ -296,8 +340,12 @@ export function RealityMap({
   onEntitySelect,
   entities: entityData = DEMO_ENTITIES,
   connections: connectionData = DEMO_CONNECTIONS,
+  alerts: alertData = [],
   initialFilter = null,
-  initialCenter
+  initialCenter,
+  tooltipLabels = DEFAULT_TOOLTIP_LABELS,
+  filterLabels = DEFAULT_FILTER_LABELS,
+  alertOverlayLabel = "Alerts"
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapType | null>(null);
@@ -307,12 +355,18 @@ export function RealityMap({
   const dashIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pulseFrameRef = useRef<number | null>(null);
   const cleanupCallbacksRef = useRef<Array<() => void>>([]);
+  const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [loaded, setLoaded] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<MapEntity[]>([]);
+  const [tooltipState, setTooltipState] = useState<{
+    layer: LayerKey;
+    position: { x: number; y: number };
+    data: SubstrateTooltipData;
+  } | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [layers, setLayers] = useState<LayerToggle[]>(
@@ -323,16 +377,40 @@ export function RealityMap({
       enabled: initialFilter ? key === initialFilter : true
     }))
   );
-
-  const entityDataRef = useRef(entityData);
-  const connectionDataRef = useRef(connectionData);
-  useEffect(() => { entityDataRef.current = entityData; }, [entityData]);
-  useEffect(() => { connectionDataRef.current = connectionData; }, [connectionData]);
+  const [timeRange, setTimeRange] = useState<TimeRange>("30d");
+  const [minConfidence, setMinConfidence] = useState(0);
+  const [alertsVisible, setAlertsVisible] = useState(false);
+  const [geoPath, setGeoPath] = useState<string[]>([]);
+  const [geoZoomLevel, setGeoZoomLevel] = useState<GeoLevel>("country");
+  const alertDataRef = useRef(alertData);
+  useEffect(() => { alertDataRef.current = alertData; }, [alertData]);
 
   const enabledKeys = useMemo(
     () => new Set(layers.filter((l) => l.enabled).map((l) => l.key)),
     [layers]
   );
+
+  const filteredEntities = useMemo(
+    () => filterEntities(entityData.filter((e) => enabledKeys.has(e.layer)), { timeRange, minConfidence }),
+    [entityData, enabledKeys, timeRange, minConfidence]
+  );
+  const geoTree = useMemo(() => aggregateByGeo(filteredEntities), [filteredEntities]);
+  const geoFeatures = useMemo(() => buildGeoFeatureCollections(geoTree), [geoTree]);
+  const geoNodes = useMemo(() => {
+    let current = geoTree;
+    for (const step of geoPath) {
+      const next = current.find((node) => node.name === step)?.children ?? [];
+      current = next;
+    }
+    return current;
+  }, [geoPath, geoTree]);
+
+  const entityDataRef = useRef(entityData);
+  const connectionDataRef = useRef(connectionData);
+  const filteredEntitiesRef = useRef(filteredEntities);
+  useEffect(() => { entityDataRef.current = entityData; }, [entityData]);
+  useEffect(() => { connectionDataRef.current = connectionData; }, [connectionData]);
+  useEffect(() => { filteredEntitiesRef.current = filteredEntities; }, [filteredEntities]);
 
   const toggleLayer = useCallback((key: LayerKey) => {
     setLayers((prev) =>
@@ -437,6 +515,13 @@ export function RealityMap({
           clusterRadius: 50
         });
 
+        for (const level of GEO_LEVELS) {
+          map.addSource(`geo-${level}`, {
+            type: "geojson",
+            data: geoFeatures[level]
+          });
+        }
+
         // ── Connection source ────────────────────────────────────────────
         map.addSource("connections", {
           type: "geojson",
@@ -538,6 +623,50 @@ export function RealityMap({
             "text-color": "#333"
           }
         });
+        const geoZoomConfig: Record<GeoLevel, { minzoom?: number; maxzoom?: number; radius: number }> = {
+          country: { maxzoom: 4.5, radius: 26 },
+          state: { minzoom: 4.5, maxzoom: 7.5, radius: 22 },
+          county: { minzoom: 7.5, maxzoom: 10.5, radius: 18 },
+          site: { minzoom: 10.5, radius: 12 }
+        };
+        for (const level of GEO_LEVELS) {
+          map.addLayer({
+            id: `geo-${level}-circles`,
+            type: "circle",
+            source: `geo-${level}`,
+            minzoom: geoZoomConfig[level].minzoom,
+            maxzoom: geoZoomConfig[level].maxzoom,
+            paint: {
+              "circle-radius": [
+                "interpolate",
+                ["linear"],
+                ["get", "signalCount"],
+                1, Math.max(10, geoZoomConfig[level].radius - 6),
+                8, geoZoomConfig[level].radius,
+                25, geoZoomConfig[level].radius + 8
+              ],
+              "circle-color": level === "site" ? "rgba(201,169,97,0.86)" : "rgba(59,130,217,0.18)",
+              "circle-stroke-color": level === "site" ? "rgba(201,169,97,0.96)" : "rgba(59,130,217,0.9)",
+              "circle-stroke-width": level === "site" ? 1.5 : 2,
+              "circle-opacity": level === "site" ? 0.82 : 0.94
+            }
+          });
+          map.addLayer({
+            id: `geo-${level}-labels`,
+            type: "symbol",
+            source: `geo-${level}`,
+            minzoom: geoZoomConfig[level].minzoom,
+            maxzoom: geoZoomConfig[level].maxzoom,
+            layout: {
+              "text-field": ["format", ["get", "name"], { "font-scale": 1 }, "\n", {}, ["get", "signalCount"], { "font-scale": 0.85 }],
+              "text-size": level === "country" ? 12 : level === "state" ? 11 : 10,
+              "text-allow-overlap": false
+            },
+            paint: {
+              "text-color": level === "site" ? "#f3e5b5" : "#dbe7ff"
+            }
+          });
+        }
 
         // ── Entity symbols (zoom-dependent sizing) ───────────────────────
         map.addLayer({
@@ -570,6 +699,70 @@ export function RealityMap({
             "text-halo-width": 1.5
           }
         });
+
+        // ── Alert overlay source ─────────────────────────────────────────
+        map.addSource("alerts", {
+          type: "geojson",
+          data: {
+            type: "FeatureCollection",
+            features: alertDataRef.current.map((a) => ({
+              type: "Feature" as const,
+              id: a.id,
+              geometry: { type: "Point" as const, coordinates: [a.lng, a.lat] },
+              properties: { id: a.id, priority: a.priority, title: a.title, entityId: a.entityId }
+            }))
+          }
+        });
+
+        map.addLayer({
+          id: "alert-circles",
+          type: "circle",
+          source: "alerts",
+          layout: { visibility: "none" },
+          paint: {
+            "circle-radius": 9,
+            "circle-color": "#dc2626",
+            "circle-opacity": 0.85,
+            "circle-stroke-color": "rgba(255,255,255,0.6)",
+            "circle-stroke-width": 1.5
+          }
+        });
+
+        // Pulsing ring — reduced-motion aware (added in startAnimations)
+        map.addLayer({
+          id: "alert-pulse",
+          type: "circle",
+          source: "alerts",
+          layout: { visibility: "none" },
+          paint: {
+            "circle-radius": 9,
+            "circle-color": "rgba(0,0,0,0)",
+            "circle-stroke-color": "#dc2626",
+            "circle-stroke-width": 2,
+            "circle-stroke-opacity": 0.5
+          }
+        });
+
+        // Alert click → popup
+        map.on("click", "alert-circles", (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
+          const feature = e.features?.[0];
+          if (!feature) return;
+          const props = feature.properties as { priority: string; title: string; entityId: string };
+          const coords = (feature.geometry as unknown as { coordinates: [number, number] }).coordinates;
+          popupRef.current
+            ?.setLngLat(coords)
+            .setHTML(
+              `<div style="background:rgba(10,12,16,0.96);border:1px solid rgba(220,38,38,0.4);border-radius:8px;padding:10px 12px;min-width:200px;">
+                <div style="font-family:monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:#dc2626;margin-bottom:4px;">${escapeHtml(props.priority)}</div>
+                <div style="font-size:12px;font-weight:600;color:#dde1ea;line-height:1.4;">${escapeHtml(props.title)}</div>
+                <a href="/alerts" style="font-family:monospace;font-size:10px;color:#c9a961;margin-top:6px;display:block;">View alerts →</a>
+              </div>`
+            )
+            .addTo(map);
+        });
+
+        map.on("mouseenter", "alert-circles", () => { map.getCanvas().style.cursor = "pointer"; });
+        map.on("mouseleave", "alert-circles", () => { map.getCanvas().style.cursor = ""; popupRef.current?.remove(); });
 
         // ── Animations ──────────────────────────────────────────────────
 
@@ -653,6 +846,41 @@ export function RealityMap({
         map.on("mouseleave", "entity-symbols", () => {
           map.getCanvas().style.cursor = "";
           popupRef.current?.remove();
+          if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+          tooltipTimerRef.current = null;
+          setTooltipState(null);
+        });
+
+        // ── Substrate tooltip (debounced 200ms) ──────────────────────────
+        map.on("mousemove", "entity-symbols", (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
+          const feature = e.features?.[0];
+          if (!feature) return;
+          const props = feature.properties as EntityProperties;
+          const layer = props.layer as LayerKey;
+          const mouseX = (e.originalEvent as MouseEvent).clientX;
+          const mouseY = (e.originalEvent as MouseEvent).clientY;
+
+          if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+          tooltipTimerRef.current = setTimeout(() => {
+            const layerEntities = entityDataRef.current.filter((en) => en.layer === layer);
+            const sorted = [...layerEntities].sort((a, b) => b.score - a.score);
+            const topEntity = sorted[0] ?? null;
+            const avgScore = layerEntities.reduce((sum, en) => sum + en.score, 0) / Math.max(1, layerEntities.length);
+            const narrativeGap: SubstrateTooltipData["narrativeGap"] =
+              avgScore > 74 ? "HIGH" : avgScore > 62 ? "MEDIUM" : "LOW";
+            const delta = Math.round((props.score - 70) / 5);
+            setTooltipState({
+              layer,
+              position: { x: mouseX, y: mouseY },
+              data: {
+                activeSignals: layerEntities.length,
+                signalsDelta: delta,
+                topEntity: topEntity ? { name: topEntity.name, confidence: topEntity.confidence } : null,
+                narrativeGap,
+                capitalTotal30d: layerEntities.reduce((sum, en) => sum + en.score * 1_200_000, 0)
+              }
+            });
+          }, 200);
         });
 
         // ── Interaction: click entity ────────────────────────────────────
@@ -690,9 +918,49 @@ export function RealityMap({
         });
 
         // ── Click background → deselect ──────────────────────────────────
+        const handleGeoClick = (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
+          const feature = e.features?.[0];
+          if (!feature) return;
+          const properties = feature.properties as { level?: GeoLevel; entityId?: string; path?: string };
+          const path = (() => {
+            try {
+              return JSON.parse(properties.path ?? "[]") as string[];
+            } catch {
+              return [];
+            }
+          })();
+          if (properties.entityId) {
+            const entity = filteredEntitiesRef.current.find((entry) => entry.id === properties.entityId);
+            if (entity) handleSearchSelect(entity);
+            return;
+          }
+          const level = properties.level ?? "country";
+          setGeoPath(path);
+          setGeoZoomLevel(level);
+          map.flyTo({
+            center: (feature.geometry as unknown as { coordinates: [number, number] }).coordinates,
+            zoom: zoomForLevel(level === "country" ? "state" : level === "state" ? "county" : "site"),
+            duration: 850,
+            essential: true
+          });
+        };
+
+        for (const level of GEO_LEVELS) {
+          map.on("click", `geo-${level}-circles`, handleGeoClick);
+          map.on("click", `geo-${level}-labels`, handleGeoClick);
+          map.on("mouseenter", `geo-${level}-circles`, () => { map.getCanvas().style.cursor = "pointer"; });
+          map.on("mouseleave", `geo-${level}-circles`, () => { map.getCanvas().style.cursor = ""; });
+          map.on("mouseenter", `geo-${level}-labels`, () => { map.getCanvas().style.cursor = "pointer"; });
+          map.on("mouseleave", `geo-${level}-labels`, () => { map.getCanvas().style.cursor = ""; });
+        }
+
+        map.on("moveend", () => {
+          setGeoZoomLevel(levelForZoom(map.getZoom()));
+        });
+
         map.on("click", (e: MapMouseEvent) => {
           const features = map.queryRenderedFeatures(e.point, {
-            layers: ["entity-symbols", "clusters"]
+            layers: ["entity-symbols", "clusters", ...GEO_LEVELS.flatMap((level) => [`geo-${level}-circles`, `geo-${level}-labels`])]
           });
           if (features.length === 0) {
             setSelectedId(null);
@@ -769,8 +1037,10 @@ export function RealityMap({
       cancelled = true;
       if (dashIntervalRef.current) clearInterval(dashIntervalRef.current);
       if (pulseFrameRef.current) cancelAnimationFrame(pulseFrameRef.current);
+      if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
       dashIntervalRef.current = null;
       pulseFrameRef.current = null;
+      tooltipTimerRef.current = null;
       for (const cleanupCallback of cleanupCallbacksRef.current.splice(0)) cleanupCallback();
       popupRef.current?.remove();
       if (mapRef.current) {
@@ -791,7 +1061,7 @@ export function RealityMap({
     connSrc.setData(buildConnectionCollection(enabledKeys, selectedId, entityData, connectionData));
   }, [selectedId, loaded, enabledKeys, entityData, connectionData]);
 
-  // ── Sync layer visibility → entity source filter ──────────────────────────
+  // ── Sync layer visibility + filters → entity source ──────────────────────
 
   useEffect(() => {
     const map = mapRef.current;
@@ -816,19 +1086,34 @@ export function RealityMap({
 
     const src = map.getSource("entities") as GeoJSONSource | undefined;
     if (src) {
-      src.setData(
-        buildEntityCollection(
-          entityDataRef.current.filter((e) => enabledKeys.has(e.layer))
-        )
-      );
+      src.setData(buildEntityCollection(filteredEntities));
     }
 
     const connSrc = map.getSource("connections") as GeoJSONSource | undefined;
     if (connSrc) {
-      connSrc.setData(buildConnectionCollection(enabledKeys, selectedId, entityDataRef.current, connectionDataRef.current));
+      connSrc.setData(buildConnectionCollection(enabledKeys, selectedId, filteredEntities, connectionDataRef.current));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, layers]);
+  }, [loaded, layers, filteredEntities]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loaded) return;
+    for (const level of GEO_LEVELS) {
+      const source = map.getSource(`geo-${level}`) as GeoJSONSource | undefined;
+      if (source) source.setData(geoFeatures[level]);
+    }
+  }, [geoFeatures, loaded]);
+
+  // ── Sync alert overlay visibility ─────────────────────────────────────────
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loaded) return;
+    const vis = alertsVisible ? "visible" : "none";
+    if (map.getLayer("alert-circles")) map.setLayoutProperty("alert-circles", "visibility", vis);
+    if (map.getLayer("alert-pulse")) map.setLayoutProperty("alert-pulse", "visibility", vis);
+  }, [alertsVisible, loaded]);
 
   // ── Search handlers ───────────────────────────────────────────────────────
 
@@ -850,6 +1135,25 @@ export function RealityMap({
       });
     },
     [onEntitySelect]
+  );
+
+  const handleGeoNodeSelect = useCallback(
+    (name: string) => {
+      const node = geoNodes.find((entry) => entry.name === name);
+      const map = mapRef.current;
+      if (!node || !map) return;
+      if (node.children.length) {
+        setGeoPath((current) => [...current, node.name]);
+        setGeoZoomLevel(node.level);
+        map.flyTo({ center: [node.lng, node.lat], zoom: zoomForLevel(node.level === "country" ? "state" : node.level === "state" ? "county" : "site"), duration: 900, essential: true });
+        return;
+      }
+      if (node.entityId) {
+        const entity = filteredEntities.find((entry) => entry.id === node.entityId);
+        if (entity) handleSearchSelect(entity);
+      }
+    },
+    [filteredEntities, geoNodes, handleSearchSelect]
   );
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -984,6 +1288,157 @@ export function RealityMap({
         ))}
       </div>
 
+      {/* Time range + confidence filter controls */}
+      <div
+        className="absolute right-3 z-10 rounded-[var(--radius-md)] p-2"
+        style={{
+          top: "calc(3rem + 230px)",
+          background: "rgba(9,11,15,0.86)",
+          backdropFilter: "blur(14px) saturate(1.2)",
+          WebkitBackdropFilter: "blur(14px) saturate(1.2)",
+          border: "1px solid var(--glass-border)",
+          boxShadow: "var(--shadow-lg)",
+          width: 148
+        }}
+      >
+        <div
+          className="mono px-1 pb-1.5 text-[10px] uppercase tracking-[0.14em]"
+          style={{ color: "var(--text-tertiary)" }}
+        >
+          {filterLabels.timeRange}
+        </div>
+        <div className="flex flex-wrap gap-0.5 pb-2" style={{ borderBottom: "1px solid var(--line-faint)" }}>
+          {(["7d", "30d", "90d", "1y", "all"] as const).map((range) => (
+            <button
+              key={range}
+              type="button"
+              onClick={() => setTimeRange(range)}
+              className="mono rounded px-1.5 py-0.5 text-[9px] uppercase tracking-[0.1em] transition-colors"
+              style={{
+                background: timeRange === range ? "var(--rune-wash)" : "transparent",
+                color: timeRange === range ? "var(--rune)" : "var(--text-tertiary)",
+                border: `1px solid ${timeRange === range ? "rgba(201,169,97,0.3)" : "transparent"}`
+              }}
+            >
+              {filterLabels[range]}
+            </button>
+          ))}
+        </div>
+        <div className="pt-2">
+          <div className="mb-1 flex items-center justify-between">
+            <span className="mono text-[9px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>
+              {filterLabels.confidence}
+            </span>
+            <span className="mono text-[9px]" style={{ color: "var(--rune)" }}>
+              {minConfidence}%
+            </span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={5}
+            value={minConfidence}
+            onChange={(e) => setMinConfidence(Number(e.target.value))}
+            className="w-full"
+            style={{ accentColor: "var(--rune)" }}
+          />
+        </div>
+      </div>
+
+      {/* Alert overlay toggle */}
+      <div
+        className="absolute right-3 z-10"
+        style={{ top: "calc(3rem + 230px + 130px + 8px)" }}
+      >
+        <button
+          type="button"
+          onClick={() => setAlertsVisible((v) => !v)}
+          className="flex items-center gap-1.5 rounded-[var(--radius-md)] px-2.5 py-1.5 transition-all"
+          style={{
+            background: alertsVisible ? "rgba(220,38,38,0.15)" : "rgba(9,11,15,0.86)",
+            backdropFilter: "blur(14px) saturate(1.2)",
+            WebkitBackdropFilter: "blur(14px) saturate(1.2)",
+            border: alertsVisible ? "1px solid rgba(220,38,38,0.4)" : "1px solid var(--glass-border)",
+            boxShadow: "var(--shadow-lg)"
+          }}
+        >
+          <span
+            className="inline-block rounded-full"
+            style={{
+              width: 6,
+              height: 6,
+              background: alertsVisible ? "#dc2626" : "var(--text-tertiary)",
+              boxShadow: alertsVisible ? "0 0 5px rgba(220,38,38,0.7)" : "none"
+            }}
+          />
+          <span
+            className="mono text-[10px] uppercase tracking-[0.12em]"
+            style={{ color: alertsVisible ? "#dc2626" : "var(--text-tertiary)" }}
+          >
+            {alertOverlayLabel}
+          </span>
+        </button>
+      </div>
+
+      {/* Geographic drill-down */}
+      <div
+        className="absolute bottom-3 left-3 z-10 max-w-[280px] rounded-[var(--radius-md)] p-3"
+        style={{
+          background: "rgba(9,11,15,0.86)",
+          backdropFilter: "blur(14px) saturate(1.2)",
+          border: "1px solid var(--glass-border)",
+          boxShadow: "var(--shadow-lg)"
+        }}
+      >
+        <div className="mono mb-2 text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
+          Geographic Drill · {geoZoomLevel}
+        </div>
+        <div className="mb-2 flex flex-wrap gap-1">
+          <button
+            type="button"
+            onClick={() => setGeoPath([])}
+            className="mono rounded px-1.5 py-0.5 text-[9px] uppercase tracking-[0.1em]"
+            style={{ background: geoPath.length === 0 ? "var(--rune-wash)" : "transparent", color: geoPath.length === 0 ? "var(--rune)" : "var(--text-tertiary)" }}
+          >
+            Global
+          </button>
+          {geoPath.map((step, index) => (
+            <button
+              key={step}
+              type="button"
+              onClick={() => setGeoPath(geoPath.slice(0, index + 1))}
+              className="mono rounded px-1.5 py-0.5 text-[9px] uppercase tracking-[0.1em]"
+              style={{ background: "transparent", color: "var(--text-tertiary)" }}
+            >
+              {step}
+            </button>
+          ))}
+        </div>
+        <div className="grid gap-1.5">
+          {geoNodes.slice(0, 6).map((node) => (
+            <button
+              key={`${node.level}:${node.name}`}
+              type="button"
+              onClick={() => handleGeoNodeSelect(node.name)}
+              className="flex items-center justify-between rounded-[var(--radius-sm)] px-2 py-1.5 text-left transition-colors hover:bg-white/5"
+            >
+              <div className="min-w-0">
+                <div className="truncate text-[12px]" style={{ color: "var(--text-primary)" }}>
+                  {node.name}
+                </div>
+                <div className="mono text-[9px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>
+                  {node.level}
+                </div>
+              </div>
+              <span className="mono text-[10px]" style={{ color: "var(--rune)" }}>
+                {node.signalCount}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Loading overlay */}
       {!loaded && (
         <div
@@ -1000,6 +1455,16 @@ export function RealityMap({
             Loading substrate map
           </div>
         </div>
+      )}
+
+      {/* Substrate tooltip */}
+      {tooltipState && (
+        <SubstrateTooltip
+          layer={tooltipState.layer}
+          position={tooltipState.position}
+          data={tooltipState.data}
+          labels={tooltipLabels}
+        />
       )}
     </div>
   );

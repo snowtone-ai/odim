@@ -22,7 +22,11 @@
     "rls:staging": "node scripts/run-staging-rls-smoke.mjs",
     "release:audit": "node scripts/release-audit.mjs",
     "verify": "node scripts/verify.mjs",
-    "setup": "node scripts/setup.mjs"
+    "setup": "node scripts/setup.mjs",
+    "seeds:generate": "node scripts/generate-entity-seeds.mjs",
+    "report:weekly": "node scripts/weekly-report.mjs",
+    "data:freshness": "node -e \"import('./lib/pipeline/freshness.ts').then(m=>console.log(JSON.stringify(m.DEFAULT_SOURCE_SLA_HOURS,null,2)))\"",
+    "backtest": "node scripts/run-backtest.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.106.1",

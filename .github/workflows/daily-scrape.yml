@@ -8,6 +8,7 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -31,7 +32,6 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SEC_EDGAR_BASE_URL: ${{ vars.SEC_EDGAR_BASE_URL || 'https://data.sec.gov/submissions' }}
-          SEC_EDGAR_CIKS: ${{ vars.SEC_EDGAR_CIKS }}
           SEC_EDGAR_USER_AGENT: ${{ vars.SEC_EDGAR_USER_AGENT }}
           FERC_FEED_URL: ${{ vars.FERC_FEED_URL }}
           BUILDING_PERMITS_URL: ${{ vars.BUILDING_PERMITS_URL }}
@@ -51,3 +51,35 @@ jobs:
           EPA_ECHO_FEED_URL: ${{ vars.EPA_ECHO_FEED_URL || 'https://echodata.epa.gov/echo' }}
           EPA_ECHO_STATE: ${{ vars.EPA_ECHO_STATE }}
           FAA_OAS_FEED_URL: ${{ vars.FAA_OAS_FEED_URL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_NOTIFY_MIN_PRIORITY: ${{ vars.SLACK_NOTIFY_MIN_PRIORITY || 'CRITICAL' }}
+          GLEIF_API_URL: ${{ vars.GLEIF_API_URL || 'https://api.gleif.org/api/v1' }}
+          WIKIDATA_USER_AGENT: ${{ vars.WIKIDATA_USER_AGENT || 'Odim/1.0 (https://github.com/odim)' }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          FRED_API_URL: ${{ vars.FRED_API_URL || 'https://api.stlouisfed.org/fred/series/observations' }}
+          FEDERAL_REGISTER_API_URL: ${{ vars.FEDERAL_REGISTER_API_URL || 'https://www.federalregister.gov/api/v1/documents.json' }}
+          EDINET_API_KEY: ${{ secrets.EDINET_API_KEY }}
+          EDINET_API_URL: ${{ vars.EDINET_API_URL || 'https://disclosure.edinet-fsa.go.jp/api/v2/documents.json' }}
+          COMPANIES_HOUSE_API_KEY: ${{ secrets.COMPANIES_HOUSE_API_KEY }}
+          COMPANIES_HOUSE_API_URL: ${{ vars.COMPANIES_HOUSE_API_URL || 'https://api.company-information.service.gov.uk/company' }}
+          USASPENDING_API_URL: ${{ vars.USASPENDING_API_URL || 'https://api.usaspending.gov/api/v2/search/spending_by_award/' }}
+          OPENSANCTIONS_DATA_URL: ${{ vars.OPENSANCTIONS_DATA_URL || 'https://data.opensanctions.org/datasets/latest/default/entities.ftm.json' }}
+          FEMA_API_URL: ${{ vars.FEMA_API_URL || 'https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries' }}
+          SAM_GOV_API_URL: ${{ vars.SAM_GOV_API_URL || 'https://api.sam.gov/opportunities/v2/search' }}
+          SAM_GOV_API_KEY: ${{ secrets.SAM_GOV_API_KEY }}
+          NRC_API_URL: ${{ vars.NRC_API_URL || 'https://adams.nrc.gov/wba/services/search/advanced/nrc' }}
+          ERCOT_QUEUE_URL: ${{ vars.ERCOT_QUEUE_URL }}
+          PJM_QUEUE_URL: ${{ vars.PJM_QUEUE_URL }}
+          MISO_QUEUE_URL: ${{ vars.MISO_QUEUE_URL }}
+          CAISO_QUEUE_URL: ${{ vars.CAISO_QUEUE_URL }}
+          SPP_QUEUE_URL: ${{ vars.SPP_QUEUE_URL }}
+          BLS_COMMODITIES_URL: ${{ vars.BLS_COMMODITIES_URL || 'https://api.bls.gov/publicAPI/v2/timeseries/data/' }}
+          BLS_API_KEY: ${{ secrets.BLS_API_KEY }}
+          CENSUS_TRADE_URL: ${{ vars.CENSUS_TRADE_URL || 'https://api.census.gov/data/timeseries/intltrade/imports/hs' }}
+          CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
+          GDELT_FEED_URL: ${{ vars.GDELT_FEED_URL || 'https://api.gdeltproject.org/api/v2/doc/doc' }}
+          CONGRESS_API_URL: ${{ vars.CONGRESS_API_URL || 'https://api.congress.gov/v3/hearing' }}
+          CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}

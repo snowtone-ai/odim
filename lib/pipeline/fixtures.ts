@@ -12,6 +12,19 @@ import { parsePucRecords } from "../../scrapers/state-puc.ts";
 import { parsePatentRecords } from "../../scrapers/patent.ts";
 import { parseEpaEchoRecords } from "../../scrapers/epa-echo.ts";
 import { parseFaaObstructionRecords } from "../../scrapers/faa-obstructions.ts";
+import { parseFredSeriesObservations } from "../../scrapers/fred.ts";
+import { parseFederalRegisterResults } from "../../scrapers/federal-register.ts";
+import { parseEdinetDocuments } from "../../scrapers/edinet.ts";
+import { parseCompaniesHouseFilings } from "../../scrapers/companies-house.ts";
+import { parseUsaspendingAwards } from "../../scrapers/usaspending.ts";
+import { parseForm4Xml } from "../../scrapers/sec-edgar-form4.ts";
+import { parse8KSubmission } from "../../scrapers/sec-edgar-8k.ts";
+import { parse13DGDocument } from "../../scrapers/sec-edgar-13dg.ts";
+import { parse13FInformationTable } from "../../scrapers/sec-edgar-13f.ts";
+import { parseOpenSanctionsMatches } from "../../scrapers/opensanctions.ts";
+import { parseFemaDeclarations } from "../../scrapers/fema.ts";
+import { parseSamOpportunities } from "../../scrapers/sam-gov.ts";
+import { parseNrcActions } from "../../scrapers/nrc.ts";
 
 export function buildFixtureRawSignals(): RawSignal[] {
   const secSignals = parseSecSubmissions(
@@ -217,6 +230,61 @@ export function buildFixtureRawSignals(): RawSignal[] {
     "https://oeaaa.faa.gov/oeaaa/external/searchAction.jsp",
     10
   );
+  const fredSignals = parseFredSeriesObservations(
+    { id: "T10Y2Y", layer: "cash", label: "Yield Curve Spread" },
+    { date: "2026-05-20", value: "-0.42" }
+  );
+  const federalRegisterSignals = parseFederalRegisterResults([
+    { document_number: "2026-12345", publication_date: "2026-05-20", title: "EPA industrial water rule", type: "RULE", html_url: "https://example.local/fr", agencies: [{ name: "EPA" }] }
+  ]);
+  const edinetSignals = parseEdinetDocuments([
+    { docID: "S100FIX1", submitDateTime: "2026-05-20T02:10:00+09:00", filerName: "Toyota Motor Corporation", edinetCode: "E02144", docTypeCode: "120" }
+  ]);
+  const companiesHouseSignals = parseCompaniesHouseFilings("01234567", "ASML Holding UK Ltd", [
+    { date: "2026-05-20", type: "tm01", description: "director resigned", links: { self: "https://example.local/ch" } }
+  ]);
+  const usaspendingSignals = parseUsaspendingAwards("Palantir Technologies", [
+    { generated_internal_id: "USA-42", action_date: "2026-05-20", award_amount: 150000000, awarding_agency: "Department of Defense" }
+  ]);
+  const form4Signals = parseForm4Xml(
+    "<ownershipDocument><rptOwnerName>Satya Nadella</rptOwnerName><transactionCode>P</transactionCode><transactionShares>12000</transactionShares><transactionPricePerShare>420.15</transactionPricePerShare><sharesOwnedFollowingTransaction>180000</sharesOwnedFollowingTransaction></ownershipDocument>",
+    { cik: "0000789019", accessionNumber: "0000789019-26-000010", filingDate: "2026-05-20", companyName: "Microsoft Corporation" }
+  );
+  const sec8kSignals = parse8KSubmission({
+    cik: "1326801",
+    name: "Meta Platforms, Inc.",
+    filings: { recent: { accessionNumber: ["0001326801-26-000050"], filingDate: ["2026-05-20"], form: ["8-K"], items: ["2.01"], primaryDocument: ["meta-8k.htm"] } }
+  });
+  const sec13dgSignals = parse13DGDocument({
+    filerName: "ValueAct Capital",
+    subjectCompany: "Meta Platforms, Inc.",
+    ownershipPercent: 7.2,
+    purpose: "Strategic review",
+    observedAt: "2026-05-20T00:00:00.000Z",
+    url: "https://www.sec.gov/example/13d"
+  });
+  const sec13fSignals = parse13FInformationTable({
+    filerName: "Citadel Advisors LLC",
+    issuerName: "NVIDIA Corporation",
+    valueThousands: 250000,
+    shares: 1250000,
+    observedAt: "2026-05-15T00:00:00.000Z"
+  });
+  const openSanctionsSignals = parseOpenSanctionsMatches(
+    [{ id: "os-fixture-1", caption: "Meta Platforms, Inc.", datasets: ["sanctions"] }],
+    ["Meta Platforms, Inc.", "Palantir Technologies"]
+  );
+  const femaSignals = parseFemaDeclarations(
+    [{ disasterNumber: "FEMA-1", declarationTitle: "Texas Severe Storms", incidentBeginDate: "2026-05-21", state: "TX" }],
+    [{ name: "Vistra Corp", state: "TX" }]
+  );
+  const samSignals = parseSamOpportunities(
+    [{ noticeId: "SAM-1", title: "Federal analytics support for Palantir Technologies", postedDate: "2026-05-21" }],
+    ["Palantir Technologies", "Meta Platforms, Inc."]
+  );
+  const nrcSignals = parseNrcActions([
+    { accessionNumber: "ML26140A001", docketNumber: "50-001", documentDate: "2026-05-21", title: "License amendment review" }
+  ]);
 
   return [
     ...secSignals,
@@ -231,6 +299,19 @@ export function buildFixtureRawSignals(): RawSignal[] {
     ...statePucSignals,
     ...patentSignals,
     ...epaEchoSignals,
-    ...faaSignals
+    ...faaSignals,
+    ...fredSignals,
+    ...federalRegisterSignals,
+    ...edinetSignals,
+    ...companiesHouseSignals,
+    ...usaspendingSignals,
+    ...form4Signals,
+    ...sec8kSignals,
+    ...sec13dgSignals,
+    ...sec13fSignals,
+    ...openSanctionsSignals,
+    ...femaSignals,
+    ...samSignals,
+    ...nrcSignals
   ];
 }

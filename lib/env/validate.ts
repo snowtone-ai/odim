@@ -1,4 +1,4 @@
-import { isProductionRuntime } from "./runtime.ts";
+import { isProductionRuntime, isStagingRuntime, resolveSupabaseRuntimeEnv } from "./runtime.ts";
 
 type EnvRequirement = {
   name: string;
@@ -8,9 +8,10 @@ type EnvRequirement = {
 const optionalVars = ["DEFAULT_ORG_ID", "AI_MODEL", "AI_PROVIDER"];
 
 function missingRequiredVars(env: NodeJS.ProcessEnv): string[] {
+  const supabase = resolveSupabaseRuntimeEnv(env);
   const required: EnvRequirement[] = [
-    { name: "SUPABASE_URL", value: env.SUPABASE_URL ?? env.NEXT_PUBLIC_SUPABASE_URL },
-    { name: "SUPABASE_SERVICE_ROLE_KEY", value: env.SUPABASE_SERVICE_ROLE_KEY },
+    { name: "SUPABASE_URL", value: supabase.url },
+    { name: "SUPABASE_SERVICE_ROLE_KEY", value: supabase.serviceRoleKey },
     { name: "API_KEY_PEPPER", value: env.API_KEY_PEPPER },
     { name: "AI_API_KEY", value: env.AI_API_KEY }
   ];
@@ -24,7 +25,7 @@ export function validateRequiredEnv(env: NodeJS.ProcessEnv = process.env) {
     console.warn("Optional environment variables are not set", { missing: missingOptional });
   }
 
-  if (!isProductionRuntime(env)) {
+  if (!isProductionRuntime(env) && !isStagingRuntime(env)) {
     console.info("Environment validation completed for non-production runtime");
     return;
   }

@@ -12,11 +12,11 @@ Next.js 16 App Router + Supabase + Gemini AI. Ingests public signals (SEC, FERC,
 
 ## Architecture
 - **UI:** `app/(dashboard)/` — 5 pages: map, entity, alerts, huginn, settings; `components/ui/`
-- **Routing:** Next.js App Router; `middleware.ts` applies security headers; `app/api/` — 9 route handlers (huginn, huginn/eval, alerts, entities, signals, audit, settings, api-keys, seed-memory)
-- **Domain:** `lib/huginn/` (cascade, grading, bias, precompute); `lib/munin/` (memory, dream, write-gate, seed)
-- **Data:** `lib/repositories/admin.ts` + `reality.ts` — Supabase or fallback fixtures; `lib/pipeline/` (normalize, ontologize, alert, ingest)
-- **External:** Gemini API (`lib/ai/provider.ts`); Supabase (`lib/supabase/client.ts`); scrapers (`scrapers/`)
-- **Config:** `config/sources.json`; `lib/env/runtime.ts`; `lib/env/validate.ts`; `.env.example`
+- **Routing:** Next.js App Router; `middleware.ts` applies security headers plus SSO session enforcement; `app/api/` includes `v1/`, export, audit-export, push-subscribe, auth callback, and existing handlers.
+- **Domain:** `lib/huginn/` (cascade, grading, bias, precompute); `lib/munin/` (memory, dream, write-gate, seed); `lib/ai/ensemble.ts` for multi-provider generation.
+- **Data:** `lib/repositories/admin.ts` + `reality.ts` — Supabase or fallback fixtures; `lib/pipeline/` adds scoring, freshness, diff, calibration, attribution, anomaly, sentiment, sector-rotation, and backtest.
+- **External:** Gemini/OpenAI/Claude provider hooks; Supabase (`lib/supabase/client.ts`); scrapers (`scrapers/`) now include SEC expansion, FRED, Federal Register, EDINET, Companies House, USAspending, OpenSanctions, FEMA, SAM.gov, NRC, and ISO queue coverage.
+- **Config:** `config/sources.json`; `lib/env/runtime.ts`; `lib/env/validate.ts`; `.env.example`; `docs/api-reference.md`
 - **Tests:** `tests/` — 16 files (auth, route handlers, pipeline, huginn, bias, security, RLS, i18n, mobile)
 
 ## Key Areas
@@ -50,15 +50,15 @@ Next.js 16 App Router + Supabase + Gemini AI. Ingests public signals (SEC, FERC,
 ## Change Routes
 | Change Type | Start Here | Then Check |
 |---|---|---|
-| UI | `components/ui/*.tsx` | page in `app/(dashboard)/`, `lib/i18n/messages.ts` |
-| API | `app/api/*/route.ts` | `lib/auth/request.ts`, service modules in `lib/` |
+| UI | `components/ui/*.tsx` | page in `app/(dashboard)/`, `lib/i18n/messages.ts`, persisted stores in `lib/stores/`, `public/push-sw.js` for browser notification UX, `components/ui/dashboard-builder.tsx` for `/custom` |
+| API | `app/api/*/route.ts` | `lib/auth/request.ts`, `lib/auth/sso.ts`, `lib/api/v1-router.ts`, service modules in `lib/` |
 | AI/query logic | `lib/huginn/query.ts` | `cascade.ts`, `grader.ts`, `bias-test.ts`, huginn tests |
 | Memory | `lib/munin/memory.ts` | `write-gate.ts`, `seed.ts`, dream tests |
-| Ingestion | `lib/pipeline/ingest.ts` | `ontologize.ts`, `alert.ts`, `scrapers/run.ts` |
+| Ingestion | `lib/pipeline/ingest.ts` | `ontologize.ts`, `alert.ts`, `scrapers/run.ts`, `calibration.ts`, `attribution.ts`, `anomaly.ts`, `sentiment.ts`, `sector-rotation.ts`, `backtest.ts` |
 | Scrapers | `scrapers/<name>.ts` | `scrapers/run.ts`, `config/sources.json`, pipeline tests |
 | DB schema | `supabase/migrations/` | `lib/repositories/`, RLS smoke, `scripts/apply-db-migrations.mjs` |
 | Auth/security | `lib/auth/request.ts` | `api-keys.ts`, `lib/api/rate-limit.ts`, security tests |
-| Config/env | `lib/env/runtime.ts` | `lib/env/validate.ts`, `.env.example`, `lib/ai/rate-limit.ts`, `lib/auth/request.ts` |
+| Config/env | `lib/env/runtime.ts` | `lib/env/validate.ts`, `.env.example`, `lib/ai/rate-limit.ts`, `lib/auth/request.ts`, `lib/supabase/client.ts` |
 | Workflows | `.github/workflows/*.yml` | `tests/automation-workflows.test.mjs`, `scripts/verify.mjs` |
 
 ## High-Risk Areas

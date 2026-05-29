@@ -6,12 +6,16 @@ import { buildFixtureRawSignals } from "../lib/pipeline/fixtures.ts";
 import type { IngestionPlan, RawSignal } from "../lib/pipeline/types.ts";
 import { createServiceSupabaseClient } from "../lib/supabase/client.ts";
 import { upsertIngestionPlan } from "../lib/pipeline/ingest.ts";
+import { recordEntityScoreSnapshots } from "../lib/pipeline/score-snapshot.ts";
 import { fetchBuildingPermitSignals } from "./building-permits.ts";
 import { fetchCloudRegionSignals } from "./cloud-regions.ts";
 import { fetchFercSignals } from "./ferc.ts";
 import { fetchNarrativeSignals } from "./narrative.ts";
 import { fetchPortStatisticSignals } from "./port-statistics.ts";
-import { fetchSecEdgarSignals } from "./sec-edgar.ts";
+import { fetchSecEdgarSignalsBatch } from "./sec-edgar.ts";
+import { fetchSubsidiaryLinksBatch } from "./sec-edgar-subsidiaries.ts";
+import { fetchGleifRelationshipsBatch } from "./gleif.ts";
+import { fetchWikidataRelationships } from "./wikidata.ts";
 import { fetchUsgsMineralSignals } from "./usgs-minerals.ts";
 import { fetchWaterDistrictSignals } from "./water-districts.ts";
 import { fetchConfiguredSourceSignals, type ConfiguredSourceDefinition } from "./configured-source.ts";
@@ -20,9 +24,33 @@ import { fetchStatePucSignals } from "./state-puc.ts";
 import { fetchPatentSignals } from "./patent.ts";
 import { fetchEpaEchoSignals } from "./epa-echo.ts";
 import { fetchFaaObstructionSignals } from "./faa-obstructions.ts";
+import { sendSlackAlert } from "../lib/notifications/slack.ts";
+import { fetchFredSignals } from "./fred.ts";
+import { fetchFederalRegisterSignals } from "./federal-register.ts";
+import { fetchEdinetSignals } from "./edinet.ts";
+import { fetchCompaniesHouseSignals } from "./companies-house.ts";
+import { fetchUsaspendingSignals } from "./usaspending.ts";
+import { fetchForm4SignalsBatch } from "./sec-edgar-form4.ts";
+import { fetch8KSignalsBatch } from "./sec-edgar-8k.ts";
+import { fetch13DGSignals } from "./sec-edgar-13dg.ts";
+import { fetch13FHoldings } from "./sec-edgar-13f.ts";
+import { checkFreshness } from "../lib/pipeline/freshness.ts";
+import { broadcastPushAlert } from "../lib/notifications/push.ts";
+import { fetchOpenSanctionsSignals } from "./opensanctions.ts";
+import { fetchFemaSignals } from "./fema.ts";
+import { fetchSamGovSignals } from "./sam-gov.ts";
+import { fetchNrcSignals } from "./nrc.ts";
 
 type SourceConfig = {
   sources: ConfiguredSourceDefinition[];
+};
+
+type EntitySeed = {
+  name?: string;
+  cik?: string | null;
+  lei?: string | null;
+  wikidata_id?: string | null;
+  region?: string;
 };
 
 type ScrapeMode = "daily" | "backfill" | "dry-run";
@@ -86,6 +114,20 @@ function envNumber(name: string, fallback: number) {
 
 function loadSourceConfig(): SourceConfig {
   return JSON.parse(readFileSync("config/sources.json", "utf8")) as SourceConfig;
+}
+
+function loadEntitySeeds(): EntitySeed[] {
+  try {
+    return JSON.parse(readFileSync("config/entity-seeds.json", "utf8")) as EntitySeed[];
+  } catch {
+    return [];
+  }
+}
+
+function loadSeedCiks(): string[] {
+  return loadEntitySeeds()
+    .map((s) => s.cik)
+    .filter((cik): cik is string => typeof cik === "string" && cik.length > 0);
 }
 
 function sourceLimitFor(mode: ScrapeMode) {
@@ -272,6 +314,19 @@ function warnSourceFailures(failedSources: SourceReport[]) {
 }
 
 export async function collectLiveSignals(options: ScrapeOptions) {
+  if (options.dryRun) {
+    const signals = buildFixtureRawSignals();
+    const sourceReport = Array.from(
+      signals.reduce((map, signal) => {
+        const current = map.get(signal.source) ?? { id: signal.source, ok: true, count: 0, lastObservedAt: signal.observedAt };
+        current.count += 1;
+        current.lastObservedAt = current.lastObservedAt && current.lastObservedAt > signal.observedAt ? current.lastObservedAt : signal.observedAt;
+        map.set(signal.source, current);
+        return map;
+      }, new Map<string, SourceReport>())
+    ).map(([, value]) => value);
+    return { signals, sourceReport };
+  }
   if (process.env.SCRAPE_ENABLED !== "true") {
     throw new Error("SCRAPE_ENABLED=true is required for live scraping. Use --dry-run for local verification.");
   }
@@ -279,10 +334,13 @@ export async function collectLiveSignals(options: ScrapeOptions) {
   const signals: RawSignal[] = [];
   const sourceReport: SourceReport[] = [];
   const limit = options.sourceLimit;
-  const ciks = envList("SEC_EDGAR_CIKS");
+  // SEC_EDGAR_CIKS env var overrides the seed file (useful for targeted testing)
+  const overrideCiks = envList("SEC_EDGAR_CIKS");
+  const seedCiks = loadSeedCiks();
+  const ciks = overrideCiks.length ? overrideCiks : seedCiks;
   if (ciks.length) {
     signals.push(...(await runSource(sourceReport, "sec-edgar", options, () =>
-      fetchSecEdgarSignals({
+      fetchSecEdgarSignalsBatch({
         ciks,
         historicalFileLimit: options.maxPages,
         includeHistorical: options.mode === "backfill",
@@ -291,9 +349,23 @@ export async function collectLiveSignals(options: ScrapeOptions) {
         limit
       })
     )));
+    signals.push(...(await runSource(sourceReport, "sec-edgar-form4", options, () =>
+      fetchForm4SignalsBatch(ciks, {
+        userAgent: process.env.SEC_EDGAR_USER_AGENT,
+        baseUrl: process.env.SEC_EDGAR_BASE_URL
+      })
+    )));
+    signals.push(...(await runSource(sourceReport, "sec-edgar-8k", options, () =>
+      fetch8KSignalsBatch(ciks, {
+        userAgent: process.env.SEC_EDGAR_USER_AGENT,
+        baseUrl: process.env.SEC_EDGAR_BASE_URL
+      })
+    )));
   } else {
-    skipSource(sourceReport, "sec-edgar", "SEC_EDGAR_CIKS is empty");
+    skipSource(sourceReport, "sec-edgar", "no CIKs configured (seed file empty and SEC_EDGAR_CIKS not set)");
   }
+  signals.push(...(await runSource(sourceReport, "sec-edgar-13dg", options, () => fetch13DGSignals({ dryRun: options.dryRun }))));
+  signals.push(...(await runSource(sourceReport, "sec-edgar-13f", options, async () => (await fetch13FHoldings({ dryRun: options.dryRun })).signals)));
   const fercFeedUrl = process.env.FERC_FEED_URL;
   if (fercFeedUrl) {
     signals.push(...(await runPagedSource(sourceReport, "ferc-elibrary", options, (page) =>
@@ -443,6 +515,40 @@ export async function collectLiveSignals(options: ScrapeOptions) {
   } else {
     skipSource(sourceReport, "faa-oas", "FAA_OAS_FEED_URL is not set");
   }
+  signals.push(...(await runSource(sourceReport, "fred-economic", options, () =>
+    fetchFredSignals({ apiKey: process.env.FRED_API_KEY, dryRun: options.dryRun })
+  )));
+  signals.push(...(await runSource(sourceReport, "federal-register", options, () =>
+    fetchFederalRegisterSignals({ dryRun: options.dryRun })
+  )));
+  signals.push(...(await runSource(sourceReport, "edinet", options, () =>
+    fetchEdinetSignals({ apiKey: process.env.EDINET_API_KEY, dryRun: options.dryRun })
+  )));
+  signals.push(...(await runSource(sourceReport, "companies-house", options, () =>
+    fetchCompaniesHouseSignals({ dryRun: options.dryRun })
+  )));
+  signals.push(...(await runSource(sourceReport, "usaspending", options, () =>
+    fetchUsaspendingSignals({ dryRun: options.dryRun })
+  )));
+  signals.push(...(await runSource(sourceReport, "opensanctions", options, () =>
+    fetchOpenSanctionsSignals({ dryRun: options.dryRun, seedNames: loadEntitySeeds().map((seed) => seed.name ?? "").filter(Boolean) })
+  )));
+  signals.push(...(await runSource(sourceReport, "fema", options, () =>
+    fetchFemaSignals({
+      dryRun: options.dryRun,
+      entityLocations: loadEntitySeeds().slice(0, 50).map((seed) => ({ name: seed.name ?? "", state: seed.region === "US" ? "TX" : undefined }))
+    })
+  )));
+  signals.push(...(await runSource(sourceReport, "sam-gov", options, () =>
+    fetchSamGovSignals({
+      dryRun: options.dryRun,
+      apiKey: process.env.SAM_GOV_API_KEY,
+      seedNames: loadEntitySeeds().map((seed) => seed.name ?? "").filter(Boolean)
+    })
+  )));
+  signals.push(...(await runSource(sourceReport, "nrc", options, () =>
+    fetchNrcSignals({ dryRun: options.dryRun })
+  )));
   for (const source of loadSourceConfig().sources.filter((item) => item.enabled && item.adapter === "configured-json-csv")) {
     if (!source.urlEnv) {
       skipSource(sourceReport, source.id, "configured source has no urlEnv");
@@ -473,14 +579,133 @@ export async function collectLiveSignals(options: ScrapeOptions) {
   return { signals, sourceReport };
 }
 
+async function collectRelationshipLinks(options: ScrapeOptions) {
+  if (options.dryRun) return { ontologyLinks: [], ontologyObjects: [] };
+
+  const seeds = loadEntitySeeds();
+  const userAgent = process.env.SEC_EDGAR_USER_AGENT;
+  const gleifBaseUrl = process.env.GLEIF_API_URL;
+  const wikidataUserAgent = process.env.WIKIDATA_USER_AGENT;
+
+  const allLinks: import("../lib/pipeline/types.ts").OntologyLinkDraft[] = [];
+  const allObjects: import("../lib/pipeline/types.ts").OntologyObjectDraft[] = [];
+
+  // T112: SEC EDGAR Exhibit 21 subsidiary links (US seeds with CIKs)
+  if (userAgent && sourceSelected(options, "sec-edgar-ex21")) {
+    const usCiks = seeds
+      .filter((s) => s.region === "US" && typeof s.cik === "string" && s.cik.length > 0)
+      .map((s) => s.cik as string);
+    if (usCiks.length) {
+      try {
+        const subsidiaryLinks = await fetchSubsidiaryLinksBatch(usCiks, {
+          userAgent,
+          baseUrl: process.env.SEC_EDGAR_BASE_URL
+        });
+        allLinks.push(...subsidiaryLinks);
+        console.log(`sec-edgar-ex21: collected ${subsidiaryLinks.length} subsidiary links`);
+      } catch (err) {
+        console.warn(`sec-edgar-ex21 collection failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+  }
+
+  // T113: GLEIF LEI parent-child relationships
+  if (sourceSelected(options, "gleif")) {
+    const leis = seeds
+      .filter((s) => typeof s.lei === "string" && s.lei.length > 0)
+      .map((s) => s.lei as string);
+    if (leis.length) {
+      try {
+        const gleifLinks = await fetchGleifRelationshipsBatch(leis, { baseUrl: gleifBaseUrl });
+        allLinks.push(...gleifLinks);
+        console.log(`gleif: collected ${gleifLinks.length} relationship links`);
+      } catch (err) {
+        console.warn(`gleif collection failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+  }
+
+  // T114: Wikidata SPARQL supplementary relationships
+  if (sourceSelected(options, "wikidata")) {
+    const wikidataIds = seeds
+      .filter((s) => typeof s.wikidata_id === "string" && s.wikidata_id.length > 0)
+      .map((s) => s.wikidata_id as string);
+    if (wikidataIds.length) {
+      try {
+        const wikidataResult = await fetchWikidataRelationships(wikidataIds, {
+          userAgent: wikidataUserAgent
+        });
+        allLinks.push(...wikidataResult.links);
+        allObjects.push(...wikidataResult.objects);
+        console.log(
+          `wikidata: collected ${wikidataResult.links.length} links, ${wikidataResult.objects.length} objects`
+        );
+      } catch (err) {
+        console.warn(`wikidata collection failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+  }
+
+  return { ontologyLinks: allLinks, ontologyObjects: allObjects };
+}
+
+async function sendSlackNotifications(plan: import("../lib/pipeline/types.ts").IngestionPlan) {
+  const webhookUrl = process.env.SLACK_WEBHOOK_URL;
+  if (!webhookUrl) return;
+
+  const minPriority = (process.env.SLACK_NOTIFY_MIN_PRIORITY ?? "CRITICAL").toLowerCase();
+  const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+  const minLevel = priorityOrder[minPriority] ?? 0;
+
+  const qualifyingAlerts = plan.alerts.filter((alert) => {
+    const level = priorityOrder[alert.priority.toLowerCase()] ?? 99;
+    return level <= minLevel;
+  });
+
+  let sentCount = 0;
+  for (const alert of qualifyingAlerts) {
+    await sendSlackAlert({
+      title: alert.title,
+      priority: alert.priority,
+      confidence: alert.confidence,
+      description: alert.description,
+      source: alert.evidence[0]?.sourceId ?? "odim"
+    });
+    sentCount++;
+  }
+
+  if (sentCount > 0) {
+    console.log(`Slack notification sent for ${sentCount} alert(s)`);
+  }
+}
+
+async function sendBrowserPushNotifications(plan: import("../lib/pipeline/types.ts").IngestionPlan) {
+  const criticalAlerts = plan.alerts.filter((alert) => alert.priority === "critical");
+  for (const alert of criticalAlerts) {
+    await broadcastPushAlert({
+      id: alert.id,
+      title: alert.title,
+      priority: alert.priority,
+      description: alert.description
+    });
+  }
+}
+
 async function prepareScrape(args = process.argv.slice(2)): Promise<PreparedScrape> {
   const options = resolveScrapeOptions(args);
-  const live = options.dryRun ? { signals: buildFixtureRawSignals(), sourceReport: [] } : await collectLiveSignals(options);
+  const live = await collectLiveSignals(options);
   const signals = live.signals;
   if (signals.length < options.minSignals) {
     throw new Error(`Scrape produced ${signals.length} raw signals, below SCRAPE_MIN_SIGNALS=${options.minSignals}`);
   }
   const plan = buildIngestionPlan(signals);
+
+  // Collect relationship links (T112/T113/T114) — merged into the plan
+  if (!options.dryRun) {
+    const relationshipData = await collectRelationshipLinks(options);
+    plan.ontologyLinks.push(...relationshipData.ontologyLinks);
+    plan.ontologyObjects.push(...relationshipData.ontologyObjects);
+  }
 
   return {
     options,
@@ -514,8 +739,23 @@ export async function runScrape(args = process.argv.slice(2)) {
     const prepared = await prepareScrape(args);
     const result = prepared.result;
     await upsertIngestionPlan(client, prepared.plan);
+    await recordEntityScoreSnapshots(client, prepared.plan.ontologyObjects);
     await updateSourceWatermarks(client, options, result.sources);
+    const freshness = checkFreshness(
+      result.sources.map((source) => ({
+        sourceId: source.id,
+        lastSuccessAt: source.lastObservedAt ?? null,
+        lastObservedAt: source.lastObservedAt ?? null,
+        rawSignalCount: source.count
+      }))
+    );
+    const stale = freshness.filter((entry) => entry.status === "critical");
+    if (stale.length) {
+      console.warn(`freshness SLA violated: ${stale.map((entry) => entry.sourceId).join(", ")}`);
+    }
     await recordIngestionRunSuccess(client, runId, result);
+    await sendSlackNotifications(prepared.plan);
+    await sendBrowserPushNotifications(prepared.plan);
     return { ...result, ingestionRunId: runId };
   } catch (error) {
     await recordIngestionRunFailure(client, runId, error instanceof Error ? error.message : String(error));

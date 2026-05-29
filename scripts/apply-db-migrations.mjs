@@ -42,7 +42,9 @@ const files = migrations.length
       "supabase/migrations/0004_ai_rate_limit_usage.sql",
       "supabase/migrations/0005_ingestion_operations.sql",
       "supabase/migrations/0006_ingest_transaction.sql",
-      "supabase/migrations/0007_performance_indexes.sql"
+      "supabase/migrations/0007_performance_indexes.sql",
+      "supabase/migrations/0008_entity_score_history.sql",
+      "supabase/migrations/0009_push_subscriptions.sql"
     ];
 
 for (const file of files) {

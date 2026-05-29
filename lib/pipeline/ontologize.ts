@@ -2,6 +2,7 @@ import { buildAlerts } from "./alert.ts";
 import { buildAuditEvent } from "./audit.ts";
 import { deterministicUuid } from "./idempotency.ts";
 import { normalizeSignals } from "./normalize.ts";
+import { computeBatchEntityScores } from "./scoring.ts";
 import type {
   AuditEventDraft,
   IngestionPlan,
@@ -1036,6 +1037,23 @@ export function buildIngestionPlan(rawSignals: RawSignal[]): IngestionPlan {
 
   const uniqueObjects = uniqueById(ontologyObjects);
   const uniqueLinks = uniqueById(ontologyLinks);
+  const scoreById = computeBatchEntityScores(uniqueObjects, rawSignalsNormalized, uniqueLinks);
+  const scoredObjects = uniqueObjects.map((object) => {
+    if (object.objectType !== "decision_maker") return object;
+    const score = scoreById.get(object.id);
+    if (!score) return object;
+    return {
+      ...object,
+      attributes: {
+        ...object.attributes,
+        reality_score: score.score,
+        confidence: score.confidence,
+        signal_count: rawSignalsNormalized.filter((signal) => signalMatchesEntity(signal, String(object.attributes.name ?? ""))).length,
+        narrative_gap: score.components.narrativeGap ?? 0,
+        score_components: score.components
+      }
+    };
+  });
   const alerts = buildAlerts(rawSignalsNormalized, uniqueObjects);
 
   for (const alert of alerts) {
@@ -1056,9 +1074,27 @@ export function buildIngestionPlan(rawSignals: RawSignal[]): IngestionPlan {
 
   return {
     rawSignals: rawSignalsNormalized,
-    ontologyObjects: uniqueObjects,
+    ontologyObjects: scoredObjects,
     ontologyLinks: uniqueLinks,
     alerts,
     auditEvents: uniqueById(auditEvents)
   };
+}
+
+function signalMatchesEntity(signal: NormalizedSignal, name: string) {
+  const lowerName = name.toLowerCase();
+  const fields = [
+    text(signal.payload.companyName),
+    text(signal.payload.applicantRaw),
+    text(signal.payload.applicant),
+    text(signal.payload.assigneeName),
+    text(signal.payload.provider),
+    text(signal.payload.operator),
+    text(signal.payload.entityName),
+    text(signal.payload.subjectCompany),
+    text(signal.payload.reportingOwner)
+  ]
+    .filter(Boolean)
+    .map((value) => String(value).toLowerCase());
+  return fields.some((value) => value.includes(lowerName) || lowerName.includes(value));
 }

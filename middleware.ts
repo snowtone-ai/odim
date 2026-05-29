@@ -1,6 +1,32 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { readSsoSessionCookie, ssoEnabled } from "@/lib/auth/sso";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
+  if (
+    ssoEnabled() &&
+    !request.nextUrl.pathname.startsWith("/api/auth/callback") &&
+    !request.nextUrl.pathname.startsWith("/login") &&
+    !request.nextUrl.pathname.startsWith("/_next")
+  ) {
+    const session = await readSsoSessionCookie(request.headers.get("cookie"));
+    const protectedPath =
+      request.nextUrl.pathname.startsWith("/api/") ||
+      request.nextUrl.pathname.startsWith("/map") ||
+      request.nextUrl.pathname.startsWith("/entity") ||
+      request.nextUrl.pathname.startsWith("/alerts") ||
+      request.nextUrl.pathname.startsWith("/huginn") ||
+      request.nextUrl.pathname.startsWith("/settings") ||
+      request.nextUrl.pathname.startsWith("/custom");
+    if (protectedPath && !session) {
+      if (request.nextUrl.pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "SSO session required" }, { status: 401 });
+      }
+      const login = new URL("/login", request.url);
+      login.searchParams.set("next", request.nextUrl.pathname + request.nextUrl.search);
+      return NextResponse.redirect(login);
+    }
+  }
+
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
 
   const csp = [

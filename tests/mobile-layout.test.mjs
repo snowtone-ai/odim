@@ -10,7 +10,8 @@ test("shell keeps desktop sidebar while supporting mobile navigation", () => {
 });
 
 test("Signal Alerts uses a single-column mobile layout before desktop split", () => {
-  const alertsPage = readFileSync("app/(dashboard)/alerts/page.tsx", "utf8");
-  assert.match(alertsPage, /grid-cols-1/);
-  assert.match(alertsPage, /xl:grid-cols-\[420px_1fr\]/);
+  // Layout is in the AlertsWorkstation client component (refactored from T101)
+  const workstation = readFileSync("components/ui/alerts-workstation.tsx", "utf8");
+  assert.match(workstation, /grid-cols-1/);
+  assert.match(workstation, /xl:grid-cols-\[420px_1fr\]/);
 });

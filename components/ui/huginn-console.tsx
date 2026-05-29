@@ -11,6 +11,9 @@ import { EvalButton } from "@/components/ui/eval-button";
 import type { ClientHuginnResponse } from "@/app/actions/huginn";
 import { HuginnIcon } from "@/components/ui/huginn-icon";
 import type { LayerKey } from "@/lib/map/types";
+import { HUGINN_PRESETS } from "@/lib/huginn/presets";
+import { useQueryHistory } from "@/lib/stores/query-history";
+import { SavedSearchBar } from "@/components/ui/saved-search-bar";
 
 type HuginnResponse = ClientHuginnResponse;
 
@@ -26,6 +29,7 @@ type EvalLabels = {
 
 type Props = {
   defaultOrgId: string;
+  locale?: string;
   cascadeLayers: CascadeLayers;
   memoryRecords: string;
   panelLabels: {
@@ -50,6 +54,11 @@ type Props = {
   emptyStateText: string;
   showOnMapLabel: string;
   webSearchLabel: string;
+  presetsLabel: string;
+  historyLabels: {
+    recentQueries: string;
+    clearHistory: string;
+  };
   action: (question: string, orgId: string, webSearch?: boolean) => Promise<HuginnResponse>;
 };
 
@@ -135,6 +144,7 @@ type Message = {
 
 export function HuginnConsole({
   defaultOrgId,
+  locale = "en",
   cascadeLayers,
   memoryRecords,
   panelLabels,
@@ -145,6 +155,8 @@ export function HuginnConsole({
   emptyStateText,
   showOnMapLabel,
   webSearchLabel,
+  presetsLabel,
+  historyLabels,
   action
 }: Readonly<Props>) {
   const router = useRouter();
@@ -152,7 +164,11 @@ export function HuginnConsole({
   const [loading, setLoading] = useState(false);
   const [expandedTrace, setExpandedTrace] = useState<number | null>(null);
   const [webSearch, setWebSearch] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
+  const [inputPrefill, setInputPrefill] = useState("");
+  const [variableForm, setVariableForm] = useState<{ presetId: string; values: Record<string, string> } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { entries: historyEntries, addEntry, clearHistory } = useQueryHistory();
 
   const latestResponse = [...messages].reverse().find((m: Message) => m.role === "assistant")?.response ?? null;
   const layers = latestResponse ? (latestResponse.retrieval_layers_used as Array<keyof typeof cascadeLayers>) : [];
@@ -170,12 +186,52 @@ export function HuginnConsole({
     try {
       const data = await action(question, defaultOrgId, webSearch || undefined);
       setMessages((prev) => [...prev, { role: "assistant", content: data.answer, response: data }]);
+      addEntry({
+        question,
+        timestamp: new Date().toISOString(),
+        confidence: typeof data.confidence === "number" ? data.confidence : null
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Request failed";
       setMessages((prev) => [...prev, { role: "assistant", content: `Error: ${message}` }]);
     } finally {
       setLoading(false);
     }
+  }
+
+  function applyPreset(presetId: string) {
+    const preset = HUGINN_PRESETS.find((p) => p.id === presetId);
+    if (!preset) return;
+    const template = locale === "ja" ? preset.templateJa : preset.template;
+    if (preset.variables?.length) {
+      const initial: Record<string, string> = {};
+      for (const v of preset.variables) initial[v] = "";
+      setVariableForm({ presetId, values: initial });
+    } else {
+      setInputPrefill(template);
+    }
+  }
+
+  function submitVariableForm() {
+    if (!variableForm) return;
+    const preset = HUGINN_PRESETS.find((p) => p.id === variableForm.presetId);
+    if (!preset) return;
+    const template = locale === "ja" ? preset.templateJa : preset.template;
+    let filled = template;
+    for (const [key, value] of Object.entries(variableForm.values)) {
+      filled = filled.replaceAll(`{${key}}`, value || `[${key}]`);
+    }
+    setInputPrefill(filled);
+    setVariableForm(null);
+  }
+
+  function formatRelativeTime(timestamp: string): string {
+    const diff = Date.now() - new Date(timestamp).getTime();
+    const mins = Math.floor(diff / 60_000);
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
   }
 
   let lastAssistantIdx = -1;
@@ -224,7 +280,66 @@ export function HuginnConsole({
             </div>
           )}
 
-          <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
+          {/* Compare mode: side-by-side last two assistant responses */}
+          {compareMode && (() => {
+            const assistantMsgs = messages.filter((m) => m.role === "assistant");
+            const prev = assistantMsgs[assistantMsgs.length - 2] ?? null;
+            const curr = assistantMsgs[assistantMsgs.length - 1] ?? null;
+            if (!curr) return null;
+            return (
+              <div className="grid grid-cols-2 gap-3 px-4 py-4" style={{ maxHeight: "calc(100vh - 200px)", overflow: "auto" }}>
+                {/* Previous */}
+                <div
+                  className="rounded-[var(--radius-md)] p-4"
+                  style={{ background: "var(--ink-850)", border: "1px solid var(--line-faint)" }}
+                >
+                  <div className="mono mb-2 text-[9px] uppercase tracking-[0.14em]" style={{ color: "var(--text-tertiary)" }}>
+                    Previous
+                    {prev?.response && (
+                      <span className="ml-2" style={{ color: "var(--rune-dim)" }}>
+                        {Math.round((prev.response.confidence ?? 0) * 100)}% conf.
+                      </span>
+                    )}
+                  </div>
+                  {prev ? (
+                    <div className="huginn-prose text-[13px] leading-[1.7]" style={{ color: "var(--text-secondary)" }}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{prev.content}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    <div className="text-[12px]" style={{ color: "var(--text-tertiary)" }}>No previous response</div>
+                  )}
+                </div>
+                {/* Current */}
+                <div
+                  className="rounded-[var(--radius-md)] p-4"
+                  style={{ background: "var(--ink-800)", border: "1px solid rgba(201,169,97,0.18)" }}
+                >
+                  <div className="mono mb-2 text-[9px] uppercase tracking-[0.14em]" style={{ color: "var(--rune-dim)" }}>
+                    Current
+                    {curr.response && (
+                      <span className="ml-2" style={{ color: "var(--rune)" }}>
+                        {Math.round((curr.response.confidence ?? 0) * 100)}% conf.
+                        {prev?.response && (() => {
+                          const delta = (curr.response?.confidence ?? 0) - (prev.response?.confidence ?? 0);
+                          if (Math.abs(delta) < 0.01) return null;
+                          return (
+                            <span style={{ color: delta > 0 ? "var(--positive, #22c55e)" : "var(--critical)" }}>
+                              {` ${delta > 0 ? "+" : ""}${Math.round(delta * 100)}%`}
+                            </span>
+                          );
+                        })()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="huginn-prose text-[13px] leading-[1.7]" style={{ color: "var(--text-primary)" }}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{curr.content}</ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div className={`mx-auto max-w-2xl space-y-6 px-4 py-6 ${compareMode ? "hidden" : ""}`}>
             {messages.map((msg, idx) => (
               <div key={`${idx}-${msg.role}`}>
                 {msg.role === "user" ? (
@@ -357,6 +472,128 @@ export function HuginnConsole({
           style={{ borderTop: "1px solid var(--line-faint)" }}
         >
           <div className="mx-auto max-w-2xl">
+            <SavedSearchBar
+              type="huginn"
+              currentQuery={inputPrefill}
+              currentFilters={{ webSearch: String(webSearch) }}
+              onApply={(entry) => {
+                setInputPrefill(entry.query);
+                setWebSearch(entry.filters.webSearch === "true");
+              }}
+            />
+            {/* Preset chips */}
+            <div className="mb-2 flex flex-wrap items-center gap-1.5">
+              <span
+                className="mono text-[9px] uppercase tracking-[0.12em]"
+                style={{ color: "var(--text-quaternary)" }}
+              >
+                {presetsLabel}
+              </span>
+              {HUGINN_PRESETS.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  title={locale === "ja" ? preset.labelJa : preset.label}
+                  onClick={() => applyPreset(preset.id)}
+                  className="mono flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] tracking-[0.06em] transition-all duration-[var(--dur-fast)] hover:bg-[var(--rune-wash)]"
+                  style={{
+                    background: "var(--surface-tertiary)",
+                    border: "1px solid var(--line-faint)",
+                    color: "var(--text-secondary)"
+                  }}
+                >
+                  {locale === "ja" ? preset.labelJa : preset.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Variable form (inline) */}
+            {variableForm && (() => {
+              const preset = HUGINN_PRESETS.find((p) => p.id === variableForm.presetId);
+              if (!preset) return null;
+              return (
+                <div
+                  className="mb-3 rounded-[var(--radius-md)] p-3"
+                  style={{ background: "var(--ink-800)", border: "1px solid var(--line-faint)" }}
+                >
+                  <div
+                    className="mono mb-2 text-[10px] uppercase tracking-[0.1em]"
+                    style={{ color: "var(--rune-dim)" }}
+                  >
+                    {locale === "ja" ? preset.labelJa : preset.label}
+                  </div>
+                  <div className="grid gap-2">
+                    {preset.variables?.map((variable) => (
+                      <div key={variable} className="flex items-center gap-2">
+                        <span
+                          className="mono w-24 shrink-0 text-[10px]"
+                          style={{ color: "var(--text-tertiary)" }}
+                        >
+                          {variable}
+                        </span>
+                        <input
+                          type="text"
+                          value={variableForm.values[variable] ?? ""}
+                          onChange={(e) =>
+                            setVariableForm((prev) =>
+                              prev
+                                ? { ...prev, values: { ...prev.values, [variable]: e.target.value } }
+                                : null
+                            )
+                          }
+                          onKeyDown={(e) => { if (e.key === "Enter") submitVariableForm(); }}
+                          className="flex-1 rounded px-2 py-1 text-[12px] outline-none"
+                          style={{
+                            background: "var(--ink-900)",
+                            border: "1px solid var(--line-faint)",
+                            color: "var(--text-primary)"
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={submitVariableForm}
+                      className="mono rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.1em] transition-colors"
+                      style={{ background: "var(--rune)", color: "var(--ink-950)" }}
+                    >
+                      Apply
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVariableForm(null)}
+                      className="mono rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.1em] transition-colors"
+                      style={{ background: "var(--ink-700)", color: "var(--text-tertiary)" }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Compare toggle */}
+            <div className="mb-2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCompareMode((v) => !v)}
+                className="mono flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] tracking-[0.08em] transition-all duration-[var(--dur-fast)]"
+                style={{
+                  background: compareMode ? "rgba(59,130,246,0.12)" : "var(--ink-800)",
+                  border: compareMode ? "1px solid rgba(59,130,246,0.3)" : "1px solid var(--line-faint)",
+                  color: compareMode ? "#60a5fa" : "var(--text-tertiary)"
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="7" height="18" rx="1" />
+                  <rect x="14" y="3" width="7" height="18" rx="1" />
+                </svg>
+                Compare
+              </button>
+            </div>
+
             {/* Web search toggle */}
             <div className="mb-2 flex items-center">
               <button
@@ -372,7 +609,7 @@ export function HuginnConsole({
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" />
                   <line x1="2" y1="12" x2="22" y2="12" />
-                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z" />
                 </svg>
                 {webSearchLabel}
                 {webSearch && (
@@ -389,6 +626,7 @@ export function HuginnConsole({
               action={action}
               onSubmit={handleSubmit}
               loading={loading}
+              prefillValue={inputPrefill}
             />
           </div>
         </div>
@@ -396,6 +634,54 @@ export function HuginnConsole({
 
       {/* Right sidebar panels */}
       <div className="grid gap-5 self-start">
+        {/* Recent Queries */}
+        {historyEntries.length > 0 && (
+          <Panel title={historyLabels.recentQueries}>
+            <div className="grid gap-1.5">
+              {historyEntries.slice(0, 8).map((entry) => (
+                <button
+                  key={entry.id}
+                  type="button"
+                  onClick={() => setInputPrefill(entry.question)}
+                  className="w-full rounded-[var(--radius-sm)] px-2 py-2 text-left transition-colors hover:bg-[var(--ink-750)]"
+                  style={{ background: "var(--ink-850)" }}
+                >
+                  <div
+                    className="truncate text-[12px]"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    {entry.question.length > 60 ? `${entry.question.slice(0, 60)}…` : entry.question}
+                  </div>
+                  <div className="mt-0.5 flex items-center justify-between">
+                    <span
+                      className="mono text-[9px] uppercase tracking-[0.1em]"
+                      style={{ color: "var(--text-quaternary)" }}
+                    >
+                      {formatRelativeTime(entry.timestamp)}
+                    </span>
+                    {entry.confidence !== null && (
+                      <span
+                        className="mono text-[9px]"
+                        style={{ color: "var(--rune-dim)" }}
+                      >
+                        {Math.round(entry.confidence * 100)}%
+                      </span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={clearHistory}
+              className="mono mt-3 w-full text-center text-[10px] uppercase tracking-[0.1em] transition-colors hover:text-[var(--critical)]"
+              style={{ color: "var(--text-quaternary)" }}
+            >
+              {historyLabels.clearHistory}
+            </button>
+          </Panel>
+        )}
+
         {/* Trace Layers */}
         <Panel title={panelLabels.trace}>
           <div className="grid gap-2">

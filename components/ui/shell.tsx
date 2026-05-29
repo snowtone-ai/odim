@@ -12,7 +12,11 @@ import {
 import { OdimLogo } from "@/components/ui/odim-logo";
 import { HuginnIcon } from "@/components/ui/huginn-icon";
 import { LocaleSwitcher } from "@/components/ui/locale-switcher";
+import { KeyboardNav } from "@/components/ui/keyboard-nav";
+import { PushNotificationPrompt } from "@/components/ui/push-notification-prompt";
 import type { Messages } from "@/lib/i18n/messages";
+import { useAlertState } from "@/lib/stores/alert-state";
+import { alerts as fixtureAlerts } from "@/lib/data";
 
 type NavItem = {
   icon: React.ElementType;
@@ -20,7 +24,31 @@ type NavItem = {
   href: string;
 };
 
-function SidebarLink({ item }: Readonly<{ item: NavItem }>) {
+function AlertsBadge({ count }: Readonly<{ count: number }>) {
+  if (count === 0) return null;
+  return (
+    <span
+      className="mono absolute flex items-center justify-center font-medium"
+      style={{
+        top: -4,
+        right: -8,
+        background: "var(--critical)",
+        color: "white",
+        fontSize: 10,
+        borderRadius: "50%",
+        minWidth: 16,
+        height: 16,
+        padding: "0 2px",
+        lineHeight: 1,
+        pointerEvents: "none"
+      }}
+    >
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
+function SidebarLink({ item, badge }: Readonly<{ item: NavItem; badge?: number }>) {
   const pathname = usePathname();
   const active = pathname === item.href;
   const Icon = item.icon;
@@ -46,6 +74,7 @@ function SidebarLink({ item }: Readonly<{ item: NavItem }>) {
         {active && (
           <span className="absolute -left-[13px] h-[18px] w-[2px] rounded-r-full bg-[var(--rune)]" />
         )}
+        {badge !== undefined && <AlertsBadge count={badge} />}
       </span>
       {/* Tooltip */}
       <span
@@ -67,6 +96,10 @@ export function Shell({
   messages,
   locale
 }: Readonly<{ children: React.ReactNode; messages: Messages; locale: string }>) {
+  const { unreadCount } = useAlertState();
+  const allAlertIds = fixtureAlerts.map((a) => a.id);
+  const alertsUnread = unreadCount(allAlertIds);
+
   const nav: NavItem[] = [
     { icon: Globe,      label: messages.shell.nav.map,     href: "/map" },
     { icon: Building2,  label: messages.shell.nav.entity,  href: "/entity" },
@@ -77,6 +110,8 @@ export function Shell({
 
   return (
     <div className="min-h-screen bg-[var(--ink-950)]">
+      <KeyboardNav />
+      <PushNotificationPrompt />
       {/* Desktop sidebar */}
       <aside
         className="md:fixed inset-y-0 left-0 z-40 hidden w-[var(--sidebar-w)] flex-col items-center py-5 md:flex"
@@ -93,7 +128,11 @@ export function Shell({
 
         <nav className="mt-7 grid gap-0.5">
           {nav.map((item) => (
-            <SidebarLink item={item} key={item.href} />
+            <SidebarLink
+              item={item}
+              key={item.href}
+              badge={item.href === "/alerts" ? alertsUnread : undefined}
+            />
           ))}
         </nav>
 

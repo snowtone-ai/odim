@@ -43,6 +43,8 @@ export type SecEdgarOptions = {
 
 const trackedForms = new Set(["8-K", "S-1"]);
 const secConcurrencyLimit = 3;
+const SEC_BATCH_SIZE = 8;
+const SEC_BATCH_DELAY_MS = 1200;
 
 function normalizeCik(cik: string | number) {
   return String(cik).replace(/^0+/, "").padStart(10, "0");
@@ -135,6 +137,28 @@ async function mapWithConcurrency<T, U>(items: T[], limit: number, task: (item: 
   }
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
   return results;
+}
+
+/**
+ * Batch-aware wrapper: splits a large CIK list into batches of SEC_BATCH_SIZE
+ * with SEC_BATCH_DELAY_MS delay between batches to respect the 10 req/s SEC limit.
+ * Falls back to fetchSecEdgarSignals directly when the list fits in one batch.
+ */
+export async function fetchSecEdgarSignalsBatch(options: SecEdgarOptions): Promise<RawSignal[]> {
+  const { ciks } = options;
+  if (ciks.length <= SEC_BATCH_SIZE) {
+    return fetchSecEdgarSignals(options);
+  }
+  const allSignals: RawSignal[] = [];
+  for (let i = 0; i < ciks.length; i += SEC_BATCH_SIZE) {
+    const batch = ciks.slice(i, i + SEC_BATCH_SIZE);
+    const batchSignals = await fetchSecEdgarSignals({ ...options, ciks: batch });
+    allSignals.push(...batchSignals);
+    if (i + SEC_BATCH_SIZE < ciks.length) {
+      await new Promise<void>((resolve) => setTimeout(resolve, SEC_BATCH_DELAY_MS));
+    }
+  }
+  return allSignals;
 }
 
 export async function fetchSecEdgarSignals(options: SecEdgarOptions): Promise<RawSignal[]> {

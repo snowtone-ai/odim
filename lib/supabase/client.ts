@@ -1,15 +1,14 @@
 import { createClient } from "@supabase/supabase-js";
+import { resolveSupabaseRuntimeEnv } from "../env/runtime.ts";
 
 export function createBrowserSupabaseClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const { url, anonKey } = resolveSupabaseRuntimeEnv(process.env);
   if (!url || !anonKey) throw new Error("Supabase public environment variables are required");
   return createClient(url, anonKey);
 }
 
 export function createServiceSupabaseClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const { url, serviceRoleKey } = resolveSupabaseRuntimeEnv(process.env);
   if (!url || !serviceRoleKey) throw new Error("Supabase service environment variables are required");
   return createClient(url, serviceRoleKey, {
     auth: {
@@ -20,19 +19,21 @@ export function createServiceSupabaseClient() {
 }
 
 export function hasSupabaseReadEnv() {
+  const { url, anonKey, serviceRoleKey } = resolveSupabaseRuntimeEnv(process.env);
   return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    url &&
+      (serviceRoleKey || anonKey)
   );
 }
 
 export function hasSupabaseWriteEnv() {
-  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const { url, serviceRoleKey } = resolveSupabaseRuntimeEnv(process.env);
+  return Boolean(url && serviceRoleKey);
 }
 
 export function createServerSupabaseReadClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const { url, anonKey, serviceRoleKey } = resolveSupabaseRuntimeEnv(process.env);
+  const key = serviceRoleKey || anonKey;
   if (!url || !key) throw new Error("Supabase read environment variables are required");
   return createClient(url, key, {
     auth: {
