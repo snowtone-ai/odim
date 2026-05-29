@@ -1,0 +1,7162 @@
+[
+  {
+    "name": "Apple Inc.",
+    "cik": "0000320193",
+    "ticker": "AAPL",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q312",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Microsoft Corp.",
+    "cik": "0000789019",
+    "ticker": "MSFT",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q2283",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "NVIDIA Corp.",
+    "cik": "0001045810",
+    "ticker": "NVDA",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q182477",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Alphabet Inc.",
+    "cik": "0001652044",
+    "ticker": "GOOGL",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q20800404",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Amazon.com Inc.",
+    "cik": "0001018724",
+    "ticker": "AMZN",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q3884",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Meta Platforms Inc.",
+    "cik": "0001326801",
+    "ticker": "META",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q380",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Tesla Inc.",
+    "cik": "0001318605",
+    "ticker": "TSLA",
+    "region": "US",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q478214",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Broadcom Inc.",
+    "cik": "0001730168",
+    "ticker": "AVGO",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1783991",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Oracle Corp.",
+    "cik": "0001341439",
+    "ticker": "ORCL",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q20723",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Salesforce Inc.",
+    "cik": "0001108524",
+    "ticker": "CRM",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q740948",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Adobe Inc.",
+    "cik": "0000796343",
+    "ticker": "ADBE",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q72622",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Intel Corp.",
+    "cik": "0000050863",
+    "ticker": "INTC",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q248",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Advanced Micro Devices Inc.",
+    "cik": "0000002488",
+    "ticker": "AMD",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q183366",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Qualcomm Inc.",
+    "cik": "0000804328",
+    "ticker": "QCOM",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q671465",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Texas Instruments Inc.",
+    "cik": "0000097476",
+    "ticker": "TXN",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q287140",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Micron Technology Inc.",
+    "cik": "0000723125",
+    "ticker": "MU",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1285059",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Cisco Systems Inc.",
+    "cik": "0000858877",
+    "ticker": "CSCO",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q213827",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Netflix Inc.",
+    "cik": "0001065280",
+    "ticker": "NFLX",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q907614",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Accenture Plc",
+    "cik": null,
+    "ticker": "ACN",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q265660",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "ServiceNow Inc.",
+    "cik": "0001373715",
+    "ticker": "NOW",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q22997706",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Workday Inc.",
+    "cik": "0001327811",
+    "ticker": "WDAY",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q7088398",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "CrowdStrike Holdings Inc.",
+    "cik": "0001535527",
+    "ticker": "CRWD",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q60919585",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Palo Alto Networks Inc.",
+    "cik": "0001327567",
+    "ticker": "PANW",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q7124855",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Fortinet Inc.",
+    "cik": "0001262039",
+    "ticker": "FTNT",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q5477793",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Datadog Inc.",
+    "cik": "0001561680",
+    "ticker": "DDOG",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q56875975",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Snowflake Inc.",
+    "cik": "0001640147",
+    "ticker": "SNOW",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q56874895",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Palantir Technologies Inc.",
+    "cik": "0001321655",
+    "ticker": "PLTR",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q18809408",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Cloudflare Inc.",
+    "cik": "0001477333",
+    "ticker": "NET",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q51202984",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Okta Inc.",
+    "cik": "0001660134",
+    "ticker": "OKTA",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q22939506",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Zoom Video Communications Inc.",
+    "cik": "0001585521",
+    "ticker": "ZM",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q55447394",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Uber Technologies Inc.",
+    "cik": "0001543151",
+    "ticker": "UBER",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q22680537",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Airbnb Inc.",
+    "cik": "0001559720",
+    "ticker": "ABNB",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q2607425",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Lyft Inc.",
+    "cik": "0001759509",
+    "ticker": "LYFT",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q29060413",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "DoorDash Inc.",
+    "cik": "0001792789",
+    "ticker": "DASH",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q54870689",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Twilio Inc.",
+    "cik": "0001447362",
+    "ticker": "TWLO",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q28567701",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "DocuSign Inc.",
+    "cik": "0001261333",
+    "ticker": "DOCU",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q4920085",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Akamai Technologies Inc.",
+    "cik": "0001086222",
+    "ticker": "AKAM",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q349546",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Dell Technologies Inc.",
+    "cik": "0001571123",
+    "ticker": "DELL",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q2287",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "HP Inc.",
+    "cik": "0000047217",
+    "ticker": "HPQ",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q44513",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Hewlett Packard Enterprise Co.",
+    "cik": "0001645590",
+    "ticker": "HPE",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q6531676",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "International Business Machines Corp.",
+    "cik": "0000051143",
+    "ticker": "IBM",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q37156",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Cognizant Technology Solutions Corp.",
+    "cik": "0001058290",
+    "ticker": "CTSH",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q2329965",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Applied Materials Inc.",
+    "cik": "0000796343",
+    "ticker": "AMAT",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q296177",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Lam Research Corp.",
+    "cik": "0000707549",
+    "ticker": "LRCX",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1814327",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "KLA Corp.",
+    "cik": "0000319201",
+    "ticker": "KLAC",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q6410880",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Marvell Technology Inc.",
+    "cik": "0001058057",
+    "ticker": "MRVL",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1918752",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Microchip Technology Inc.",
+    "cik": "0000827054",
+    "ticker": "MCHP",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1918714",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Analog Devices Inc.",
+    "cik": "0000006845",
+    "ticker": "ADI",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1756565",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Skyworks Solutions Inc.",
+    "cik": "0000004127",
+    "ticker": "SWKS",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q4866866",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Motorola Solutions Inc.",
+    "cik": "0000068505",
+    "ticker": "MSI",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q650687",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Corning Inc.",
+    "cik": "0000024741",
+    "ticker": "GLW",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q948774",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Western Digital Corp.",
+    "cik": "0000106040",
+    "ticker": "WDC",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q929700",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "NetApp Inc.",
+    "cik": "0001103361",
+    "ticker": "NTAP",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1974481",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Juniper Networks Inc.",
+    "cik": "0001043604",
+    "ticker": "JNPR",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1059457",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "EPAM Systems Inc.",
+    "cik": "0001352010",
+    "ticker": "EPAM",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q14913476",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Gartner Inc.",
+    "cik": "0000749251",
+    "ticker": "IT",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1489243",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Fidelity National Information Services Inc.",
+    "cik": "0000798354",
+    "ticker": "FIS",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1392827",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Fiserv Inc.",
+    "cik": "0000798354",
+    "ticker": "FISV",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1395702",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Global Payments Inc.",
+    "cik": "0001123360",
+    "ticker": "GPN",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1526463",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "PayPal Holdings Inc.",
+    "cik": "0001633917",
+    "ticker": "PYPL",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q131510",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "eBay Inc.",
+    "cik": "0001065088",
+    "ticker": "EBAY",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q46196",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Verisign Inc.",
+    "cik": "0001014473",
+    "ticker": "VRSN",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q3550799",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Intuit Inc.",
+    "cik": "0000896878",
+    "ticker": "INTU",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q846609",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Autodesk Inc.",
+    "cik": "0000815081",
+    "ticker": "ADSK",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q174651",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Electronic Arts Inc.",
+    "cik": "0000712515",
+    "ticker": "EA",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q193514",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Activision Blizzard Inc.",
+    "cik": "0000718877",
+    "ticker": "ATVI",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q587699",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Take-Two Interactive Software Inc.",
+    "cik": "0000946486",
+    "ticker": "TTWO",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q791690",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Roblox Corp.",
+    "cik": "0001315098",
+    "ticker": "RBLX",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q3363143",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Spotify Technology SA",
+    "cik": null,
+    "ticker": "SPOT",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1902676",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Snap Inc.",
+    "cik": "0001564408",
+    "ticker": "SNAP",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q20865778",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Pinterest Inc.",
+    "cik": "0001506439",
+    "ticker": "PINS",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q5013044",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Dropbox Inc.",
+    "cik": "0001467623",
+    "ticker": "DBX",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q2032804",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Zendesk Inc.",
+    "cik": "0001463172",
+    "ticker": "ZEN",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q2024791",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "HubSpot Inc.",
+    "cik": "0001404655",
+    "ticker": "HUBS",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q23038490",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Sprinklr Inc.",
+    "cik": "0001625108",
+    "ticker": "CXM",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Gitlab Inc.",
+    "cik": "0001700682",
+    "ticker": "GTLB",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q16722706",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "SpaceX",
+    "cik": "0001596776",
+    "ticker": null,
+    "region": "US",
+    "sector": "aerospace",
+    "lei": null,
+    "wikidata_id": "Q193701",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "OpenAI",
+    "cik": null,
+    "ticker": null,
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q21708400",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Stripe Inc.",
+    "cik": null,
+    "ticker": null,
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q16082538",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Databricks Inc.",
+    "cik": null,
+    "ticker": null,
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q54924649",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Anduril Industries",
+    "cik": null,
+    "ticker": null,
+    "region": "US",
+    "sector": "defense",
+    "lei": null,
+    "wikidata_id": "Q63977616",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Eli Lilly and Co.",
+    "cik": "0000059478",
+    "ticker": "LLY",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q206921",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "UnitedHealth Group Inc.",
+    "cik": "0000070858",
+    "ticker": "UNH",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q2345345",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Johnson & Johnson",
+    "cik": "0000200406",
+    "ticker": "JNJ",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q183398",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "AbbVie Inc.",
+    "cik": "0001551152",
+    "ticker": "ABBV",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q24048888",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Merck & Co. Inc.",
+    "cik": "0000310158",
+    "ticker": "MRK",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q6854581",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Pfizer Inc.",
+    "cik": "0000078003",
+    "ticker": "PFE",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q206921",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Bristol-Myers Squibb Co.",
+    "cik": "0000014272",
+    "ticker": "BMY",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q217042",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Thermo Fisher Scientific Inc.",
+    "cik": "0000097476",
+    "ticker": "TMO",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q2047947",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Abbott Laboratories",
+    "cik": "0000001800",
+    "ticker": "ABT",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q420684",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Amgen Inc.",
+    "cik": "0000318154",
+    "ticker": "AMGN",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q188788",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Intuitive Surgical Inc.",
+    "cik": "0001035267",
+    "ticker": "ISRG",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q2450729",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Stryker Corp.",
+    "cik": "0000310764",
+    "ticker": "SYK",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q578019",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Boston Scientific Corp.",
+    "cik": "0000108312",
+    "ticker": "BSX",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q5125847",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Medtronic Plc",
+    "cik": "0001613103",
+    "ticker": "MDT",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q846655",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Danaher Corp.",
+    "cik": "0000313616",
+    "ticker": "DHR",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q1185619",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Becton Dickinson and Co.",
+    "cik": "0000010795",
+    "ticker": "BDX",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q1131791",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "CVS Health Corp.",
+    "cik": "0000064803",
+    "ticker": "CVS",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q1129483",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "McKesson Corp.",
+    "cik": "0000927653",
+    "ticker": "MCK",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q2738897",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Cigna Group",
+    "cik": "0001739940",
+    "ticker": "CI",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q1078235",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Humana Inc.",
+    "cik": "0000049071",
+    "ticker": "HUM",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q1640693",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Regeneron Pharmaceuticals Inc.",
+    "cik": "0000872589",
+    "ticker": "REGN",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q2094879",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Biogen Inc.",
+    "cik": "0000875320",
+    "ticker": "BIIB",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q5055645",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Vertex Pharmaceuticals Inc.",
+    "cik": "0000875320",
+    "ticker": "VRTX",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q2469779",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Gilead Sciences Inc.",
+    "cik": "0000882095",
+    "ticker": "GILD",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q1374821",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Moderna Inc.",
+    "cik": "0001682852",
+    "ticker": "MRNA",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q28165065",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Baxter International Inc.",
+    "cik": "0000010456",
+    "ticker": "BAX",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q1885823",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Zimmer Biomet Holdings Inc.",
+    "cik": "0001136893",
+    "ticker": "ZBH",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q7692226",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Edwards Lifesciences Corp.",
+    "cik": "0001099800",
+    "ticker": "EW",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q4339744",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "IQVIA Holdings Inc.",
+    "cik": "0001478930",
+    "ticker": "IQV",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q26731994",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Hologic Inc.",
+    "cik": "0000859737",
+    "ticker": "HOLX",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q3139716",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Berkshire Hathaway Inc.",
+    "cik": "0001067983",
+    "ticker": "BRK.B",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q217583",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "JPMorgan Chase & Co.",
+    "cik": "0000019617",
+    "ticker": "JPM",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q192783",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Visa Inc.",
+    "cik": "0001403161",
+    "ticker": "V",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q2369811",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Mastercard Inc.",
+    "cik": "0001141391",
+    "ticker": "MA",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q168789",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Bank of America Corp.",
+    "cik": "0000070858",
+    "ticker": "BAC",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q487921",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Wells Fargo & Co.",
+    "cik": "0000072971",
+    "ticker": "WFC",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q744149",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Goldman Sachs Group Inc.",
+    "cik": "0000886982",
+    "ticker": "GS",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q193326",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Morgan Stanley",
+    "cik": "0000895421",
+    "ticker": "MS",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q192412",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "BlackRock Inc.",
+    "cik": "0001364742",
+    "ticker": "BLK",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q1126632",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "American Express Co.",
+    "cik": "0000004962",
+    "ticker": "AXP",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q591614",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "S&P Global Inc.",
+    "cik": "0000064040",
+    "ticker": "SPGI",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q5094",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Moody's Corp.",
+    "cik": "0001059556",
+    "ticker": "MCO",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q838087",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Charles Schwab Corp.",
+    "cik": "0000316635",
+    "ticker": "SCHW",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q1105044",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Citigroup Inc.",
+    "cik": "0000831001",
+    "ticker": "C",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q214412",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "U.S. Bancorp",
+    "cik": "0000036104",
+    "ticker": "USB",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q2455636",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "PNC Financial Services Group Inc.",
+    "cik": "0000713676",
+    "ticker": "PNC",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q3364891",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Truist Financial Corp.",
+    "cik": "0000092122",
+    "ticker": "TFC",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q19970",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "CME Group Inc.",
+    "cik": "0001156375",
+    "ticker": "CME",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q1047564",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Intercontinental Exchange Inc.",
+    "cik": "0001571949",
+    "ticker": "ICE",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q1393924",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Nasdaq Inc.",
+    "cik": "0001120193",
+    "ticker": "NDAQ",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q96191",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Coinbase Global Inc.",
+    "cik": "0001679788",
+    "ticker": "COIN",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q29018723",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Robinhood Markets Inc.",
+    "cik": "0001783879",
+    "ticker": "HOOD",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q57233988",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Fidelity Investments",
+    "cik": "0000315066",
+    "ticker": null,
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q1418885",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Vanguard Group Inc.",
+    "cik": null,
+    "ticker": null,
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q1036397",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Apollo Global Management Inc.",
+    "cik": "0001568385",
+    "ticker": "APO",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q4781823",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "KKR & Co. Inc.",
+    "cik": "0001404912",
+    "ticker": "KKR",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q1052700",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Blackstone Inc.",
+    "cik": "0001393818",
+    "ticker": "BX",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q2916581",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Carlyle Group Inc.",
+    "cik": "0001527590",
+    "ticker": "CG",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q1076012",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Franklin Resources Inc.",
+    "cik": "0000038777",
+    "ticker": "BEN",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q2500001",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "T. Rowe Price Group Inc.",
+    "cik": "0001113169",
+    "ticker": "TROW",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q2412756",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Exxon Mobil Corp.",
+    "cik": "0000034088",
+    "ticker": "XOM",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q156764",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Chevron Corp.",
+    "cik": "0000093410",
+    "ticker": "CVX",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q319642",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "ConocoPhillips",
+    "cik": "0001163165",
+    "ticker": "COP",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q866774",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Schlumberger N.V. (SLB)",
+    "cik": "0000087347",
+    "ticker": "SLB",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q185482",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Pioneer Natural Resources Co.",
+    "cik": "0001038357",
+    "ticker": "PXD",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q2411148",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Marathon Petroleum Corp.",
+    "cik": "0001285785",
+    "ticker": "MPC",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q6757831",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Phillips 66",
+    "cik": "0001534992",
+    "ticker": "PSX",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q7188140",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "EOG Resources Inc.",
+    "cik": "0000821189",
+    "ticker": "EOG",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q1283668",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Valero Energy Corp.",
+    "cik": "0001035002",
+    "ticker": "VLO",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q1571375",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Hess Corp.",
+    "cik": "0000004447",
+    "ticker": "HES",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q1539098",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Halliburton Co.",
+    "cik": "0000045012",
+    "ticker": "HAL",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q1520830",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Baker Hughes Co.",
+    "cik": "0001701605",
+    "ticker": "BKR",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q811578",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Kinder Morgan Inc.",
+    "cik": "0001110805",
+    "ticker": "KMI",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q1760516",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Williams Companies Inc.",
+    "cik": "0000107263",
+    "ticker": "WMB",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q3574127",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Diamondback Energy Inc.",
+    "cik": "0001539838",
+    "ticker": "FANG",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q5268034",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Devon Energy Corp.",
+    "cik": "0001090012",
+    "ticker": "DVN",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q4307003",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "NextEra Energy Inc.",
+    "cik": "0000753308",
+    "ticker": "NEE",
+    "region": "US",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q6981093",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Duke Energy Corp.",
+    "cik": "0001326160",
+    "ticker": "DUK",
+    "region": "US",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q1255312",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Southern Co.",
+    "cik": "0000092122",
+    "ticker": "SO",
+    "region": "US",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q1570677",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Dominion Energy Inc.",
+    "cik": "0000715957",
+    "ticker": "D",
+    "region": "US",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q1245697",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "American Electric Power Co. Inc.",
+    "cik": "0000004904",
+    "ticker": "AEP",
+    "region": "US",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q1426066",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Sempra Energy",
+    "cik": "0001032933",
+    "ticker": "SRE",
+    "region": "US",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q7449399",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Walmart Inc.",
+    "cik": "0000104169",
+    "ticker": "WMT",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q483551",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Procter & Gamble Co.",
+    "cik": "0000080424",
+    "ticker": "PG",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q168717",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Home Depot Inc.",
+    "cik": "0000354950",
+    "ticker": "HD",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1144665",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Costco Wholesale Corp.",
+    "cik": "0000909832",
+    "ticker": "COST",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q715583",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Coca-Cola Co.",
+    "cik": "0000021344",
+    "ticker": "KO",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q2813",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "PepsiCo Inc.",
+    "cik": "0000077476",
+    "ticker": "PEP",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q162603",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "McDonald's Corp.",
+    "cik": "0000063908",
+    "ticker": "MCD",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q38076",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Nike Inc.",
+    "cik": "0000320187",
+    "ticker": "NKE",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q483915",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Philip Morris International Inc.",
+    "cik": "0001413159",
+    "ticker": "PM",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q193076",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Altria Group Inc.",
+    "cik": "0000764180",
+    "ticker": "MO",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1347441",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Colgate-Palmolive Co.",
+    "cik": "0000021665",
+    "ticker": "CL",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q188030",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Mondelez International Inc.",
+    "cik": "0001103982",
+    "ticker": "MDLZ",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1103882",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Kimberly-Clark Corp.",
+    "cik": "0000055607",
+    "ticker": "KMB",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q217006",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "General Mills Inc.",
+    "cik": "0000040704",
+    "ticker": "GIS",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1296662",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Kraft Heinz Co.",
+    "cik": "0001637459",
+    "ticker": "KHC",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q28700",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Tyson Foods Inc.",
+    "cik": "0000100493",
+    "ticker": "TSN",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1052765",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Lowe's Companies Inc.",
+    "cik": "0000060667",
+    "ticker": "LOW",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1738360",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Target Corp.",
+    "cik": "0000027419",
+    "ticker": "TGT",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1046640",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Dollar General Corp.",
+    "cik": "0000029534",
+    "ticker": "DG",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1232063",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Dollar Tree Inc.",
+    "cik": "0000935703",
+    "ticker": "DLTR",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q2318741",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Starbucks Corp.",
+    "cik": "0000829224",
+    "ticker": "SBUX",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q37158",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Marriott International Inc.",
+    "cik": "0001048268",
+    "ticker": "MAR",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1135926",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Hilton Worldwide Holdings Inc.",
+    "cik": "0001585583",
+    "ticker": "HLT",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1433473",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Las Vegas Sands Corp.",
+    "cik": "0001300514",
+    "ticker": "LVS",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q6500483",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Walt Disney Co.",
+    "cik": "0001001039",
+    "ticker": "DIS",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q7244",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Comcast Corp.",
+    "cik": "0001166691",
+    "ticker": "CMCSA",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1324936",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Charter Communications Inc.",
+    "cik": "0001091907",
+    "ticker": "CHTR",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q4462025",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "AT&T Inc.",
+    "cik": "0000732717",
+    "ticker": "T",
+    "region": "US",
+    "sector": "telecom",
+    "lei": null,
+    "wikidata_id": "Q35476",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Verizon Communications Inc.",
+    "cik": "0000732712",
+    "ticker": "VZ",
+    "region": "US",
+    "sector": "telecom",
+    "lei": null,
+    "wikidata_id": "Q706627",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "T-Mobile US Inc.",
+    "cik": "0001283699",
+    "ticker": "TMUS",
+    "region": "US",
+    "sector": "telecom",
+    "lei": null,
+    "wikidata_id": "Q1313917",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Fox Corp.",
+    "cik": "0001754301",
+    "ticker": "FOXA",
+    "region": "US",
+    "sector": "media",
+    "lei": null,
+    "wikidata_id": "Q48932",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Caterpillar Inc.",
+    "cik": "0000018230",
+    "ticker": "CAT",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q183207",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Deere & Co.",
+    "cik": "0000315189",
+    "ticker": "DE",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q219561",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Honeywell International Inc.",
+    "cik": "0000773840",
+    "ticker": "HON",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q484038",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Raytheon Technologies Corp. (RTX)",
+    "cik": "0000101830",
+    "ticker": "RTX",
+    "region": "US",
+    "sector": "defense",
+    "lei": null,
+    "wikidata_id": "Q1124142",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Lockheed Martin Corp.",
+    "cik": "0000936468",
+    "ticker": "LMT",
+    "region": "US",
+    "sector": "defense",
+    "lei": null,
+    "wikidata_id": "Q644168",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Boeing Co.",
+    "cik": "0000012927",
+    "ticker": "BA",
+    "region": "US",
+    "sector": "aerospace",
+    "lei": null,
+    "wikidata_id": "Q66",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "General Electric Co.",
+    "cik": "0000040533",
+    "ticker": "GE",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q54173",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "3M Co.",
+    "cik": "0000066740",
+    "ticker": "MMM",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q193867",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Emerson Electric Co.",
+    "cik": "0000032604",
+    "ticker": "EMR",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q1340617",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Parker-Hannifin Corp.",
+    "cik": "0000076334",
+    "ticker": "PH",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q1334026",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Illinois Tool Works Inc.",
+    "cik": "0000049826",
+    "ticker": "ITW",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q1643889",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Eaton Corp. Plc",
+    "cik": "0001551182",
+    "ticker": "ETN",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q816521",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Cummins Inc.",
+    "cik": "0000026172",
+    "ticker": "CMI",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q929999",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Northrop Grumman Corp.",
+    "cik": "0001133421",
+    "ticker": "NOC",
+    "region": "US",
+    "sector": "defense",
+    "lei": null,
+    "wikidata_id": "Q960443",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "General Dynamics Corp.",
+    "cik": "0000040533",
+    "ticker": "GD",
+    "region": "US",
+    "sector": "defense",
+    "lei": null,
+    "wikidata_id": "Q5531386",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "L3Harris Technologies Inc.",
+    "cik": "0000202058",
+    "ticker": "LHX",
+    "region": "US",
+    "sector": "defense",
+    "lei": null,
+    "wikidata_id": "Q7232168",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "TransDigm Group Inc.",
+    "cik": "0001260221",
+    "ticker": "TDG",
+    "region": "US",
+    "sector": "aerospace",
+    "lei": null,
+    "wikidata_id": "Q7835394",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Rockwell Automation Inc.",
+    "cik": "0001024478",
+    "ticker": "ROK",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q7356024",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Otis Worldwide Corp.",
+    "cik": "0001781335",
+    "ticker": "OTIS",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q7109451",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Carrier Global Corp.",
+    "cik": "0001783879",
+    "ticker": "CARR",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q4053491",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "FedEx Corp.",
+    "cik": "0001048911",
+    "ticker": "FDX",
+    "region": "US",
+    "sector": "logistics",
+    "lei": null,
+    "wikidata_id": "Q459477",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "United Parcel Service Inc.",
+    "cik": "0001090727",
+    "ticker": "UPS",
+    "region": "US",
+    "sector": "logistics",
+    "lei": null,
+    "wikidata_id": "Q38982",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Union Pacific Corp.",
+    "cik": "0000100885",
+    "ticker": "UNP",
+    "region": "US",
+    "sector": "transportation",
+    "lei": null,
+    "wikidata_id": "Q2603028",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Norfolk Southern Corp.",
+    "cik": "0000702165",
+    "ticker": "NSC",
+    "region": "US",
+    "sector": "transportation",
+    "lei": null,
+    "wikidata_id": "Q1971809",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "CSX Corp.",
+    "cik": "0000277948",
+    "ticker": "CSX",
+    "region": "US",
+    "sector": "transportation",
+    "lei": null,
+    "wikidata_id": "Q1096039",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "American Tower Corp.",
+    "cik": "0001053507",
+    "ticker": "AMT",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": "Q1766869",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Prologis Inc.",
+    "cik": "0001045609",
+    "ticker": "PLD",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": "Q2389157",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Crown Castle Inc.",
+    "cik": "0001051512",
+    "ticker": "CCI",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": "Q5189162",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Equinix Inc.",
+    "cik": "0001101239",
+    "ticker": "EQIX",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1362459",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Digital Realty Trust Inc.",
+    "cik": "0001297996",
+    "ticker": "DLR",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q5271367",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Simon Property Group Inc.",
+    "cik": "0001063761",
+    "ticker": "SPG",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": "Q2287994",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Welltower Inc.",
+    "cik": "0000766704",
+    "ticker": "WELL",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": "Q7984218",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Linde Plc",
+    "cik": "0001707092",
+    "ticker": "LIN",
+    "region": "US",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q167247",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Air Products & Chemicals Inc.",
+    "cik": "0000002969",
+    "ticker": "APD",
+    "region": "US",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q1412068",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Freeport-McMoRan Inc.",
+    "cik": "0000831259",
+    "ticker": "FCX",
+    "region": "US",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q932006",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Nucor Corp.",
+    "cik": "0000073309",
+    "ticker": "NUE",
+    "region": "US",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q1975793",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Steel Dynamics Inc.",
+    "cik": "0001023654",
+    "ticker": "STLD",
+    "region": "US",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q7605049",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Newmont Corp.",
+    "cik": "0001164180",
+    "ticker": "NEM",
+    "region": "US",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q1958038",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Barrick Gold Corp.",
+    "cik": "0000756502",
+    "ticker": "GOLD",
+    "region": "US",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q175038",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "International Paper Co.",
+    "cik": "0000049826",
+    "ticker": "IP",
+    "region": "US",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q636594",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Dow Inc.",
+    "cik": "0001751788",
+    "ticker": "DOW",
+    "region": "US",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q182240",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "DuPont de Nemours Inc.",
+    "cik": "0001666700",
+    "ticker": "DD",
+    "region": "US",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q189873",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Eastman Chemical Co.",
+    "cik": "0000915389",
+    "ticker": "EMN",
+    "region": "US",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q1311498",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Alphabet Inc. Class C",
+    "cik": "0001652044",
+    "ticker": "GOOG",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q20800404",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Intuitive Machines Inc.",
+    "cik": "0001844242",
+    "ticker": "LUNR",
+    "region": "US",
+    "sector": "aerospace",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Rocket Lab USA Inc.",
+    "cik": "0001819989",
+    "ticker": "RKLB",
+    "region": "US",
+    "sector": "aerospace",
+    "lei": null,
+    "wikidata_id": "Q56869098",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Planet Labs PBC",
+    "cik": "0001836935",
+    "ticker": "PL",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q14928025",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Veeva Systems Inc.",
+    "cik": "0001372514",
+    "ticker": "VEEV",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q8046218",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Costar Group Inc.",
+    "cik": "0001057352",
+    "ticker": "CSGP",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q5169754",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Fair Isaac Corp. (FICO)",
+    "cik": "0000814547",
+    "ticker": "FICO",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1400537",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Verisk Analytics Inc.",
+    "cik": "0001442145",
+    "ticker": "VRSK",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q7922786",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Dun & Bradstreet Holdings Inc.",
+    "cik": "0001806952",
+    "ticker": "DNB",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1203832",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "MSCI Inc.",
+    "cik": "0001408198",
+    "ticker": "MSCI",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q1941630",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "FactSet Research Systems Inc.",
+    "cik": "0001013237",
+    "ticker": "FDS",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q3058282",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Tradeweb Markets Inc.",
+    "cik": "0001742618",
+    "ticker": "TW",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q7831887",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Markel Group Inc.",
+    "cik": "0001096343",
+    "ticker": "MKL",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q6753624",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "W.R. Berkley Corp.",
+    "cik": "0000011544",
+    "ticker": "WRB",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q4083",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Chubb Ltd.",
+    "cik": "0001329800",
+    "ticker": "CB",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q1040440",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Travelers Companies Inc.",
+    "cik": "0086312",
+    "ticker": "TRV",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q1815046",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Hartford Financial Services Group Inc.",
+    "cik": "0000874766",
+    "ticker": "HIG",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q1581459",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Allstate Corp.",
+    "cik": "0000899051",
+    "ticker": "ALL",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q4731649",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Progressive Corp.",
+    "cik": "0000080661",
+    "ticker": "PGR",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q2434826",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "MetLife Inc.",
+    "cik": "0001099590",
+    "ticker": "MET",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q916097",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Prudential Financial Inc.",
+    "cik": "0001137774",
+    "ticker": "PRU",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q1978219",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Principal Financial Group Inc.",
+    "cik": "0001126328",
+    "ticker": "PFG",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q2414023",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Raymond James Financial Inc.",
+    "cik": "0000720005",
+    "ticker": "RJF",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q3435561",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Synchrony Financial",
+    "cik": "0001601712",
+    "ticker": "SYF",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q20869481",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Ally Financial Inc.",
+    "cik": "0000040729",
+    "ticker": "ALLY",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q4737004",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Capital One Financial Corp.",
+    "cik": "0000927628",
+    "ticker": "COF",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q1046268",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Discover Financial Services",
+    "cik": "0001393612",
+    "ticker": "DFS",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q5281988",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "American International Group Inc.",
+    "cik": "0000005272",
+    "ticker": "AIG",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q837847",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Marsh & McLennan Companies Inc.",
+    "cik": "0000062709",
+    "ticker": "MMC",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q4050748",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Aon Plc",
+    "cik": "0000315293",
+    "ticker": "AON",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q1022787",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Willis Towers Watson Plc",
+    "cik": "0001564618",
+    "ticker": "WTW",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q2524474",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Nasdaq OMX Group",
+    "cik": "0001120193",
+    "ticker": "NDAQ",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q96191",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Cboe Global Markets Inc.",
+    "cik": "0001329192",
+    "ticker": "CBOE",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q5017527",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Annaly Capital Management Inc.",
+    "cik": "0001031623",
+    "ticker": "NLY",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Arch Capital Group Ltd.",
+    "cik": "0000947484",
+    "ticker": "ACGL",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "General Motors Co.",
+    "cik": "0001467858",
+    "ticker": "GM",
+    "region": "US",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q81965",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Ford Motor Co.",
+    "cik": "0000037996",
+    "ticker": "F",
+    "region": "US",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q44294",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Stellantis N.V.",
+    "cik": null,
+    "ticker": "STLA",
+    "region": "US",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q2366871",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Rivian Automotive Inc.",
+    "cik": "0001874178",
+    "ticker": "RIVN",
+    "region": "US",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q48791854",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Lucid Group Inc.",
+    "cik": "0001811210",
+    "ticker": "LCID",
+    "region": "US",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q67039040",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Aptiv Plc",
+    "cik": "0001521332",
+    "ticker": "APTV",
+    "region": "US",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q56928374",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "BorgWarner Inc.",
+    "cik": "0000908362",
+    "ticker": "BWA",
+    "region": "US",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q4952745",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Zoetis Inc.",
+    "cik": "0001555280",
+    "ticker": "ZTS",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q5327088",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "IDEXX Laboratories Inc.",
+    "cik": "0000874716",
+    "ticker": "IDXX",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q5985649",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Waters Corp.",
+    "cik": "0001000697",
+    "ticker": "WAT",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q7972716",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Mettler-Toledo International Inc.",
+    "cik": "0001061219",
+    "ticker": "MTD",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q1920018",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "ResMed Inc.",
+    "cik": "0000943819",
+    "ticker": "RMD",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q3427428",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "DexCom Inc.",
+    "cik": "0001107760",
+    "ticker": "DXCM",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q5270963",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Insulet Corp.",
+    "cik": "0001145986",
+    "ticker": "PODD",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q6044041",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Agilent Technologies Inc.",
+    "cik": "0001090872",
+    "ticker": "A",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q4691247",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Bio-Techne Corp.",
+    "cik": "0000842162",
+    "ticker": "TECH",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q4908869",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "STERIS Plc",
+    "cik": "0001682241",
+    "ticker": "STE",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q7605079",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "PerkinElmer Inc.",
+    "cik": "0000031791",
+    "ticker": "PKI",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q2079673",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Align Technology Inc.",
+    "cik": "0001097149",
+    "ticker": "ALGN",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q4723097",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Haemonetics Corp.",
+    "cik": "0000313318",
+    "ticker": "HAE",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q5641065",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "ICU Medical Inc.",
+    "cik": "0000895655",
+    "ticker": "ICUI",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q5983937",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Encompass Health Corp.",
+    "cik": "0000785161",
+    "ticker": "EHC",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q5374568",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Surgery Partners Inc.",
+    "cik": "0001638833",
+    "ticker": "SGRY",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Tenet Healthcare Corp.",
+    "cik": "0000070318",
+    "ticker": "THC",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q7696428",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "HCA Healthcare Inc.",
+    "cik": "0000860730",
+    "ticker": "HCA",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q1581882",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Universal Health Services Inc.",
+    "cik": "0000352915",
+    "ticker": "UHS",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q7894671",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "DaVita Inc.",
+    "cik": "0000927066",
+    "ticker": "DVA",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q5215065",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Centene Corp.",
+    "cik": "0001071739",
+    "ticker": "CNC",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q5059765",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Molina Healthcare Inc.",
+    "cik": "0000928504",
+    "ticker": "MOH",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q6892041",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Synopsys Inc.",
+    "cik": "0000883241",
+    "ticker": "SNPS",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1665628",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Cadence Design Systems Inc.",
+    "cik": "0000813672",
+    "ticker": "CDNS",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1028454",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Ansys Inc.",
+    "cik": "0000820081",
+    "ticker": "ANSS",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q2854855",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "PTC Inc.",
+    "cik": "0000857005",
+    "ticker": "PTC",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q2084671",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Bentley Systems Inc.",
+    "cik": "0001580156",
+    "ticker": "BSY",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q5756097",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Trimble Inc.",
+    "cik": "0000860546",
+    "ticker": "TRMB",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q3551726",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Open Text Corp.",
+    "cik": null,
+    "ticker": "OTEX",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q901098",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Teradata Corp.",
+    "cik": "0000816761",
+    "ticker": "TDC",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1659584",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "NCR Atleos Corp.",
+    "cik": "0001786235",
+    "ticker": "NATL",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Conduent Inc.",
+    "cik": "0001677703",
+    "ticker": "CNDT",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Science Applications International Corp.",
+    "cik": "0001336920",
+    "ticker": "SAIC",
+    "region": "US",
+    "sector": "defense",
+    "lei": null,
+    "wikidata_id": "Q1145756",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Leidos Holdings Inc.",
+    "cik": "0001336920",
+    "ticker": "LDOS",
+    "region": "US",
+    "sector": "defense",
+    "lei": null,
+    "wikidata_id": "Q6522737",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "CACI International Inc.",
+    "cik": "0000016058",
+    "ticker": "CACI",
+    "region": "US",
+    "sector": "defense",
+    "lei": null,
+    "wikidata_id": "Q3603046",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Booz Allen Hamilton Holding Corp.",
+    "cik": "0001443646",
+    "ticker": "BAH",
+    "region": "US",
+    "sector": "defense",
+    "lei": null,
+    "wikidata_id": "Q4944665",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "ManTech International Corp.",
+    "cik": "0001080054",
+    "ticker": "MANT",
+    "region": "US",
+    "sector": "defense",
+    "lei": null,
+    "wikidata_id": "Q6748047",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Ceridian HCM Holding Inc.",
+    "cik": "0001725057",
+    "ticker": "CDAY",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Paycom Software Inc.",
+    "cik": "0001590714",
+    "ticker": "PAYC",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Paylocity Holding Corp.",
+    "cik": "0001591698",
+    "ticker": "PCTY",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Paychex Inc.",
+    "cik": "0000723254",
+    "ticker": "PAYX",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q3866026",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Automatic Data Processing Inc.",
+    "cik": "0000012927",
+    "ticker": "ADP",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1423754",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Broadridge Financial Solutions Inc.",
+    "cik": "0001383312",
+    "ticker": "BR",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q4972291",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Jack Henry & Associates Inc.",
+    "cik": "0000896429",
+    "ticker": "JKHY",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q6123059",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "SS&C Technologies Holdings Inc.",
+    "cik": "0000907254",
+    "ticker": "SSNC",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q7590640",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Black Knight Inc.",
+    "cik": "0001620459",
+    "ticker": "BKI",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Fair Isaac Corp.",
+    "cik": "0000814547",
+    "ticker": "FICO",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1400537",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Open Text Corporation",
+    "cik": null,
+    "ticker": "OTEX",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q901098",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Amdocs Limited",
+    "cik": null,
+    "ticker": "DOX",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q4748178",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "CGI Inc.",
+    "cik": null,
+    "ticker": "GIB",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q2981789",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Insight Enterprises Inc.",
+    "cik": "0000972706",
+    "ticker": "NSIT",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Concentrix Corp.",
+    "cik": "0001803717",
+    "ticker": "CNXC",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "TTEC Holdings Inc.",
+    "cik": "0001062613",
+    "ticker": "TTEC",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "ExlService Holdings Inc.",
+    "cik": "0001289490",
+    "ticker": "EXLS",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "WEX Inc.",
+    "cik": "0001309108",
+    "ticker": "WEX",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Shift4 Payments Inc.",
+    "cik": "0001794170",
+    "ticker": "FOUR",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "nCino Inc.",
+    "cik": "0001681903",
+    "ticker": "NCNO",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Dayforce (Ceridian)",
+    "cik": "0001725057",
+    "ticker": "DAY",
+    "region": "US",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Quest Diagnostics Inc.",
+    "cik": "0000920148",
+    "ticker": "DGX",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q7270700",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Laboratory Corp. of America Holdings",
+    "cik": "0000920148",
+    "ticker": "LH",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q3232944",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Henry Schein Inc.",
+    "cik": "0001000228",
+    "ticker": "HSIC",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q3139139",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Dentsply Sirona Inc.",
+    "cik": "0000818479",
+    "ticker": "XRAY",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q4165065",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Cerner Corp.",
+    "cik": "0000804212",
+    "ticker": "CERN",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q1072780",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "AmerisourceBergen Corp.",
+    "cik": "0001140859",
+    "ticker": "ABC",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q4743924",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Cardinal Health Inc.",
+    "cik": "0000721371",
+    "ticker": "CAH",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q5035958",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Chemed Corp.",
+    "cik": "0000019099",
+    "ticker": "CHE",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "LHC Group Inc.",
+    "cik": "0001263688",
+    "ticker": "LHCG",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Amedisys Inc.",
+    "cik": "0000896839",
+    "ticker": "AMED",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Option Care Health Inc.",
+    "cik": "0001520697",
+    "ticker": "OPCH",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Evolent Health Inc.",
+    "cik": "0001628940",
+    "ticker": "EVH",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "GoodRx Holdings Inc.",
+    "cik": "0001741830",
+    "ticker": "GDRX",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Doximity Inc.",
+    "cik": "0001801170",
+    "ticker": "DOCS",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Accolade Inc.",
+    "cik": "0001481832",
+    "ticker": "ACCD",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Alignment Healthcare Inc.",
+    "cik": "0001787117",
+    "ticker": "ALHC",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Privia Health Group Inc.",
+    "cik": "0001814586",
+    "ticker": "PRVA",
+    "region": "US",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "SVB Financial Group",
+    "cik": "0000719739",
+    "ticker": "SIVB",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q7345019",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Fifth Third Bancorp",
+    "cik": "0000035527",
+    "ticker": "FITB",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q5451498",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "KeyCorp",
+    "cik": "0000091576",
+    "ticker": "KEY",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q6399561",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Citizens Financial Group Inc.",
+    "cik": "0001541119",
+    "ticker": "CFG",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q21742044",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Regions Financial Corp.",
+    "cik": "0001281761",
+    "ticker": "RF",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q7307280",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Huntington Bancshares Inc.",
+    "cik": "0000049196",
+    "ticker": "HBAN",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q5954266",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Synovus Financial Corp.",
+    "cik": "0000018349",
+    "ticker": "SNV",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q7660942",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Cullen/Frost Bankers Inc.",
+    "cik": "0000036270",
+    "ticker": "CFR",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "East West Bancorp Inc.",
+    "cik": "0000806985",
+    "ticker": "EWBC",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q5325793",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "First Horizon National Corp.",
+    "cik": "0000036966",
+    "ticker": "FHN",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Western Alliance Bancorporation",
+    "cik": "0001212545",
+    "ticker": "WAL",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Glacier Bancorp Inc.",
+    "cik": "0000042682",
+    "ticker": "GBCI",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Stifel Financial Corp.",
+    "cik": "0000005022",
+    "ticker": "SF",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "LPL Financial Holdings Inc.",
+    "cik": "0001398987",
+    "ticker": "LPLA",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Interactive Brokers Group Inc.",
+    "cik": "0001381574",
+    "ticker": "IBKR",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q5021073",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "MarketAxess Holdings Inc.",
+    "cik": "0001278021",
+    "ticker": "MKTX",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q6763668",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Virtu Financial Inc.",
+    "cik": "0001592386",
+    "ticker": "VIRT",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Enova International Inc.",
+    "cik": "0001529864",
+    "ticker": "ENVA",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Green Dot Corp.",
+    "cik": "0001386278",
+    "ticker": "GDOT",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Nelnet Inc.",
+    "cik": "0001258602",
+    "ticker": "NNI",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "SLM Corp. (Sallie Mae)",
+    "cik": "0001593538",
+    "ticker": "SLM",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q7391490",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Navient Corp.",
+    "cik": "0001593538",
+    "ticker": "NAVI",
+    "region": "US",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q7893827",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Xylem Inc.",
+    "cik": "0001524472",
+    "ticker": "XYL",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q7999985",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "IDEX Corp.",
+    "cik": "0000832101",
+    "ticker": "IEX",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q5985936",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Pentair Plc",
+    "cik": "0000077360",
+    "ticker": "PNR",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q7163462",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "A.O. Smith Corp.",
+    "cik": "0000091142",
+    "ticker": "AOS",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q4648183",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Watts Water Technologies Inc.",
+    "cik": "0000108312",
+    "ticker": "WTS",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Roper Technologies Inc.",
+    "cik": "0000882184",
+    "ticker": "ROP",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q7366002",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "AMETEK Inc.",
+    "cik": "0000014846",
+    "ticker": "AME",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q4726990",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Masco Corp.",
+    "cik": "0000062996",
+    "ticker": "MAS",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q6776068",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Fortune Brands Innovations Inc.",
+    "cik": "0000038725",
+    "ticker": "FBIN",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Allegion Plc",
+    "cik": "0001579241",
+    "ticker": "ALLE",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Hubbell Inc.",
+    "cik": "0000048898",
+    "ticker": "HUBB",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Acuity Brands Inc.",
+    "cik": "0001144519",
+    "ticker": "AYI",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Enovis Corp.",
+    "cik": "0000723648",
+    "ticker": "ENOV",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "nVent Electric Plc",
+    "cik": "0001720446",
+    "ticker": "NVT",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Flowserve Corp.",
+    "cik": "0000030625",
+    "ticker": "FLS",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q5462101",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "SPX Technologies Inc.",
+    "cik": "0000047581",
+    "ticker": "SPXC",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Crane Co.",
+    "cik": "0000025445",
+    "ticker": "CR",
+    "region": "US",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q5183060",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Curtiss-Wright Corp.",
+    "cik": "0000026535",
+    "ticker": "CW",
+    "region": "US",
+    "sector": "defense",
+    "lei": null,
+    "wikidata_id": "Q5195247",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Moog Inc.",
+    "cik": "0000067887",
+    "ticker": "MOG.A",
+    "region": "US",
+    "sector": "defense",
+    "lei": null,
+    "wikidata_id": "Q6893462",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Heico Corp.",
+    "cik": "0000046619",
+    "ticker": "HEI",
+    "region": "US",
+    "sector": "aerospace",
+    "lei": null,
+    "wikidata_id": "Q5703073",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "DRS Technologies (Leonardo DRS)",
+    "cik": "0000726854",
+    "ticker": "DRS",
+    "region": "US",
+    "sector": "defense",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Teledyne Technologies Inc.",
+    "cik": "0001094987",
+    "ticker": "TDY",
+    "region": "US",
+    "sector": "defense",
+    "lei": null,
+    "wikidata_id": "Q3519879",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "FLIR Systems Inc.",
+    "cik": "0000875157",
+    "ticker": "FLIR",
+    "region": "US",
+    "sector": "defense",
+    "lei": null,
+    "wikidata_id": "Q5455671",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Mercury Systems Inc.",
+    "cik": "0000867460",
+    "ticker": "MRCY",
+    "region": "US",
+    "sector": "defense",
+    "lei": null,
+    "wikidata_id": "Q6819476",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Woodward Inc.",
+    "cik": "0000108312",
+    "ticker": "WWD",
+    "region": "US",
+    "sector": "aerospace",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Ducommun Inc.",
+    "cik": "0000030305",
+    "ticker": "DCO",
+    "region": "US",
+    "sector": "aerospace",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Clorox Co.",
+    "cik": "0000021076",
+    "ticker": "CLX",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1085504",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Church & Dwight Co. Inc.",
+    "cik": "0000313927",
+    "ticker": "CHD",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1093395",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Edgewell Personal Care Co.",
+    "cik": "0001096752",
+    "ticker": "EPC",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Revlon Inc.",
+    "cik": "0000887921",
+    "ticker": "REV",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q2147695",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Energizer Holdings Inc.",
+    "cik": "0001632290",
+    "ticker": "ENR",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Spectrum Brands Holdings Inc.",
+    "cik": "0001539838",
+    "ticker": "SPB",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Prestige Consumer Healthcare Inc.",
+    "cik": "0001295947",
+    "ticker": "PBH",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Nu Skin Enterprises Inc.",
+    "cik": "0000896429",
+    "ticker": "NUS",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Herbalife Nutrition Ltd.",
+    "cik": "0001180262",
+    "ticker": "HLF",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1040380",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "USANA Health Sciences Inc.",
+    "cik": "0000896429",
+    "ticker": "USNA",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "TreeHouse Foods Inc.",
+    "cik": "0001321702",
+    "ticker": "THS",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Lancaster Colony Corp.",
+    "cik": "0000057515",
+    "ticker": "LANC",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "John B. Sanfilippo & Son Inc.",
+    "cik": "0000278104",
+    "ticker": "JBSS",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "J&J Snack Foods Corp.",
+    "cik": "0000785786",
+    "ticker": "JJSF",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Inter Parfums Inc.",
+    "cik": "0000806592",
+    "ticker": "IPAR",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Prestige Brands Holdings Inc.",
+    "cik": "0001295947",
+    "ticker": "PBH",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Hanes Brands Inc.",
+    "cik": "0001359841",
+    "ticker": "HBI",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q5649267",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "PVH Corp.",
+    "cik": "0000078239",
+    "ticker": "PVH",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q2141622",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Tapestry Inc.",
+    "cik": "0001116132",
+    "ticker": "TPR",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q3519",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Capri Holdings Ltd.",
+    "cik": "0001530721",
+    "ticker": "CPRI",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q4038718",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Carter's Inc.",
+    "cik": "0001060349",
+    "ticker": "CRI",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Kontoor Brands Inc.",
+    "cik": "0001760232",
+    "ticker": "KTB",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "G-III Apparel Group Ltd.",
+    "cik": "0000821002",
+    "ticker": "GIII",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Oxford Industries Inc.",
+    "cik": "0000075111",
+    "ticker": "OXM",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "American Eagle Outfitters Inc.",
+    "cik": "0000919012",
+    "ticker": "AEO",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q4741126",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Abercrombie & Fitch Co.",
+    "cik": "0001018414",
+    "ticker": "ANF",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q4668218",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Gap Inc.",
+    "cik": "0000039911",
+    "ticker": "GPS",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q3686",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Macy's Inc.",
+    "cik": "0000794367",
+    "ticker": "M",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q2449549",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Nordstrom Inc.",
+    "cik": "0000072333",
+    "ticker": "JWN",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q6046697",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Dillard's Inc.",
+    "cik": "0000028823",
+    "ticker": "DDS",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Kohl's Corp.",
+    "cik": "0000885639",
+    "ticker": "KSS",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q6424921",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Best Buy Co. Inc.",
+    "cik": "0000764180",
+    "ticker": "BBY",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q614921",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "AutoZone Inc.",
+    "cik": "0000866787",
+    "ticker": "AZO",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q4824985",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "O'Reilly Automotive Inc.",
+    "cik": "0000898173",
+    "ticker": "ORLY",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q4440099",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Advance Auto Parts Inc.",
+    "cik": "0001158449",
+    "ticker": "AAP",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q4681597",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Bath & Body Works Inc.",
+    "cik": "0000093410",
+    "ticker": "BBWI",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q4866866",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Williams-Sonoma Inc.",
+    "cik": "0000945114",
+    "ticker": "WSM",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q8008248",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Tiffany & Co.",
+    "cik": "0000098246",
+    "ticker": "TIF",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q779622",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Signet Jewelers Ltd.",
+    "cik": null,
+    "ticker": "SIG",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q7512282",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Crocs Inc.",
+    "cik": "0001334978",
+    "ticker": "CROX",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1328600",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Deckers Outdoor Corp.",
+    "cik": "0000895456",
+    "ticker": "DECK",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q5247157",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Skechers USA Inc.",
+    "cik": "0000895456",
+    "ticker": "SKX",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q7540823",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Columbia Sportswear Co.",
+    "cik": "0001017303",
+    "ticker": "COLM",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1116905",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Under Armour Inc.",
+    "cik": "0001336917",
+    "ticker": "UA",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1184168",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Lululemon Athletica Inc.",
+    "cik": "0001397187",
+    "ticker": "LULU",
+    "region": "US",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q6702413",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "AES Corp.",
+    "cik": "0000874761",
+    "ticker": "AES",
+    "region": "US",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q4641576",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Entergy Corp.",
+    "cik": "0000007287",
+    "ticker": "ETR",
+    "region": "US",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q1348827",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "PPL Corp.",
+    "cik": "0000922224",
+    "ticker": "PPL",
+    "region": "US",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q7127498",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Eversource Energy",
+    "cik": "0000072741",
+    "ticker": "ES",
+    "region": "US",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q5413875",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Consolidated Edison Inc.",
+    "cik": "0000023632",
+    "ticker": "ED",
+    "region": "US",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q1122283",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "WEC Energy Group Inc.",
+    "cik": "0000783325",
+    "ticker": "WEC",
+    "region": "US",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q7963296",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Xcel Energy Inc.",
+    "cik": "0000081076",
+    "ticker": "XEL",
+    "region": "US",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q8043126",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Ameren Corp.",
+    "cik": "0001002910",
+    "ticker": "AEE",
+    "region": "US",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q4729427",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Atmos Energy Corp.",
+    "cik": "0000049600",
+    "ticker": "ATO",
+    "region": "US",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q4812861",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Pinnacle West Capital Corp.",
+    "cik": "0000007286",
+    "ticker": "PNW",
+    "region": "US",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q7196078",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "DTE Energy Co.",
+    "cik": "0001319947",
+    "ticker": "DTE",
+    "region": "US",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q5206234",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "CMS Energy Corp.",
+    "cik": "0000723254",
+    "ticker": "CMS",
+    "region": "US",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q5012726",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "ONEOK Inc.",
+    "cik": "0001039684",
+    "ticker": "OKE",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q7097408",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Targa Resources Corp.",
+    "cik": "0001389170",
+    "ticker": "TRGP",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q7685291",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Antero Resources Corp.",
+    "cik": "0001433270",
+    "ticker": "AR",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q4771695",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Range Resources Corp.",
+    "cik": "0315131",
+    "ticker": "RRC",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q7293116",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Coterra Energy Inc.",
+    "cik": "0000858470",
+    "ticker": "CTRA",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Ovintiv Inc.",
+    "cik": null,
+    "ticker": "OVV",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q4770890",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Murphy Oil Corp.",
+    "cik": "0000101778",
+    "ticker": "MUR",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q6943527",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Chord Energy Corp.",
+    "cik": "0000077090",
+    "ticker": "CHRD",
+    "region": "US",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Public Storage",
+    "cik": "0001393311",
+    "ticker": "PSA",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": "Q7257046",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Weyerhaeuser Co.",
+    "cik": "0000106535",
+    "ticker": "WY",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": "Q1411434",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Realty Income Corp.",
+    "cik": "0000726854",
+    "ticker": "O",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": "Q7301218",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Invitation Homes Inc.",
+    "cik": "0001687940",
+    "ticker": "INVH",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Equity Residential",
+    "cik": "0000906107",
+    "ticker": "EQR",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": "Q5393741",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "AvalonBay Communities Inc.",
+    "cik": "0000915912",
+    "ticker": "AVB",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": "Q4826949",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Sun Communities Inc.",
+    "cik": "0000912463",
+    "ticker": "SUI",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": "Q7640163",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Camden Property Trust",
+    "cik": "0000906163",
+    "ticker": "CPT",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Independence Realty Trust Inc.",
+    "cik": "0001466085",
+    "ticker": "IRT",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "EastGroup Properties Inc.",
+    "cik": "0000049600",
+    "ticker": "EGP",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Terreno Realty Corp.",
+    "cik": "0001476150",
+    "ticker": "TRNO",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Rexford Industrial Realty Inc.",
+    "cik": "0001571049",
+    "ticker": "REXR",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "VICI Properties Inc.",
+    "cik": "0001695678",
+    "ticker": "VICI",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "SBA Communications Corp.",
+    "cik": "0001016112",
+    "ticker": "SBAC",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Uniti Group Inc.",
+    "cik": "0001620459",
+    "ticker": "UNIT",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Lamar Advertising Co.",
+    "cik": "0001070154",
+    "ticker": "LAMR",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Outfront Media Inc.",
+    "cik": "0001579982",
+    "ticker": "OUT",
+    "region": "US",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": null,
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Toyota Motor Corp.",
+    "cik": "0001094517",
+    "ticker": "7203",
+    "region": "JP",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q53268",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Honda Motor Co. Ltd.",
+    "cik": "0000715153",
+    "ticker": "7267",
+    "region": "JP",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q9584",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Nissan Motor Co. Ltd.",
+    "cik": "0001122491",
+    "ticker": "7201",
+    "region": "JP",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q57079",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Mazda Motor Corp.",
+    "cik": null,
+    "ticker": "7261",
+    "region": "JP",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q33774",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Subaru Corp.",
+    "cik": null,
+    "ticker": "7270",
+    "region": "JP",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q2671222",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Mitsubishi Motors Corp.",
+    "cik": null,
+    "ticker": "7211",
+    "region": "JP",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q1020658",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Suzuki Motor Corp.",
+    "cik": null,
+    "ticker": "7269",
+    "region": "JP",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q58427",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Isuzu Motors Ltd.",
+    "cik": null,
+    "ticker": "7202",
+    "region": "JP",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q382944",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Denso Corp.",
+    "cik": null,
+    "ticker": "6902",
+    "region": "JP",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q1199386",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Aisin Corp.",
+    "cik": null,
+    "ticker": "7259",
+    "region": "JP",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q2828588",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Sony Group Corp.",
+    "cik": "0000313838",
+    "ticker": "6758",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q41187",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Panasonic Holdings Corp.",
+    "cik": "0000080012",
+    "ticker": "6752",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q54173",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Hitachi Ltd.",
+    "cik": null,
+    "ticker": "6501",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q5720",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Fujitsu Ltd.",
+    "cik": null,
+    "ticker": "6702",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1114565",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "NEC Corp.",
+    "cik": null,
+    "ticker": "6701",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1071288",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Sharp Corp.",
+    "cik": null,
+    "ticker": "6753",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1276440",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Canon Inc.",
+    "cik": "0000716605",
+    "ticker": "7751",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q81279",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Ricoh Co. Ltd.",
+    "cik": null,
+    "ticker": "7752",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1128593",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Kyocera Corp.",
+    "cik": null,
+    "ticker": "6971",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1780603",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "TDK Corp.",
+    "cik": null,
+    "ticker": "6762",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1619764",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Murata Manufacturing Co. Ltd.",
+    "cik": null,
+    "ticker": "6981",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q3864609",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Nikon Corp.",
+    "cik": null,
+    "ticker": "7731",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q184587",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Nintendo Co. Ltd.",
+    "cik": null,
+    "ticker": "7974",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q8093",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Keyence Corp.",
+    "cik": null,
+    "ticker": "6861",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1753028",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Fanuc Corp.",
+    "cik": null,
+    "ticker": "6954",
+    "region": "JP",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q1395024",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "SoftBank Group Corp.",
+    "cik": null,
+    "ticker": "9984",
+    "region": "JP",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q6882",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Mitsubishi UFJ Financial Group Inc.",
+    "cik": null,
+    "ticker": "8306",
+    "region": "JP",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q1941461",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Sumitomo Mitsui Financial Group Inc.",
+    "cik": null,
+    "ticker": "8316",
+    "region": "JP",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q2334003",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Mizuho Financial Group Inc.",
+    "cik": null,
+    "ticker": "8411",
+    "region": "JP",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q1924396",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Nomura Holdings Inc.",
+    "cik": null,
+    "ticker": "8604",
+    "region": "JP",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q2007750",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Daiichi Life Insurance Co. Ltd.",
+    "cik": null,
+    "ticker": "8750",
+    "region": "JP",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q5208668",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Tokyo Electron Ltd.",
+    "cik": null,
+    "ticker": "8035",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q2396688",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Recruit Holdings Co. Ltd.",
+    "cik": null,
+    "ticker": "6098",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q3451580",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Mitsubishi Corp.",
+    "cik": null,
+    "ticker": "8058",
+    "region": "JP",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q186213",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Mitsui & Co. Ltd.",
+    "cik": null,
+    "ticker": "8031",
+    "region": "JP",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q720754",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Sumitomo Corp.",
+    "cik": null,
+    "ticker": "8053",
+    "region": "JP",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q2355481",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Itochu Corp.",
+    "cik": null,
+    "ticker": "8001",
+    "region": "JP",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q1664316",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Marubeni Corp.",
+    "cik": null,
+    "ticker": "8002",
+    "region": "JP",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q1903625",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Komatsu Ltd.",
+    "cik": null,
+    "ticker": "6301",
+    "region": "JP",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q1795779",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Bridgestone Corp.",
+    "cik": "0000882095",
+    "ticker": "5108",
+    "region": "JP",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q234685",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Nippon Steel Corp.",
+    "cik": null,
+    "ticker": "5401",
+    "region": "JP",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q1056887",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "JFE Holdings Inc.",
+    "cik": null,
+    "ticker": "5411",
+    "region": "JP",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q1672284",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Tokyo Gas Co. Ltd.",
+    "cik": null,
+    "ticker": "9531",
+    "region": "JP",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q1143001",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Kansai Electric Power Co. Inc.",
+    "cik": null,
+    "ticker": "9503",
+    "region": "JP",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q2661819",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Tokyo Electric Power Co. Holdings Inc.",
+    "cik": null,
+    "ticker": "9501",
+    "region": "JP",
+    "sector": "utilities",
+    "lei": null,
+    "wikidata_id": "Q1147977",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Fast Retailing Co. Ltd. (Uniqlo)",
+    "cik": null,
+    "ticker": "9983",
+    "region": "JP",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q340158",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Seven & I Holdings Co. Ltd.",
+    "cik": null,
+    "ticker": "3382",
+    "region": "JP",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1773751",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Asahi Group Holdings Ltd.",
+    "cik": null,
+    "ticker": "2502",
+    "region": "JP",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q2850266",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Kirin Holdings Co. Ltd.",
+    "cik": null,
+    "ticker": "2503",
+    "region": "JP",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1743432",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Shiseido Co. Ltd.",
+    "cik": null,
+    "ticker": "4911",
+    "region": "JP",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q899447",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Kao Corp.",
+    "cik": null,
+    "ticker": "4452",
+    "region": "JP",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1382680",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Takeda Pharmaceutical Co. Ltd.",
+    "cik": "0001377789",
+    "ticker": "4502",
+    "region": "JP",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q1553347",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Astellas Pharma Inc.",
+    "cik": null,
+    "ticker": "4503",
+    "region": "JP",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q4806685",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Daiichi Sankyo Co. Ltd.",
+    "cik": null,
+    "ticker": "4568",
+    "region": "JP",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q17092591",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Eisai Co. Ltd.",
+    "cik": null,
+    "ticker": "4523",
+    "region": "JP",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q1305764",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Olympus Corp.",
+    "cik": null,
+    "ticker": "7733",
+    "region": "JP",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q484618",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Z Holdings Corp. (Yahoo Japan)",
+    "cik": null,
+    "ticker": "4689",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q50793",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Rakuten Group Inc.",
+    "cik": null,
+    "ticker": "4755",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q752652",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "NTT Corp.",
+    "cik": null,
+    "ticker": "9432",
+    "region": "JP",
+    "sector": "telecom",
+    "lei": null,
+    "wikidata_id": "Q726903",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "KDDI Corp.",
+    "cik": null,
+    "ticker": "9433",
+    "region": "JP",
+    "sector": "telecom",
+    "lei": null,
+    "wikidata_id": "Q3798994",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "SoftBank Corp.",
+    "cik": null,
+    "ticker": "9434",
+    "region": "JP",
+    "sector": "telecom",
+    "lei": null,
+    "wikidata_id": "Q57219",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Nippon Telegraph and Telephone Corp.",
+    "cik": null,
+    "ticker": "9432",
+    "region": "JP",
+    "sector": "telecom",
+    "lei": null,
+    "wikidata_id": "Q726903",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Japan Tobacco Inc.",
+    "cik": null,
+    "ticker": "2914",
+    "region": "JP",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1700019",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Nippon Express Holdings Inc.",
+    "cik": null,
+    "ticker": "9147",
+    "region": "JP",
+    "sector": "logistics",
+    "lei": null,
+    "wikidata_id": "Q2057985",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "East Japan Railway Co.",
+    "cik": null,
+    "ticker": "9020",
+    "region": "JP",
+    "sector": "transportation",
+    "lei": null,
+    "wikidata_id": "Q726718",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Central Japan Railway Co.",
+    "cik": null,
+    "ticker": "9022",
+    "region": "JP",
+    "sector": "transportation",
+    "lei": null,
+    "wikidata_id": "Q1065489",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "ANA Holdings Inc.",
+    "cik": null,
+    "ticker": "9202",
+    "region": "JP",
+    "sector": "transportation",
+    "lei": null,
+    "wikidata_id": "Q1065534",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Japan Airlines Co. Ltd.",
+    "cik": null,
+    "ticker": "9201",
+    "region": "JP",
+    "sector": "transportation",
+    "lei": null,
+    "wikidata_id": "Q1053706",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Mitsui Fudosan Co. Ltd.",
+    "cik": null,
+    "ticker": "8801",
+    "region": "JP",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": "Q1949116",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Sumitomo Realty & Development Co. Ltd.",
+    "cik": null,
+    "ticker": "8830",
+    "region": "JP",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": "Q2355493",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Shin-Etsu Chemical Co. Ltd.",
+    "cik": null,
+    "ticker": "4063",
+    "region": "JP",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q2105093",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Fujifilm Holdings Corp.",
+    "cik": null,
+    "ticker": "4901",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1040780",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Yokogawa Electric Corp.",
+    "cik": null,
+    "ticker": "6841",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q3591854",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Omron Corp.",
+    "cik": null,
+    "ticker": "6645",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q4267027",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Rohm Co. Ltd.",
+    "cik": null,
+    "ticker": "6963",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q3441264",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Renesas Electronics Corp.",
+    "cik": null,
+    "ticker": "6723",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1378609",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Nidec Corp.",
+    "cik": null,
+    "ticker": "6594",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1972403",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Toray Industries Inc.",
+    "cik": null,
+    "ticker": "3402",
+    "region": "JP",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q968977",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Asahi Kasei Corp.",
+    "cik": null,
+    "ticker": "3407",
+    "region": "JP",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q2860451",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Terumo Corp.",
+    "cik": null,
+    "ticker": "4543",
+    "region": "JP",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q2402083",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Hoya Corp.",
+    "cik": null,
+    "ticker": "7741",
+    "region": "JP",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q1630491",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "ORIX Corp.",
+    "cik": null,
+    "ticker": "8591",
+    "region": "JP",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q1948601",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Tokio Marine Holdings Inc.",
+    "cik": null,
+    "ticker": "8766",
+    "region": "JP",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q2412803",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Sompo Holdings Inc.",
+    "cik": null,
+    "ticker": "8630",
+    "region": "JP",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q2534476",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "MS&AD Insurance Group Holdings Inc.",
+    "cik": null,
+    "ticker": "8725",
+    "region": "JP",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q6709680",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Nippon Life Insurance Co.",
+    "cik": null,
+    "ticker": null,
+    "region": "JP",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q1994618",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Meiji Holdings Co. Ltd.",
+    "cik": null,
+    "ticker": "2269",
+    "region": "JP",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1905700",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Ajinomoto Co. Inc.",
+    "cik": null,
+    "ticker": "2802",
+    "region": "JP",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q706573",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Yakult Honsha Co. Ltd.",
+    "cik": null,
+    "ticker": "2267",
+    "region": "JP",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q1047148",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Suntory Holdings Ltd.",
+    "cik": null,
+    "ticker": null,
+    "region": "JP",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q206877",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Kewpie Corp.",
+    "cik": null,
+    "ticker": "2809",
+    "region": "JP",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q3197117",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Onitsuka Tiger (Asics)",
+    "cik": null,
+    "ticker": "7936",
+    "region": "JP",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q384349",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "AGC Inc.",
+    "cik": null,
+    "ticker": "5201",
+    "region": "JP",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q1041568",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Sumitomo Electric Industries Ltd.",
+    "cik": null,
+    "ticker": "5802",
+    "region": "JP",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q1136178",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Toshiba Corp.",
+    "cik": null,
+    "ticker": "6502",
+    "region": "JP",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q183459",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "SAP SE",
+    "cik": null,
+    "ticker": "SAP",
+    "region": "EU",
+    "sector": "technology",
+    "lei": "529900G3SW56SHYNPR95",
+    "wikidata_id": "Q10643",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Siemens AG",
+    "cik": null,
+    "ticker": "SIE",
+    "region": "EU",
+    "sector": "industrial",
+    "lei": "529900Q6BWUGSRTFDH50",
+    "wikidata_id": "Q81230",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Volkswagen AG",
+    "cik": null,
+    "ticker": "VOW3",
+    "region": "EU",
+    "sector": "automotive",
+    "lei": "529900HNOAA1KXQJUQ27",
+    "wikidata_id": "Q46970",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "BMW AG",
+    "cik": null,
+    "ticker": "BMW",
+    "region": "EU",
+    "sector": "automotive",
+    "lei": "529900QPOXFTQ0TD7H69",
+    "wikidata_id": "Q26678",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Mercedes-Benz Group AG",
+    "cik": null,
+    "ticker": "MBG",
+    "region": "EU",
+    "sector": "automotive",
+    "lei": "529900PPXHKPJERPYH18",
+    "wikidata_id": "Q75",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "BASF SE",
+    "cik": null,
+    "ticker": "BAS",
+    "region": "EU",
+    "sector": "materials",
+    "lei": "529900MTHFMV6ZBFTF03",
+    "wikidata_id": "Q9401",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Bayer AG",
+    "cik": "0000875320",
+    "ticker": "BAYN",
+    "region": "EU",
+    "sector": "healthcare",
+    "lei": "529900JFOPPEDUR61H13",
+    "wikidata_id": "Q152057",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Deutsche Bank AG",
+    "cik": null,
+    "ticker": "DBK",
+    "region": "EU",
+    "sector": "finance",
+    "lei": "7LTWFZYICNSX8D621K86",
+    "wikidata_id": "Q66048",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Allianz SE",
+    "cik": null,
+    "ticker": "ALV",
+    "region": "EU",
+    "sector": "finance",
+    "lei": "MWLCFP7L6A7P4N0WKJ60",
+    "wikidata_id": "Q487482",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Deutsche Telekom AG",
+    "cik": null,
+    "ticker": "DTE",
+    "region": "EU",
+    "sector": "telecom",
+    "lei": "549300QWWWQTQLBDNG41",
+    "wikidata_id": "Q309208",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Merck KGaA",
+    "cik": null,
+    "ticker": "MRK",
+    "region": "EU",
+    "sector": "healthcare",
+    "lei": "529900DFBRCMPB8A3U49",
+    "wikidata_id": "Q208948",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Infineon Technologies AG",
+    "cik": null,
+    "ticker": "IFX",
+    "region": "EU",
+    "sector": "technology",
+    "lei": "529900WIVZCJZSPQGY47",
+    "wikidata_id": "Q543773",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Volkswagen Group (Porsche Auto Holding SE)",
+    "cik": null,
+    "ticker": "PAH3",
+    "region": "EU",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q327584",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "E.ON SE",
+    "cik": null,
+    "ticker": "EOAN",
+    "region": "EU",
+    "sector": "utilities",
+    "lei": "529900MFZA62P1BFUF37",
+    "wikidata_id": "Q3034",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "RWE AG",
+    "cik": null,
+    "ticker": "RWE",
+    "region": "EU",
+    "sector": "utilities",
+    "lei": "529900HUEFC6XBPKF785",
+    "wikidata_id": "Q3079",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Fresenius SE & Co. KGaA",
+    "cik": null,
+    "ticker": "FRE",
+    "region": "EU",
+    "sector": "healthcare",
+    "lei": "529900A3EMQZ7DQCZM32",
+    "wikidata_id": "Q323567",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Continental AG",
+    "cik": null,
+    "ticker": "CON",
+    "region": "EU",
+    "sector": "automotive",
+    "lei": "529900HJGKFBFKIYXT87",
+    "wikidata_id": "Q154421",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Henkel AG & Co. KGaA",
+    "cik": null,
+    "ticker": "HENKY",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": "529900DNFKMXHMHNYZ21",
+    "wikidata_id": "Q155802",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Adidas AG",
+    "cik": null,
+    "ticker": "ADS",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": "549300L65RSCJ90GCN43",
+    "wikidata_id": "Q3895",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Porsche AG",
+    "cik": null,
+    "ticker": "P911",
+    "region": "EU",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q35919",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "LVMH Moët Hennessy Louis Vuitton SE",
+    "cik": null,
+    "ticker": "MC",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": "969500KQTC37D6UJRW18",
+    "wikidata_id": "Q170217",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "TotalEnergies SE",
+    "cik": null,
+    "ticker": "TTE",
+    "region": "EU",
+    "sector": "energy",
+    "lei": "529900S21EQ1BO4ESM68",
+    "wikidata_id": "Q154800",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Sanofi",
+    "cik": null,
+    "ticker": "SAN",
+    "region": "EU",
+    "sector": "healthcare",
+    "lei": "9695003IU1CXHJ0R5K35",
+    "wikidata_id": "Q158205",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "BNP Paribas SA",
+    "cik": null,
+    "ticker": "BNP",
+    "region": "EU",
+    "sector": "finance",
+    "lei": "R0MUWSFPU8MPRO8K5P83",
+    "wikidata_id": "Q186386",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Airbus SE",
+    "cik": null,
+    "ticker": "AIR",
+    "region": "EU",
+    "sector": "aerospace",
+    "lei": "549300IAR6N6OTYEEO18",
+    "wikidata_id": "Q67",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "AXA SA",
+    "cik": null,
+    "ticker": "CS",
+    "region": "EU",
+    "sector": "finance",
+    "lei": "549300OH0BIXMQYJ5R86",
+    "wikidata_id": "Q185351",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Société Générale SA",
+    "cik": null,
+    "ticker": "GLE",
+    "region": "EU",
+    "sector": "finance",
+    "lei": "O2RNE8IBXP4R0TD8PU41",
+    "wikidata_id": "Q206866",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Crédit Agricole SA",
+    "cik": null,
+    "ticker": "ACA",
+    "region": "EU",
+    "sector": "finance",
+    "lei": "969500TJ5KRTCJQWXH05",
+    "wikidata_id": "Q466660",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "L'Oréal SA",
+    "cik": null,
+    "ticker": "OR",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": "969500YJ5VPQ6MG4JT83",
+    "wikidata_id": "Q181085",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Michelin (Compagnie Générale des Établissements)",
+    "cik": null,
+    "ticker": "ML",
+    "region": "EU",
+    "sector": "materials",
+    "lei": "969500GKBHTZ48A4YZ09",
+    "wikidata_id": "Q19893",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Renault SA",
+    "cik": null,
+    "ticker": "RNO",
+    "region": "EU",
+    "sector": "automotive",
+    "lei": "9695004IU6XKI8HPQV45",
+    "wikidata_id": "Q18484",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Pernod Ricard SA",
+    "cik": null,
+    "ticker": "RI",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": "549300JK88IP36JWJG10",
+    "wikidata_id": "Q1054046",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Safran SA",
+    "cik": null,
+    "ticker": "SAF",
+    "region": "EU",
+    "sector": "aerospace",
+    "lei": "9695002FU97KFNBHJ779",
+    "wikidata_id": "Q1584370",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Legrand SA",
+    "cik": null,
+    "ticker": "LR",
+    "region": "EU",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q3243244",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Capgemini SE",
+    "cik": null,
+    "ticker": "CAP",
+    "region": "EU",
+    "sector": "technology",
+    "lei": "9695002IIGZK7YSXVR85",
+    "wikidata_id": "Q521408",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Shell Plc",
+    "cik": null,
+    "ticker": "SHEL",
+    "region": "EU",
+    "sector": "energy",
+    "lei": "21380068P1DRHMJ8KU70",
+    "wikidata_id": "Q154950",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "BP Plc",
+    "cik": "0000313807",
+    "ticker": "BP",
+    "region": "EU",
+    "sector": "energy",
+    "lei": "097900BICQ0000135165",
+    "wikidata_id": "Q152057",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "AstraZeneca Plc",
+    "cik": "0001336917",
+    "ticker": "AZN",
+    "region": "EU",
+    "sector": "healthcare",
+    "lei": "INR2EJN1ERAN0W5ZP974",
+    "wikidata_id": "Q731938",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "GlaxoSmithKline Plc",
+    "cik": "0001336920",
+    "ticker": "GSK",
+    "region": "EU",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q209047",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "HSBC Holdings Plc",
+    "cik": "0000806968",
+    "ticker": "HSBC",
+    "region": "EU",
+    "sector": "finance",
+    "lei": "MLU0ZO3ML4LN2LL2TL39",
+    "wikidata_id": "Q190547",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Unilever Plc",
+    "cik": null,
+    "ticker": "ULVR",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": "635400KQBU5TPGAMHM78",
+    "wikidata_id": "Q131345",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Rio Tinto Plc",
+    "cik": null,
+    "ticker": "RIO",
+    "region": "EU",
+    "sector": "materials",
+    "lei": "213800YO589JTWYCMS11",
+    "wikidata_id": "Q156385",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "BHP Group Plc",
+    "cik": "0001401257",
+    "ticker": "BHP",
+    "region": "EU",
+    "sector": "materials",
+    "lei": "549300C116EOWV835198",
+    "wikidata_id": "Q1551",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Anglo American Plc",
+    "cik": null,
+    "ticker": "AAL",
+    "region": "EU",
+    "sector": "materials",
+    "lei": "2138001E9BOU4ANG2X74",
+    "wikidata_id": "Q183461",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Rolls-Royce Holdings Plc",
+    "cik": null,
+    "ticker": "RR",
+    "region": "EU",
+    "sector": "aerospace",
+    "lei": "2138003QKSJGBA68TV03",
+    "wikidata_id": "Q182754",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "BAE Systems Plc",
+    "cik": null,
+    "ticker": "BA",
+    "region": "EU",
+    "sector": "defense",
+    "lei": "2138003J05CYC01UU785",
+    "wikidata_id": "Q216836",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Vodafone Group Plc",
+    "cik": "0001089872",
+    "ticker": "VOD",
+    "region": "EU",
+    "sector": "telecom",
+    "lei": "213800TB53ELEEK4LL34",
+    "wikidata_id": "Q122141",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Legal & General Group Plc",
+    "cik": null,
+    "ticker": "LGEN",
+    "region": "EU",
+    "sector": "finance",
+    "lei": "549300MWQFUS29TNQR79",
+    "wikidata_id": "Q3237041",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Standard Chartered Plc",
+    "cik": null,
+    "ticker": "STAN",
+    "region": "EU",
+    "sector": "finance",
+    "lei": "5LBCWIB2YPUQZGODAP49",
+    "wikidata_id": "Q1146472",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "National Grid Plc",
+    "cik": null,
+    "ticker": "NG",
+    "region": "EU",
+    "sector": "utilities",
+    "lei": "549300VHVNLMB5GFPW03",
+    "wikidata_id": "Q2024989",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Diageo Plc",
+    "cik": null,
+    "ticker": "DGE",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": "EI68PJ6R3E57M2ECPW60",
+    "wikidata_id": "Q495029",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "ASML Holding NV",
+    "cik": "0937556",
+    "ticker": "ASML",
+    "region": "EU",
+    "sector": "technology",
+    "lei": "724500Y6DUVHQD6OXN27",
+    "wikidata_id": "Q600076",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Philips N.V.",
+    "cik": null,
+    "ticker": "PHIA",
+    "region": "EU",
+    "sector": "technology",
+    "lei": "724500NNKFQ7XRJHZR37",
+    "wikidata_id": "Q21077",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Heineken N.V.",
+    "cik": null,
+    "ticker": "HEIA",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": "724500JPXPPQZMKGKE61",
+    "wikidata_id": "Q79026",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "IMCD N.V.",
+    "cik": null,
+    "ticker": "IMCD",
+    "region": "EU",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q18189534",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Wolters Kluwer N.V.",
+    "cik": null,
+    "ticker": "WKL",
+    "region": "EU",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q3568017",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "ING Group N.V.",
+    "cik": null,
+    "ticker": "INGA",
+    "region": "EU",
+    "sector": "finance",
+    "lei": "3TK20IVIUJ8J3ZU0QE75",
+    "wikidata_id": "Q169990",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Nestlé SA",
+    "cik": null,
+    "ticker": "NESN",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": "549300VSMJRE假",
+    "wikidata_id": "Q11984",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Novartis AG",
+    "cik": null,
+    "ticker": "NOVN",
+    "region": "EU",
+    "sector": "healthcare",
+    "lei": "EHY69VRKX3BKD8WNSA98",
+    "wikidata_id": "Q507285",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Roche Holding AG",
+    "cik": null,
+    "ticker": "ROG",
+    "region": "EU",
+    "sector": "healthcare",
+    "lei": "529900FAGFN2BXUWZF37",
+    "wikidata_id": "Q212658",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "ABB Ltd.",
+    "cik": null,
+    "ticker": "ABBN",
+    "region": "EU",
+    "sector": "industrial",
+    "lei": "594900O0VSDB72RRHQ40",
+    "wikidata_id": "Q37876",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "UBS Group AG",
+    "cik": null,
+    "ticker": "UBSG",
+    "region": "EU",
+    "sector": "finance",
+    "lei": "BFM8T61CT2L1QCEMIK50",
+    "wikidata_id": "Q169037",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Zurich Insurance Group AG",
+    "cik": null,
+    "ticker": "ZURN",
+    "region": "EU",
+    "sector": "finance",
+    "lei": "QYSF7SE7DBUEF2PNVJ49",
+    "wikidata_id": "Q2078265",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Swiss Re Ltd.",
+    "cik": null,
+    "ticker": "SREN",
+    "region": "EU",
+    "sector": "finance",
+    "lei": "BFM8T61CT2L1QCEMIK51",
+    "wikidata_id": "Q325965",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Swatch Group AG",
+    "cik": null,
+    "ticker": "UHR",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q2322602",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Richemont (Compagnie Financière Richemont)",
+    "cik": null,
+    "ticker": "CFR",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q685671",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Lonza Group AG",
+    "cik": null,
+    "ticker": "LONN",
+    "region": "EU",
+    "sector": "healthcare",
+    "lei": "529900A9GX1HH9EG1R13",
+    "wikidata_id": "Q2064026",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "STMicroelectronics N.V.",
+    "cik": null,
+    "ticker": "STMPA",
+    "region": "EU",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q185481",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Ericsson (Telefonaktiebolaget LM)",
+    "cik": "0000093556",
+    "ticker": "ERIC",
+    "region": "EU",
+    "sector": "technology",
+    "lei": "529900W24MGBFQFNOC42",
+    "wikidata_id": "Q40571",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Volvo Group",
+    "cik": null,
+    "ticker": "VOLV",
+    "region": "EU",
+    "sector": "industrial",
+    "lei": "529900W24MGBFQFNOC43",
+    "wikidata_id": "Q187820",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Atlas Copco AB",
+    "cik": null,
+    "ticker": "ATCO",
+    "region": "EU",
+    "sector": "industrial",
+    "lei": "549300SVFXQZAVQZX595",
+    "wikidata_id": "Q745782",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Sandvik AB",
+    "cik": null,
+    "ticker": "SAND",
+    "region": "EU",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q1770977",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "H&M Hennes & Mauritz AB",
+    "cik": null,
+    "ticker": "HM",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": "529900O0MHH9QIVVOB27",
+    "wikidata_id": "Q188326",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Hexagon AB",
+    "cik": null,
+    "ticker": "HEXA",
+    "region": "EU",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1600888",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Novo Nordisk A/S",
+    "cik": null,
+    "ticker": "NOVO",
+    "region": "EU",
+    "sector": "healthcare",
+    "lei": "529900T8BM49AURSDO55",
+    "wikidata_id": "Q386893",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "A.P. Møller - Mærsk A/S",
+    "cik": null,
+    "ticker": "MAERSK",
+    "region": "EU",
+    "sector": "logistics",
+    "lei": "549300D56V9C7GZWL429",
+    "wikidata_id": "Q2558",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Nokia Oyj",
+    "cik": "0001043604",
+    "ticker": "NOKIA",
+    "region": "EU",
+    "sector": "technology",
+    "lei": "549300A0JPRWG1KI7U17",
+    "wikidata_id": "Q8916",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Nordea Bank Abp",
+    "cik": null,
+    "ticker": "NDA",
+    "region": "EU",
+    "sector": "finance",
+    "lei": "529900ODI3047E2LIV03",
+    "wikidata_id": "Q1773686",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Inditex (Industria de Diseño Textil SA)",
+    "cik": null,
+    "ticker": "ITX",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": "894500ISHMRQZGF7SB40",
+    "wikidata_id": "Q242067",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Santander Group (Banco Santander SA)",
+    "cik": null,
+    "ticker": "SAN",
+    "region": "EU",
+    "sector": "finance",
+    "lei": "5493006QMFDDMYWIAM13",
+    "wikidata_id": "Q58679",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "BBVA (Banco Bilbao Vizcaya Argentaria SA)",
+    "cik": null,
+    "ticker": "BBVA",
+    "region": "EU",
+    "sector": "finance",
+    "lei": "K8MS7FD7N5Z2WQ51AZ71",
+    "wikidata_id": "Q204878",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Iberdrola SA",
+    "cik": null,
+    "ticker": "IBE",
+    "region": "EU",
+    "sector": "utilities",
+    "lei": "9598003MPTC9P3A7OD54",
+    "wikidata_id": "Q1357445",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Telefónica SA",
+    "cik": "0001066923",
+    "ticker": "TEF",
+    "region": "EU",
+    "sector": "telecom",
+    "lei": "5493006QMFDDMYWIAM14",
+    "wikidata_id": "Q80371",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Enel SpA",
+    "cik": null,
+    "ticker": "ENEL",
+    "region": "EU",
+    "sector": "utilities",
+    "lei": "815600E09C4TS21E9N46",
+    "wikidata_id": "Q633870",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Eni SpA",
+    "cik": null,
+    "ticker": "ENI",
+    "region": "EU",
+    "sector": "energy",
+    "lei": "894500PLYULQDQLJ9058",
+    "wikidata_id": "Q2631",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Intesa Sanpaolo SpA",
+    "cik": null,
+    "ticker": "ISP",
+    "region": "EU",
+    "sector": "finance",
+    "lei": "2W8N8UU78PMDQKZENC08",
+    "wikidata_id": "Q3155709",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "UniCredit SpA",
+    "cik": null,
+    "ticker": "UCG",
+    "region": "EU",
+    "sector": "finance",
+    "lei": "549300TRUWO2CD2G5692",
+    "wikidata_id": "Q1436012",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Ferrari N.V.",
+    "cik": "0001616862",
+    "ticker": "RACE",
+    "region": "EU",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q27302",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "LVMH (alternate listing)",
+    "cik": null,
+    "ticker": "LVMHF",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": "969500KQTC37D6UJRW18",
+    "wikidata_id": "Q170217",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Kering SA",
+    "cik": null,
+    "ticker": "KER",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": "9695001BD3BFMQLVS561",
+    "wikidata_id": "Q610174",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Hermès International SCA",
+    "cik": null,
+    "ticker": "RMS",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q165232",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "ArcelorMittal SA",
+    "cik": null,
+    "ticker": "MT",
+    "region": "EU",
+    "sector": "materials",
+    "lei": "549300TOX0UKSGZS2P58",
+    "wikidata_id": "Q2088",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Glencore Plc",
+    "cik": null,
+    "ticker": "GLEN",
+    "region": "EU",
+    "sector": "materials",
+    "lei": "2138002658CPO9NBH955",
+    "wikidata_id": "Q3091762",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Siemens Healthineers AG",
+    "cik": null,
+    "ticker": "SHL",
+    "region": "EU",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q2361978",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Vonovia SE",
+    "cik": null,
+    "ticker": "VNA",
+    "region": "EU",
+    "sector": "real_estate",
+    "lei": null,
+    "wikidata_id": "Q15920641",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Scout24 SE",
+    "cik": null,
+    "ticker": "G24",
+    "region": "EU",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1557397",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "TeamViewer AG",
+    "cik": null,
+    "ticker": "TMV",
+    "region": "EU",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q7690888",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Nemetschek SE",
+    "cik": null,
+    "ticker": "NEM",
+    "region": "EU",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q2009266",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Rational AG",
+    "cik": null,
+    "ticker": "RAA",
+    "region": "EU",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q1392822",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Danone SA",
+    "cik": null,
+    "ticker": "BN",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": "9695003IU1CXHJ0R5K36",
+    "wikidata_id": "Q178697",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Vinci SA",
+    "cik": null,
+    "ticker": "DG",
+    "region": "EU",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q1034399",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Saint-Gobain SA",
+    "cik": null,
+    "ticker": "SGO",
+    "region": "EU",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q380902",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Bouygues SA",
+    "cik": null,
+    "ticker": "EN",
+    "region": "EU",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q1164424",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Sodexo SA",
+    "cik": null,
+    "ticker": "SW",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q2738",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "EssilorLuxottica SA",
+    "cik": null,
+    "ticker": "EL",
+    "region": "EU",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q2588479",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Publicis Groupe SA",
+    "cik": null,
+    "ticker": "PUB",
+    "region": "EU",
+    "sector": "media",
+    "lei": null,
+    "wikidata_id": "Q270951",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Vivendi SE",
+    "cik": null,
+    "ticker": "VIV",
+    "region": "EU",
+    "sector": "media",
+    "lei": null,
+    "wikidata_id": "Q215263",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Orange SA",
+    "cik": null,
+    "ticker": "ORA",
+    "region": "EU",
+    "sector": "telecom",
+    "lei": null,
+    "wikidata_id": "Q769860",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "BT Group Plc",
+    "cik": null,
+    "ticker": "BT.A",
+    "region": "EU",
+    "sector": "telecom",
+    "lei": null,
+    "wikidata_id": "Q1003",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Compass Group Plc",
+    "cik": null,
+    "ticker": "CPG",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q5154892",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Rentokil Initial Plc",
+    "cik": null,
+    "ticker": "RTO",
+    "region": "EU",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q7313107",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "WPP Plc",
+    "cik": null,
+    "ticker": "WPP",
+    "region": "EU",
+    "sector": "media",
+    "lei": null,
+    "wikidata_id": "Q217173",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Informa Plc",
+    "cik": null,
+    "ticker": "INF",
+    "region": "EU",
+    "sector": "media",
+    "lei": null,
+    "wikidata_id": "Q3147018",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "RELX Plc",
+    "cik": null,
+    "ticker": "REL",
+    "region": "EU",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q1264941",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Sage Group Plc",
+    "cik": null,
+    "ticker": "SGE",
+    "region": "EU",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q726880",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Intertek Group Plc",
+    "cik": null,
+    "ticker": "ITRK",
+    "region": "EU",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q3151282",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Halma Plc",
+    "cik": null,
+    "ticker": "HLMA",
+    "region": "EU",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q5641003",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "IMI Plc",
+    "cik": null,
+    "ticker": "IMI",
+    "region": "EU",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q3186042",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Experian Plc",
+    "cik": null,
+    "ticker": "EXPN",
+    "region": "EU",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q5412428",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Auto Trader Group Plc",
+    "cik": null,
+    "ticker": "AUTO",
+    "region": "EU",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q4826870",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Ferrovial SE",
+    "cik": null,
+    "ticker": "FER",
+    "region": "EU",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q1049804",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Amadeus IT Group SA",
+    "cik": null,
+    "ticker": "AMS",
+    "region": "EU",
+    "sector": "technology",
+    "lei": null,
+    "wikidata_id": "Q4737079",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "CaixaBank SA",
+    "cik": null,
+    "ticker": "CABK",
+    "region": "EU",
+    "sector": "finance",
+    "lei": null,
+    "wikidata_id": "Q745163",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Leonardo SpA",
+    "cik": null,
+    "ticker": "LDO",
+    "region": "EU",
+    "sector": "defense",
+    "lei": null,
+    "wikidata_id": "Q1124142",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Prysmian SpA",
+    "cik": null,
+    "ticker": "PRY",
+    "region": "EU",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q1028440",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Davide Campari-Milano N.V.",
+    "cik": null,
+    "ticker": "CPR",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q751547",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Moncler SpA",
+    "cik": null,
+    "ticker": "MONC",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q3312793",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Vestas Wind Systems A/S",
+    "cik": null,
+    "ticker": "VWS",
+    "region": "EU",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q929998",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "DSV A/S",
+    "cik": null,
+    "ticker": "DSV",
+    "region": "EU",
+    "sector": "logistics",
+    "lei": null,
+    "wikidata_id": "Q1174283",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Coloplast A/S",
+    "cik": null,
+    "ticker": "COLO",
+    "region": "EU",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q3004613",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Genmab A/S",
+    "cik": null,
+    "ticker": "GMAB",
+    "region": "EU",
+    "sector": "healthcare",
+    "lei": null,
+    "wikidata_id": "Q5530649",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Chr. Hansen Holding A/S",
+    "cik": null,
+    "ticker": "CHR",
+    "region": "EU",
+    "sector": "consumer",
+    "lei": null,
+    "wikidata_id": "Q5108406",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Neste Oyj",
+    "cik": null,
+    "ticker": "NESTE",
+    "region": "EU",
+    "sector": "energy",
+    "lei": null,
+    "wikidata_id": "Q3337561",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "SSAB AB",
+    "cik": null,
+    "ticker": "SSAB",
+    "region": "EU",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q7596491",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Boliden AB",
+    "cik": null,
+    "ticker": "BOL",
+    "region": "EU",
+    "sector": "materials",
+    "lei": null,
+    "wikidata_id": "Q1087455",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Autoliv Inc.",
+    "cik": "0000898293",
+    "ticker": "ALV",
+    "region": "EU",
+    "sector": "automotive",
+    "lei": null,
+    "wikidata_id": "Q4828527",
+    "us_subsidiary_ciks": []
+  },
+  {
+    "name": "Epiroc AB",
+    "cik": null,
+    "ticker": "EPI",
+    "region": "EU",
+    "sector": "industrial",
+    "lei": null,
+    "wikidata_id": "Q55818538",
+    "us_subsidiary_ciks": []
+  }
+]
