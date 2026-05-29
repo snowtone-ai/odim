@@ -1,0 +1,56 @@
+name: Weekly Intelligence Report
+
+on:
+  schedule:
+    # Every Monday at 08:00 UTC
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (print report without sending)"
+        required: false
+        default: "false"
+      locale:
+        description: "Report locale (en or ja)"
+        required: false
+        default: "en"
+
+jobs:
+  report:
+    name: Generate and Send Weekly Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Next.js app
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL || 'http://localhost:3000' }}
+
+      - name: Run weekly report
+        run: |
+          DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
+          LOCALE="${{ github.event.inputs.locale || 'en' }}"
+          FLAGS=""
+          if [ "$DRY_RUN" = "true" ]; then FLAGS="--dry-run"; fi
+          if [ "$LOCALE" = "ja" ]; then FLAGS="$FLAGS --locale=ja"; fi
+          node scripts/weekly-report.mjs $FLAGS
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DEFAULT_ORG_ID: ${{ secrets.DEFAULT_ORG_ID || '11111111-1111-4111-8111-111111111111' }}
+          ODIM_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL || 'http://localhost:3000' }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
