@@ -472,42 +472,7 @@ export function HuginnConsole({
           style={{ borderTop: "1px solid var(--line-faint)" }}
         >
           <div className="mx-auto max-w-2xl">
-            <SavedSearchBar
-              type="huginn"
-              currentQuery={inputPrefill}
-              currentFilters={{ webSearch: String(webSearch) }}
-              onApply={(entry) => {
-                setInputPrefill(entry.query);
-                setWebSearch(entry.filters.webSearch === "true");
-              }}
-            />
-            {/* Preset chips */}
-            <div className="mb-2 flex flex-wrap items-center gap-1.5">
-              <span
-                className="mono text-[9px] uppercase tracking-[0.12em]"
-                style={{ color: "var(--text-quaternary)" }}
-              >
-                {presetsLabel}
-              </span>
-              {HUGINN_PRESETS.map((preset) => (
-                <button
-                  key={preset.id}
-                  type="button"
-                  title={locale === "ja" ? preset.labelJa : preset.label}
-                  onClick={() => applyPreset(preset.id)}
-                  className="mono flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] tracking-[0.06em] transition-all duration-[var(--dur-fast)] hover:bg-[var(--rune-wash)]"
-                  style={{
-                    background: "var(--surface-tertiary)",
-                    border: "1px solid var(--line-faint)",
-                    color: "var(--text-secondary)"
-                  }}
-                >
-                  {locale === "ja" ? preset.labelJa : preset.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Variable form (inline) */}
+            {/* Variable form (shown inline when a preset with variables is selected) */}
             {variableForm && (() => {
               const preset = HUGINN_PRESETS.find((p) => p.id === variableForm.presetId);
               if (!preset) return null;
@@ -527,7 +492,7 @@ export function HuginnConsole({
                       <div key={variable} className="flex items-center gap-2">
                         <span
                           className="mono w-24 shrink-0 text-[10px]"
-                          style={{ color: "var(--text-tertiary)" }}
+                          style={{ color: "var(--text-secondary)" }}
                         >
                           {variable}
                         </span>
@@ -574,52 +539,7 @@ export function HuginnConsole({
               );
             })()}
 
-            {/* Compare toggle */}
-            <div className="mb-2 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setCompareMode((v) => !v)}
-                className="mono flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] tracking-[0.08em] transition-all duration-[var(--dur-fast)]"
-                style={{
-                  background: compareMode ? "rgba(59,130,246,0.12)" : "var(--ink-800)",
-                  border: compareMode ? "1px solid rgba(59,130,246,0.3)" : "1px solid var(--line-faint)",
-                  color: compareMode ? "#60a5fa" : "var(--text-tertiary)"
-                }}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="3" width="7" height="18" rx="1" />
-                  <rect x="14" y="3" width="7" height="18" rx="1" />
-                </svg>
-                Compare
-              </button>
-            </div>
-
-            {/* Web search toggle */}
-            <div className="mb-2 flex items-center">
-              <button
-                type="button"
-                onClick={() => setWebSearch((v) => !v)}
-                className="mono flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] tracking-[0.08em] transition-all duration-[var(--dur-fast)]"
-                style={{
-                  background: webSearch ? "var(--rune-wash)" : "var(--ink-800)",
-                  border: webSearch ? "1px solid rgba(201,169,97,0.25)" : "1px solid var(--line-faint)",
-                  color: webSearch ? "var(--rune)" : "var(--text-tertiary)"
-                }}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="2" y1="12" x2="22" y2="12" />
-                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z" />
-                </svg>
-                {webSearchLabel}
-                {webSearch && (
-                  <span
-                    className="inline-block h-[5px] w-[5px] rounded-full"
-                    style={{ background: "var(--positive)", boxShadow: "0 0 4px color-mix(in srgb, var(--positive) 50%, transparent)" }}
-                  />
-                )}
-              </button>
-            </div>
+            {/* PRIMARY: Input box — dominant element */}
             <HuginnInput
               defaultOrgId={defaultOrgId}
               labels={inputLabels}
@@ -628,6 +548,93 @@ export function HuginnConsole({
               loading={loading}
               prefillValue={inputPrefill}
             />
+
+            {/* SECONDARY TOOLBAR: Analysis modes + Quick presets — one compact row */}
+            <div
+              className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5"
+            >
+              {/* Analysis mode toggles — grouped left */}
+              <div className="flex items-center gap-1" style={{ paddingRight: 10, borderRight: "1px solid var(--line-faint)" }}>
+                <button
+                  type="button"
+                  onClick={() => setCompareMode((v) => !v)}
+                  className="mono flex items-center gap-1.5 rounded px-2.5 py-1 text-[10px] tracking-[0.07em] transition-all duration-[var(--dur-fast)]"
+                  style={{
+                    background: compareMode ? "rgba(59,130,246,0.12)" : "transparent",
+                    border: compareMode ? "1px solid rgba(59,130,246,0.3)" : "1px solid transparent",
+                    color: compareMode ? "#60a5fa" : "var(--text-tertiary)"
+                  }}
+                  title="Compare last two responses side-by-side"
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="3" width="7" height="18" rx="1" />
+                    <rect x="14" y="3" width="7" height="18" rx="1" />
+                  </svg>
+                  Compare
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWebSearch((v) => !v)}
+                  className="mono flex items-center gap-1.5 rounded px-2.5 py-1 text-[10px] tracking-[0.07em] transition-all duration-[var(--dur-fast)]"
+                  style={{
+                    background: webSearch ? "var(--rune-wash)" : "transparent",
+                    border: webSearch ? "1px solid rgba(201,169,97,0.25)" : "1px solid transparent",
+                    color: webSearch ? "var(--rune)" : "var(--text-tertiary)"
+                  }}
+                  title={webSearchLabel}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="2" y1="12" x2="22" y2="12" />
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z" />
+                  </svg>
+                  {webSearchLabel}
+                  {webSearch && (
+                    <span
+                      className="inline-block h-[5px] w-[5px] rounded-full"
+                      style={{ background: "var(--positive)" }}
+                    />
+                  )}
+                </button>
+              </div>
+
+              {/* Quick presets — scrollable, right of analysis modes */}
+              <span
+                className="mono shrink-0 text-[9px] uppercase tracking-[0.12em]"
+                style={{ color: "var(--text-tertiary)" }}
+              >
+                {presetsLabel}
+              </span>
+              {HUGINN_PRESETS.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  title={locale === "ja" ? preset.labelJa : preset.label}
+                  onClick={() => applyPreset(preset.id)}
+                  className="mono flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] tracking-[0.06em] transition-all duration-[var(--dur-fast)] hover:bg-[var(--rune-wash)] hover:border-[rgba(201,169,97,0.2)]"
+                  style={{
+                    background: "transparent",
+                    border: "1px solid var(--line-faint)",
+                    color: "var(--text-secondary)"
+                  }}
+                >
+                  {locale === "ja" ? preset.labelJa : preset.label}
+                </button>
+              ))}
+            </div>
+
+            {/* TERTIARY: Saved searches */}
+            <div className="mt-2">
+              <SavedSearchBar
+                type="huginn"
+                currentQuery={inputPrefill}
+                currentFilters={{ webSearch: String(webSearch) }}
+                onApply={(entry) => {
+                  setInputPrefill(entry.query);
+                  setWebSearch(entry.filters.webSearch === "true");
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>

@@ -76,13 +76,14 @@ export function SubstrateTooltip({ layer, position, data, labels }: Readonly<Pro
         left: position.x + 16,
         top: position.y + 16,
         zIndex: 9999,
-        background: "var(--surface-secondary)",
-        border: "1px solid var(--line-faint)",
+        background: "var(--surface-primary)",
+        border: "1px solid var(--line-strong)",
         borderRadius: 8,
-        padding: "12px",
-        minWidth: 220,
-        boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
-        pointerEvents: "none"
+        padding: "12px 14px",
+        minWidth: 230,
+        boxShadow: "0 4px 12px rgba(0,0,0,0.5), 0 12px 36px rgba(0,0,0,0.35)",
+        pointerEvents: "none",
+        backdropFilter: "blur(12px)"
       }}
     >
       <style>{`
@@ -101,18 +102,19 @@ export function SubstrateTooltip({ layer, position, data, labels }: Readonly<Pro
       <div
         style={{
           fontFamily: "monospace",
-          fontSize: 10,
+          fontSize: 11,
           textTransform: "uppercase",
           letterSpacing: "0.12em",
-          color: "var(--text-tertiary)",
-          marginBottom: 8
+          color: "var(--text-secondary)",
+          marginBottom: 8,
+          fontWeight: 500
         }}
       >
         {LAYER_DISPLAY[layer]}
       </div>
 
       {/* Divider */}
-      <div style={{ borderTop: "1px solid var(--line-faint)", paddingTop: 8 }}>
+      <div style={{ borderTop: "1px solid var(--line-soft)", paddingTop: 8 }}>
         {/* Active Signals */}
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
           <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>

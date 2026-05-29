@@ -832,11 +832,11 @@ export function RealityMap({
                 ${props.description ? `<div style="font-size:11px;color:#8892a4;margin-top:5px;line-height:1.5;">${escapeHtml(props.description)}</div>` : ""}
                 <div style="display:flex;align-items:center;gap:10px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,0.06);">
                   <span style="font-family:monospace;font-size:11px;font-weight:500;color:${color};">Score ${props.score}</span>
-                  <span style="font-family:monospace;font-size:10px;color:#5c6780;">${Math.round(props.confidence * 100)}% conf.</span>
+                  <span style="font-family:monospace;font-size:10px;color:#8892a4;">${Math.round(props.confidence * 100)}% conf.</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:5px;margin-top:6px;">
                   <span style="width:6px;height:6px;border-radius:50%;background:${color};box-shadow:0 0 5px ${color}60;display:inline-block;flex-shrink:0;"></span>
-                  <span style="font-family:monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:#404c61;">${escapeHtml(props.layer.replace("_", " "))}</span>
+                  <span style="font-family:monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#5c6780;">${escapeHtml(props.layer.replace("_", " "))}</span>
                 </div>
               </div>`
             )

@@ -44,6 +44,11 @@
   --critical:  #d9694a;
   --neutral:   #5c6780;
 
+  /* ── Surface layers (panel / overlay backgrounds) ── */
+  --surface-primary:   rgba(9, 11, 15, 0.97);   /* tooltip / popup overlay — near-opaque */
+  --surface-secondary: #10131a;                  /* card surface (= --ink-800) */
+  --surface-tertiary:  #161a22;                  /* nested card / sidebar row (= --ink-750) */
+
   /* ── Glass ── */
   --glass-bg:        rgba(12, 15, 21, 0.76);
   --glass-border:    rgba(255, 255, 255, 0.10);
