@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Panel } from "@/components/ui/panel";
 
 export type SettingsSection = Readonly<{
@@ -65,13 +65,53 @@ export function SettingsShell({
   const [activeId, setActiveId] = useState(sections[0]?.id ?? "");
   const active = sections.find((s) => s.id === activeId) ?? sections[0];
 
+  // Keyboard navigation for sidebar
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
+      const currentIdx = sections.findIndex((s) => s.id === activeId);
+      if (e.key === "ArrowDown" || e.key === "j") {
+        e.preventDefault();
+        const next = Math.min(currentIdx + 1, sections.length - 1);
+        setActiveId(sections[next].id);
+      }
+      if (e.key === "ArrowUp" || e.key === "k") {
+        e.preventDefault();
+        const prev = Math.max(currentIdx - 1, 0);
+        setActiveId(sections[prev].id);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [activeId, sections]);
+
   return (
-    <div className="flex items-start gap-4">
-      {/* Sidebar */}
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+      {/* Mobile dropdown (visible on small screens) */}
+      <div className="lg:hidden">
+        <select
+          value={activeId}
+          onChange={(e) => setActiveId(e.target.value)}
+          className="mono w-full rounded-[var(--radius-md)] px-3 py-2.5 text-[12px] uppercase tracking-[0.08em] outline-none"
+          style={{
+            background: "var(--ink-800)",
+            border: "1px solid var(--glass-border)",
+            color: "var(--text-primary)",
+            boxShadow: "var(--shadow-sm)"
+          }}
+        >
+          {sections.map((s) => (
+            <option key={s.id} value={s.id}>{s.title}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Desktop sidebar (sticky) */}
       <nav
-        className="shrink-0 overflow-hidden rounded-[var(--radius-lg)]"
+        className="hidden shrink-0 overflow-hidden rounded-[var(--radius-lg)] lg:block lg:sticky lg:top-6"
         style={{
-          width: 216,
+          width: 224,
           background: "var(--ink-800)",
           border: "1px solid var(--glass-border)",
           boxShadow: "var(--shadow-inset), var(--shadow-sm)",
@@ -86,7 +126,7 @@ export function SettingsShell({
               key={section.id}
               type="button"
               onClick={() => setActiveId(section.id)}
-              className="flex w-full items-start gap-3 px-3.5 py-3 text-left transition-colors duration-[var(--dur-fast)] hover:bg-white/[0.03]"
+              className="flex w-full items-start gap-3 px-3.5 py-3 text-left transition-all duration-[var(--dur-fast)] hover:bg-white/[0.03]"
               style={{
                 background: isActive ? "rgba(201,169,97,0.07)" : "transparent",
                 borderBottom: isLast ? "none" : "1px solid var(--line-faint)",
@@ -95,14 +135,14 @@ export function SettingsShell({
               }}
             >
               <span
-                className="mt-0.5 shrink-0"
+                className="mt-0.5 shrink-0 transition-colors duration-[var(--dur-fast)]"
                 style={{ color: isActive ? "var(--rune)" : "var(--text-tertiary)" }}
               >
                 {section.icon}
               </span>
               <div className="min-w-0">
                 <div
-                  className="text-[12px] font-medium leading-tight"
+                  className="text-[12px] font-medium leading-tight transition-colors duration-[var(--dur-fast)]"
                   style={{ color: isActive ? "var(--text-primary)" : "var(--text-secondary)" }}
                 >
                   {section.title}

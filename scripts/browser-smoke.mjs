@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 const port = Number(process.env.BROWSER_SMOKE_PORT || "3010");
 const baseUrl = `http://127.0.0.1:${port}`;
@@ -24,7 +25,8 @@ async function fetchWithRetry(url, attempts = 30) {
 }
 
 function startServer() {
-  const child = spawn("pnpm", ["start", "--", "-p", String(port)], {
+  const nextCli = fileURLToPath(new URL("../node_modules/next/dist/bin/next", import.meta.url));
+  const child = spawn(process.execPath, [nextCli, "start", "-H", "127.0.0.1", "-p", String(port)], {
     stdio: ["ignore", "pipe", "pipe"],
     windowsHide: true
   });

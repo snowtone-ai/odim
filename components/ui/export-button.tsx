@@ -44,7 +44,7 @@ export function ExportButton({
       </button>
       {open ? (
         <div
-          className="absolute right-0 top-10 z-20 min-w-[88px] overflow-hidden rounded-[var(--radius-sm)]"
+          className="absolute right-0 top-full z-[60] mt-1 min-w-[88px] overflow-hidden rounded-[var(--radius-sm)]"
           style={{
             background: "var(--ink-800)",
             border: "1px solid var(--line-faint)",

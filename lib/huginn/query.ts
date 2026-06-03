@@ -4,6 +4,7 @@ import { isProductionRuntime } from "../env/runtime.ts";
 import { buildRecallMemoryDraft, searchMuninMemory, toMuninMemoryRow, type MuninMemory, type MuninOpinion, type RetrievedMemory } from "../munin/memory.ts";
 import { writeGate } from "../munin/write-gate.ts";
 import type { SourceRef } from "../pipeline/types.ts";
+import { formatEvidencePathsForContext, type EvidenceGraphMetrics, type EvidencePath } from "../graphrag/evidence-graph.ts";
 import { createServiceSupabaseClient, hasSupabaseWriteEnv } from "../supabase/client.ts";
 import { cascadeSearch, type CascadeEvidence } from "./cascade.ts";
 import { logHuginnEval } from "./eval-log.ts";
@@ -11,7 +12,7 @@ import { outcomesGrader, writeSycophancyAuditEvent } from "./grader.ts";
 import { assessQuery, type SelfAssessmentPlan } from "./self-assessment.ts";
 
 export type ReasoningTraceStep = {
-  step: "scope" | "self_assessment" | "memory" | "cascade" | "ontology" | "generation" | "grader" | "eval" | "recall";
+  step: "scope" | "self_assessment" | "memory" | "cascade" | "evidence_graph" | "ontology" | "generation" | "grader" | "eval" | "recall";
   summary: string;
   confidence?: number;
   sources?: string[];
@@ -39,6 +40,11 @@ export type HuginnResponse = GenerateResponse & {
     auditEvents: number;
   };
   retrieval_layers_used: string[];
+  evidenceGraph?: {
+    paths: EvidencePath[];
+    metrics: EvidenceGraphMetrics;
+    source: "fallback" | "supabase";
+  };
   eval_log_id: string;
   selfAssessmentPlan: SelfAssessmentPlan;
   graderScore?: number;
@@ -97,6 +103,9 @@ function formatContext(input: {
   orgId: string;
   question: string;
   evidence: CascadeEvidence[];
+  evidenceGraph?: {
+    paths: EvidencePath[];
+  };
   opinions: MuninOpinion[];
   plan: SelfAssessmentPlan;
 }) {
@@ -126,6 +135,8 @@ function formatContext(input: {
     memoryLines || "- none",
     "Reality/Odim evidence:",
     evidenceLines || "- none",
+    "Evidence graph paths:",
+    formatEvidencePathsForContext(input.evidenceGraph?.paths ?? []),
     `Narrative-reality divergence index: ${Math.round(divergence * 100) / 100}`,
     "Past opinions (only because uses_past_opinion=true):",
     input.plan.uses_past_opinion ? opinionLines || "- none" : "- excluded by default"
@@ -165,6 +176,7 @@ export async function answerHuginnQuestion(input: HuginnQuestionInput): Promise<
     orgId: input.orgId,
     question: input.question,
     evidence,
+    evidenceGraph: cascade.evidenceGraph,
     opinions: cascade.opinions,
     plan
   });
@@ -298,6 +310,14 @@ export async function answerHuginnQuestion(input: HuginnQuestionInput): Promise<
         sources
       },
       {
+        step: "evidence_graph",
+        summary: cascade.evidenceGraph
+          ? `Resolved ${cascade.evidenceGraph.paths.length} evidence paths; citation coverage=${cascade.evidenceGraph.metrics.citationCoverage}, trace completeness=${cascade.evidenceGraph.metrics.traceCompleteness}.`
+          : "Evidence graph did not add a path for this query.",
+        confidence: cascade.evidenceGraph?.metrics.averageConfidence,
+        sources: unique(cascade.evidenceGraph?.paths.flatMap((path) => path.sources.map((ref) => ref.sourceId)) ?? [])
+      },
+      {
         step: "ontology",
         summary: `Loaded ${cascade.contextCounts.entities} entities, ${cascade.contextCounts.signals} signals, ${cascade.contextCounts.alerts} alerts, and ${cascade.contextCounts.auditEvents} audit events.`,
         sources
@@ -355,6 +375,7 @@ export async function answerHuginnQuestion(input: HuginnQuestionInput): Promise<
       auditEvents: cascade.contextCounts.auditEvents
     },
     retrieval_layers_used: cascade.layers_used,
+    evidenceGraph: cascade.evidenceGraph,
     eval_log_id: evalLogId,
     selfAssessmentPlan: plan,
     graderScore: grader.score,

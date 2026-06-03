@@ -135,7 +135,7 @@ export function HuginnInput({ labels, onSubmit, loading, prefillValue }: Readonl
 
       {/* Input box */}
       <div
-        className="flex items-end gap-2 rounded-2xl px-3 py-3 transition-all duration-[var(--dur-fast)]"
+        className="group/input flex items-end gap-2 rounded-2xl px-4 py-3 transition-all duration-[var(--dur-fast)] focus-within:ring-1 focus-within:ring-[rgba(201,169,97,0.2)]"
         style={{
           background: "var(--ink-800)",
           border: "1px solid var(--line-soft)",

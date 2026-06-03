@@ -5,6 +5,8 @@ import { Panel } from "@/components/ui/panel";
 import { Screen } from "@/components/ui/screen";
 import { Confidence } from "@/components/ui/confidence";
 import { ExportButton } from "@/components/ui/export-button";
+import { WatchtowerWorkflows } from "@/components/ui/watchtower-workflows";
+import type { WatchtowerLabels, WatchtowerPlaybookView, WatchtowerRunView } from "@/components/ui/watchtower-workflows";
 import { useAlertState } from "@/lib/stores/alert-state";
 
 type EvidenceRef = { sourceId?: string; title?: string; url?: string };
@@ -21,11 +23,12 @@ type Alert = {
 
 type Messages = {
   title: string;
-  panels: { queue: string; chain: string };
+  panels: { queue: string; chain: string; watchtower?: string };
   markAllRead: string;
   unread: string;
   viewList: string;
   viewGrouped: string;
+  watchtower: WatchtowerLabels;
 };
 
 /** Extract a rough entity name from alert title for grouping. */
@@ -43,6 +46,13 @@ const PRIORITY_ORDER: Record<string, number> = {
   critical: 0, high: 1, medium: 2, low: 3
 };
 
+const PRIORITY_COLOR: Record<string, string> = {
+  critical: "var(--critical)",
+  high: "#e07a3a",
+  medium: "var(--rune)",
+  low: "var(--text-tertiary)"
+};
+
 function priorityLevel(p: string): number {
   return PRIORITY_ORDER[p.toLowerCase()] ?? 99;
 }
@@ -57,9 +67,15 @@ type AlertGroup = {
 export function AlertsWorkstation({
   alerts,
   messages,
+  watchtower,
 }: Readonly<{
   alerts: Alert[];
   messages: Messages;
+  watchtower?: {
+    runs: WatchtowerRunView[];
+    playbooks: WatchtowerPlaybookView[];
+    labels: WatchtowerLabels;
+  };
 }>) {
   const [selectedId, setSelectedId] = useState<string | null>(alerts[0]?.id ?? null);
   const [viewMode, setViewMode] = useState<"list" | "grouped">("list");
@@ -184,15 +200,18 @@ export function AlertsWorkstation({
                     )}
                     <div
                       className="mono text-[10px] font-medium uppercase tracking-[0.13em]"
-                      style={{ color: "var(--critical)" }}
+                      style={{ color: PRIORITY_COLOR[alert.priority.toLowerCase()] ?? "var(--critical)" }}
                     >
                       {alert.priority}
                     </div>
+                    <span className="mono text-[9px]" style={{ color: "var(--text-quaternary)" }}>
+                      {alert.source}
+                    </span>
                   </div>
-                  <div className="mt-1.5 text-[13px]" style={{ color: "var(--text-primary)" }}>
+                  <div className="mt-1.5 text-[13px] leading-snug" style={{ color: unread ? "var(--text-primary)" : "var(--text-secondary)" }}>
                     {alert.title}
                   </div>
-                  <div className="mt-1 text-[12px]" style={{ color: "var(--text-secondary)" }}>
+                  <div className="mt-1 line-clamp-2 text-[12px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
                     {alert.description}
                   </div>
                   <div className="mt-2.5">
@@ -214,9 +233,7 @@ export function AlertsWorkstation({
                     className="w-full text-left py-2.5 transition-colors"
                     style={{
                       borderBottom: "1px solid var(--line-faint)",
-                      borderLeft: group.isCritical
-                        ? "3px solid var(--critical)"
-                        : "3px solid var(--line-faint)",
+                      borderLeft: `3px solid ${PRIORITY_COLOR[group.highestPriority.toLowerCase()] ?? "var(--line-faint)"}`,
                       paddingLeft: "12px",
                       background: group.isCritical
                         ? "rgba(220,38,38,0.04)"
@@ -303,7 +320,7 @@ export function AlertsWorkstation({
                           )}
                           <span
                             className="mono text-[9px] uppercase tracking-[0.12em]"
-                            style={{ color: "var(--critical)" }}
+                            style={{ color: PRIORITY_COLOR[alert.priority.toLowerCase()] ?? "var(--critical)" }}
                           >
                             {alert.priority}
                           </span>
@@ -323,43 +340,75 @@ export function AlertsWorkstation({
           )}
         </Panel>
 
-        <Panel title={messages.panels.chain} accent>
-          <div className="grid gap-4">
-            {chainSteps.map((step, index) => (
-              <div
-                className="flex gap-4 pb-4"
-                style={{ borderBottom: "1px solid var(--line-faint)" }}
-                key={`${index}-${step}`}
-              >
+        <div className="grid gap-5">
+          <Panel title={messages.panels.chain} accent>
+            <div className="relative grid gap-0">
+              {/* Vertical connector line */}
+              {chainSteps.length > 1 && (
                 <div
-                  className="mono flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--radius-sm)] text-[12px] font-medium"
-                  style={{
-                    color: "var(--rune)",
-                    background: "var(--rune-wash)",
-                    border: "1px solid rgba(201,169,97,0.14)",
-                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
-                  }}
-                >
-                  {String(index + 1).padStart(2, "0")}
-                </div>
-                <div
-                  className="pt-0.5 text-[13px] leading-relaxed"
-                  style={{ color: "var(--text-primary)" }}
-                >
-                  {step}
-                </div>
-              </div>
-            ))}
-          </div>
-          {selectedAlert && (
-            <div
-              className="mono mt-3 text-[10px] uppercase tracking-[0.12em]"
-              style={{ color: "var(--text-tertiary)" }}
-            >
-              {selectedAlert.source} · {Math.round(selectedAlert.confidence * 100)}% conf.
+                  className="absolute left-[13px] top-[28px] w-[1px]"
+                  style={{ height: `calc(100% - 56px)`, background: "rgba(201,169,97,0.18)" }}
+                />
+              )}
+              {chainSteps.map((step, index) => {
+                const isLast = index === chainSteps.length - 1;
+                const evidence = selectedAlert?.evidence[index];
+                return (
+                  <div
+                    className="relative flex gap-4 py-3"
+                    style={{ borderBottom: isLast ? "none" : "1px solid var(--line-faint)" }}
+                    key={`${index}-${step}`}
+                  >
+                    <div
+                      className="mono relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-medium"
+                      style={{
+                        color: isLast ? "var(--ink-950)" : "var(--rune)",
+                        background: isLast ? "var(--rune)" : "var(--rune-wash)",
+                        border: `1px solid ${isLast ? "var(--rune)" : "rgba(201,169,97,0.2)"}`,
+                        boxShadow: isLast ? "0 0 10px rgba(201,169,97,0.3)" : "none"
+                      }}
+                    >
+                      {String(index + 1).padStart(2, "0")}
+                    </div>
+                    <div className="flex-1 pt-0.5">
+                      <div
+                        className="text-[13px] leading-relaxed"
+                        style={{ color: "var(--text-primary)" }}
+                      >
+                        {step}
+                      </div>
+                      {evidence?.url && (
+                        <div className="mono mt-1 truncate text-[10px]" style={{ color: "var(--rune-dim)" }}>
+                          {evidence.sourceId ?? "source"}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          )}
-        </Panel>
+            {selectedAlert && (
+              <div
+                className="mono mt-4 flex items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2 text-[10px] uppercase tracking-[0.12em]"
+                style={{ background: "var(--ink-800)", border: "1px solid var(--line-faint)", color: "var(--text-tertiary)" }}
+              >
+                <span>{selectedAlert.source}</span>
+                <span style={{ color: "var(--rune)" }}>{Math.round(selectedAlert.confidence * 100)}%</span>
+              </div>
+            )}
+          </Panel>
+
+          {watchtower ? (
+            <Panel title={messages.panels.watchtower ?? watchtower.labels.title}>
+              <WatchtowerWorkflows
+                initialRuns={watchtower.runs}
+                playbooks={watchtower.playbooks}
+                labels={watchtower.labels}
+                compact
+              />
+            </Panel>
+          ) : null}
+        </div>
       </div>
     </Screen>
   );

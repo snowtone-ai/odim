@@ -45,6 +45,21 @@ const LAYER_DISPLAY: Record<LayerKey, string> = {
   logistics:     "Logistics"
 };
 
+// ─── Inline popup colors ───────────────────────────────────────────────────────
+// CSS custom properties (var(--…)) cannot be used inside MapLibre setHTML strings.
+// These values mirror styles/tokens.css — update both when design tokens change.
+const POPUP_COLORS = {
+  bg:          "rgba(10,12,16,0.94)",
+  border:      "rgba(255,255,255,0.08)",
+  borderAlert: "rgba(220,38,38,0.4)",
+  divider:     "rgba(255,255,255,0.06)",
+  primary:     "#dde1ea",  // --text-primary
+  secondary:   "#8d97ab",  // --text-secondary
+  tertiary:    "#5c6780",  // --text-tertiary
+  rune:        "#c9a961",  // --rune
+  critical:    "#dc2626"   // alert red
+} as const;
+
 // OpenFreeMap Liberty — colorful OSM vector tiles, no API key required
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
 
@@ -291,7 +306,7 @@ type FilterLabels = {
 const DEFAULT_FILTER_LABELS: FilterLabels = {
   label: "Filters",
   timeRange: "Time Range",
-  confidence: "Min Confidence",
+  confidence: "Confidence",
   "7d": "7d",
   "30d": "30d",
   "90d": "90d",
@@ -623,34 +638,13 @@ export function RealityMap({
             "text-color": "#333"
           }
         });
-        const geoZoomConfig: Record<GeoLevel, { minzoom?: number; maxzoom?: number; radius: number }> = {
-          country: { maxzoom: 4.5, radius: 26 },
-          state: { minzoom: 4.5, maxzoom: 7.5, radius: 22 },
-          county: { minzoom: 7.5, maxzoom: 10.5, radius: 18 },
-          site: { minzoom: 10.5, radius: 12 }
+        const geoZoomConfig: Record<GeoLevel, { minzoom?: number; maxzoom?: number }> = {
+          country: { maxzoom: 4.5 },
+          state: { minzoom: 4.5, maxzoom: 7.5 },
+          county: { minzoom: 7.5, maxzoom: 10.5 },
+          site: { minzoom: 10.5 }
         };
         for (const level of GEO_LEVELS) {
-          map.addLayer({
-            id: `geo-${level}-circles`,
-            type: "circle",
-            source: `geo-${level}`,
-            minzoom: geoZoomConfig[level].minzoom,
-            maxzoom: geoZoomConfig[level].maxzoom,
-            paint: {
-              "circle-radius": [
-                "interpolate",
-                ["linear"],
-                ["get", "signalCount"],
-                1, Math.max(10, geoZoomConfig[level].radius - 6),
-                8, geoZoomConfig[level].radius,
-                25, geoZoomConfig[level].radius + 8
-              ],
-              "circle-color": level === "site" ? "rgba(201,169,97,0.86)" : "rgba(59,130,217,0.18)",
-              "circle-stroke-color": level === "site" ? "rgba(201,169,97,0.96)" : "rgba(59,130,217,0.9)",
-              "circle-stroke-width": level === "site" ? 1.5 : 2,
-              "circle-opacity": level === "site" ? 0.82 : 0.94
-            }
-          });
           map.addLayer({
             id: `geo-${level}-labels`,
             type: "symbol",
@@ -658,12 +652,15 @@ export function RealityMap({
             minzoom: geoZoomConfig[level].minzoom,
             maxzoom: geoZoomConfig[level].maxzoom,
             layout: {
-              "text-field": ["format", ["get", "name"], { "font-scale": 1 }, "\n", {}, ["get", "signalCount"], { "font-scale": 0.85 }],
-              "text-size": level === "country" ? 12 : level === "state" ? 11 : 10,
-              "text-allow-overlap": false
+              "text-field": ["get", "name"],
+              "text-size": level === "country" ? 13 : level === "state" ? 11 : 10,
+              "text-allow-overlap": false,
+              "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"]
             },
             paint: {
-              "text-color": level === "site" ? "#f3e5b5" : "#dbe7ff"
+              "text-color": level === "site" ? "rgba(201,169,97,0.9)" : "rgba(220,225,234,0.7)",
+              "text-halo-color": "rgba(10,12,16,0.7)",
+              "text-halo-width": 1.2
             }
           });
         }
@@ -752,10 +749,10 @@ export function RealityMap({
           popupRef.current
             ?.setLngLat(coords)
             .setHTML(
-              `<div style="background:rgba(10,12,16,0.96);border:1px solid rgba(220,38,38,0.4);border-radius:8px;padding:10px 12px;min-width:200px;">
-                <div style="font-family:monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:#dc2626;margin-bottom:4px;">${escapeHtml(props.priority)}</div>
-                <div style="font-size:12px;font-weight:600;color:#dde1ea;line-height:1.4;">${escapeHtml(props.title)}</div>
-                <a href="/alerts" style="font-family:monospace;font-size:10px;color:#c9a961;margin-top:6px;display:block;">View alerts →</a>
+              `<div style="background:${POPUP_COLORS.bg};border:1px solid ${POPUP_COLORS.borderAlert};border-radius:8px;padding:10px 12px;min-width:200px;">
+                <div style="font-family:monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:${POPUP_COLORS.critical};margin-bottom:4px;">${escapeHtml(props.priority)}</div>
+                <div style="font-size:12px;font-weight:600;color:${POPUP_COLORS.primary};line-height:1.4;">${escapeHtml(props.title)}</div>
+                <a href="/alerts" style="font-family:monospace;font-size:10px;color:${POPUP_COLORS.rune};margin-top:6px;display:block;">View alerts →</a>
               </div>`
             )
             .addTo(map);
@@ -827,16 +824,16 @@ export function RealityMap({
           popupRef.current
             ?.setLngLat(coords)
             .setHTML(
-              `<div style="background:rgba(10,12,16,0.94);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;min-width:210px;max-width:260px;box-shadow:0 6px 20px rgba(0,0,0,0.5);">
-                <div style="font-size:12px;font-weight:600;color:#dde1ea;letter-spacing:0.01em;line-height:1.4;">${escapeHtml(props.name)}</div>
-                ${props.description ? `<div style="font-size:11px;color:#8892a4;margin-top:5px;line-height:1.5;">${escapeHtml(props.description)}</div>` : ""}
-                <div style="display:flex;align-items:center;gap:10px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,0.06);">
+              `<div style="background:${POPUP_COLORS.bg};backdrop-filter:blur(16px);border:1px solid ${POPUP_COLORS.border};border-radius:10px;padding:12px 14px;min-width:210px;max-width:260px;box-shadow:0 6px 20px rgba(0,0,0,0.5);">
+                <div style="font-size:12px;font-weight:600;color:${POPUP_COLORS.primary};letter-spacing:0.01em;line-height:1.4;">${escapeHtml(props.name)}</div>
+                ${props.description ? `<div style="font-size:11px;color:${POPUP_COLORS.secondary};margin-top:5px;line-height:1.5;">${escapeHtml(props.description)}</div>` : ""}
+                <div style="display:flex;align-items:center;gap:10px;margin-top:8px;padding-top:7px;border-top:1px solid ${POPUP_COLORS.divider};">
                   <span style="font-family:monospace;font-size:11px;font-weight:500;color:${color};">Score ${props.score}</span>
-                  <span style="font-family:monospace;font-size:10px;color:#8892a4;">${Math.round(props.confidence * 100)}% conf.</span>
+                  <span style="font-family:monospace;font-size:10px;color:${POPUP_COLORS.secondary};">${Math.round(props.confidence * 100)}% conf.</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:5px;margin-top:6px;">
                   <span style="width:6px;height:6px;border-radius:50%;background:${color};box-shadow:0 0 5px ${color}60;display:inline-block;flex-shrink:0;"></span>
-                  <span style="font-family:monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#5c6780;">${escapeHtml(props.layer.replace("_", " "))}</span>
+                  <span style="font-family:monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:${POPUP_COLORS.tertiary};">${escapeHtml(props.layer.replace("_", " "))}</span>
                 </div>
               </div>`
             )
@@ -946,10 +943,7 @@ export function RealityMap({
         };
 
         for (const level of GEO_LEVELS) {
-          map.on("click", `geo-${level}-circles`, handleGeoClick);
           map.on("click", `geo-${level}-labels`, handleGeoClick);
-          map.on("mouseenter", `geo-${level}-circles`, () => { map.getCanvas().style.cursor = "pointer"; });
-          map.on("mouseleave", `geo-${level}-circles`, () => { map.getCanvas().style.cursor = ""; });
           map.on("mouseenter", `geo-${level}-labels`, () => { map.getCanvas().style.cursor = "pointer"; });
           map.on("mouseleave", `geo-${level}-labels`, () => { map.getCanvas().style.cursor = ""; });
         }
@@ -960,7 +954,7 @@ export function RealityMap({
 
         map.on("click", (e: MapMouseEvent) => {
           const features = map.queryRenderedFeatures(e.point, {
-            layers: ["entity-symbols", "clusters", ...GEO_LEVELS.flatMap((level) => [`geo-${level}-circles`, `geo-${level}-labels`])]
+            layers: ["entity-symbols", "clusters", ...GEO_LEVELS.map((level) => `geo-${level}-labels`)]
           });
           if (features.length === 0) {
             setSelectedId(null);
@@ -978,19 +972,19 @@ export function RealityMap({
                   return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:5px;">
                     <div style="display:flex;align-items:center;gap:5px;">
                       <span style="width:6px;height:6px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0;"></span>
-                      <span style="font-family:monospace;font-size:10px;color:#8892a4;">${escapeHtml(label)}</span>
+                      <span style="font-family:monospace;font-size:10px;color:${POPUP_COLORS.secondary};">${escapeHtml(label)}</span>
                     </div>
                     <span style="font-family:monospace;font-size:11px;font-weight:600;color:${color};">${cnt}</span>
                   </div>`;
                 })
                 .join("")
-            : `<div style="font-family:monospace;font-size:10px;color:#404c61;margin-top:5px;">Loading…</div>`;
+            : `<div style="font-family:monospace;font-size:10px;color:${POPUP_COLORS.tertiary};margin-top:5px;">Loading…</div>`;
 
-          return `<div style="background:rgba(10,12,16,0.94);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;min-width:190px;box-shadow:0 6px 20px rgba(0,0,0,0.5);">
-            <div style="font-family:monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:#5c6780;margin-bottom:4px;">Substrate Cluster</div>
-            <div style="font-size:16px;font-weight:700;color:#dde1ea;">${count} signals</div>
+          return `<div style="background:${POPUP_COLORS.bg};backdrop-filter:blur(16px);border:1px solid ${POPUP_COLORS.border};border-radius:10px;padding:12px 14px;min-width:190px;box-shadow:0 6px 20px rgba(0,0,0,0.5);">
+            <div style="font-family:monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:${POPUP_COLORS.tertiary};margin-bottom:4px;">Substrate Cluster</div>
+            <div style="font-size:16px;font-weight:700;color:${POPUP_COLORS.primary};">${count} signals</div>
             ${layerRows}
-            <div style="font-family:monospace;font-size:9px;color:#404c61;margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.05);">Click to zoom in</div>
+            <div style="font-family:monospace;font-size:9px;color:${POPUP_COLORS.tertiary};margin-top:8px;padding-top:6px;border-top:1px solid ${POPUP_COLORS.divider};">Click to zoom in</div>
           </div>`;
         }
 
@@ -1288,49 +1282,62 @@ export function RealityMap({
         ))}
       </div>
 
-      {/* Time range + confidence filter controls */}
+      {/* Filter controls + Alerts — single merged panel */}
       <div
-        className="absolute right-3 z-10 rounded-[var(--radius-md)] p-2"
+        className="absolute right-3 z-10 overflow-hidden rounded-[var(--radius-md)]"
         style={{
           top: "calc(3rem + 230px)",
-          background: "rgba(9,11,15,0.86)",
+          background: "rgba(9,11,15,0.88)",
           backdropFilter: "blur(14px) saturate(1.2)",
           WebkitBackdropFilter: "blur(14px) saturate(1.2)",
           border: "1px solid var(--glass-border)",
           boxShadow: "var(--shadow-lg)",
-          width: 148
+          width: 160
         }}
       >
-        <div
-          className="mono px-1 pb-1.5 text-[10px] uppercase tracking-[0.14em]"
-          style={{ color: "var(--text-tertiary)" }}
-        >
-          {filterLabels.timeRange}
+        {/* ── Time Range ─────────────────────────────── */}
+        <div className="px-2.5 pb-2 pt-2.5">
+          <div
+            className="mono mb-1.5 text-[9px] uppercase tracking-[0.16em]"
+            style={{ color: "var(--rune-dim)" }}
+          >
+            {filterLabels.timeRange}
+          </div>
+          <div className="grid grid-cols-3 gap-0.5">
+            {(["7d", "30d", "90d", "1y", "all"] as const).map((range) => (
+              <button
+                key={range}
+                type="button"
+                onClick={() => setTimeRange(range)}
+                className="mono rounded-[3px] px-1 py-1.5 text-center text-[9px] uppercase tracking-[0.06em] transition-all duration-[var(--dur-fast)]"
+                style={{
+                  background: timeRange === range ? "rgba(201,169,97,0.16)" : "rgba(255,255,255,0.03)",
+                  color: timeRange === range ? "var(--rune)" : "var(--text-tertiary)",
+                  border: `1px solid ${timeRange === range ? "rgba(201,169,97,0.35)" : "var(--line-faint)"}`,
+                  boxShadow: timeRange === range ? "0 0 8px rgba(201,169,97,0.12)" : "none"
+                }}
+              >
+                {filterLabels[range]}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-wrap gap-0.5 pb-2" style={{ borderBottom: "1px solid var(--line-faint)" }}>
-          {(["7d", "30d", "90d", "1y", "all"] as const).map((range) => (
-            <button
-              key={range}
-              type="button"
-              onClick={() => setTimeRange(range)}
-              className="mono rounded px-1.5 py-0.5 text-[9px] uppercase tracking-[0.1em] transition-colors"
-              style={{
-                background: timeRange === range ? "var(--rune-wash)" : "transparent",
-                color: timeRange === range ? "var(--rune)" : "var(--text-tertiary)",
-                border: `1px solid ${timeRange === range ? "rgba(201,169,97,0.3)" : "transparent"}`
-              }}
+
+        {/* ── Confidence ──────────────────────────────── */}
+        <div className="px-2.5 pb-2 pt-2" style={{ borderTop: "1px solid var(--line-faint)" }}>
+          <div className="mb-1.5 flex items-center justify-between">
+            <span
+              className="mono text-[9px] uppercase tracking-[0.12em]"
+              style={{ color: "var(--text-tertiary)" }}
             >
-              {filterLabels[range]}
-            </button>
-          ))}
-        </div>
-        <div className="pt-2">
-          <div className="mb-1 flex items-center justify-between">
-            <span className="mono text-[9px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>
               {filterLabels.confidence}
             </span>
-            <span className="mono text-[9px]" style={{ color: "var(--rune)" }}>
-              {minConfidence}%
+            <span
+              className="mono tabular-nums"
+              style={{ fontSize: 11, fontWeight: 600, color: "var(--rune)", lineHeight: 1 }}
+            >
+              {minConfidence}
+              <span style={{ fontSize: 8, opacity: 0.75 }}>%</span>
             </span>
           </div>
           <input
@@ -1343,101 +1350,77 @@ export function RealityMap({
             className="w-full"
             style={{ accentColor: "var(--rune)" }}
           />
+          <div
+            className="mono mt-0.5 flex justify-between text-[8px] tabular-nums"
+            style={{ color: "var(--text-quaternary)", opacity: 0.6 }}
+          >
+            <span>0</span><span>50</span><span>100</span>
+          </div>
         </div>
-      </div>
 
-      {/* Alert overlay toggle */}
-      <div
-        className="absolute right-3 z-10"
-        style={{ top: "calc(3rem + 230px + 130px + 8px)" }}
-      >
+        {/* ── Alerts toggle ────────────────────────────── */}
         <button
           type="button"
           onClick={() => setAlertsVisible((v) => !v)}
-          className="flex items-center gap-1.5 rounded-[var(--radius-md)] px-2.5 py-1.5 transition-all"
+          className="flex w-full items-center justify-between px-2.5 py-2 transition-all duration-[var(--dur-fast)]"
           style={{
-            background: alertsVisible ? "rgba(220,38,38,0.15)" : "rgba(9,11,15,0.86)",
-            backdropFilter: "blur(14px) saturate(1.2)",
-            WebkitBackdropFilter: "blur(14px) saturate(1.2)",
-            border: alertsVisible ? "1px solid rgba(220,38,38,0.4)" : "1px solid var(--glass-border)",
-            boxShadow: "var(--shadow-lg)"
+            borderTop: "1px solid var(--line-faint)",
+            background: alertsVisible ? "rgba(220,38,38,0.07)" : "transparent"
           }}
         >
           <span
-            className="inline-block rounded-full"
-            style={{
-              width: 6,
-              height: 6,
-              background: alertsVisible ? "#dc2626" : "var(--text-tertiary)",
-              boxShadow: alertsVisible ? "0 0 5px rgba(220,38,38,0.7)" : "none"
-            }}
-          />
-          <span
-            className="mono text-[10px] uppercase tracking-[0.12em]"
-            style={{ color: alertsVisible ? "#dc2626" : "var(--text-tertiary)" }}
+            className="mono text-[9px] uppercase tracking-[0.14em]"
+            style={{ color: alertsVisible ? "#ef4444" : "var(--text-tertiary)" }}
           >
             {alertOverlayLabel}
           </span>
+          <span
+            style={{
+              display: "inline-block",
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              background: alertsVisible ? "#ef4444" : "var(--line-vivid)",
+              boxShadow: alertsVisible ? "0 0 6px rgba(239,68,68,0.8)" : "none",
+              transition: "all 200ms"
+            }}
+          />
         </button>
       </div>
 
-      {/* Geographic drill-down */}
-      <div
-        className="absolute bottom-3 left-3 z-10 max-w-[280px] rounded-[var(--radius-md)] p-3"
-        style={{
-          background: "rgba(9,11,15,0.86)",
-          backdropFilter: "blur(14px) saturate(1.2)",
-          border: "1px solid var(--glass-border)",
-          boxShadow: "var(--shadow-lg)"
-        }}
-      >
-        <div className="mono mb-2 text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
-          Geographic Drill · {geoZoomLevel}
-        </div>
-        <div className="mb-2 flex flex-wrap gap-1">
+      {/* Geographic breadcrumb — minimal, bottom-left */}
+      {geoPath.length > 0 && (
+        <div
+          className="absolute bottom-3 left-3 z-10 flex items-center gap-1 rounded-[var(--radius-md)] px-3 py-2"
+          style={{
+            background: "rgba(9,11,15,0.82)",
+            backdropFilter: "blur(14px) saturate(1.2)",
+            border: "1px solid var(--glass-border)"
+          }}
+        >
           <button
             type="button"
-            onClick={() => setGeoPath([])}
-            className="mono rounded px-1.5 py-0.5 text-[9px] uppercase tracking-[0.1em]"
-            style={{ background: geoPath.length === 0 ? "var(--rune-wash)" : "transparent", color: geoPath.length === 0 ? "var(--rune)" : "var(--text-tertiary)" }}
+            onClick={() => { setGeoPath([]); mapRef.current?.flyTo({ center: [-98.6, 39.8], zoom: 3, duration: 900, essential: true }); }}
+            className="mono rounded px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] transition-colors hover:bg-white/5"
+            style={{ color: "var(--rune)" }}
           >
             Global
           </button>
           {geoPath.map((step, index) => (
-            <button
-              key={step}
-              type="button"
-              onClick={() => setGeoPath(geoPath.slice(0, index + 1))}
-              className="mono rounded px-1.5 py-0.5 text-[9px] uppercase tracking-[0.1em]"
-              style={{ background: "transparent", color: "var(--text-tertiary)" }}
-            >
-              {step}
-            </button>
+            <span key={`${step}-${index}`} className="flex items-center gap-1">
+              <span className="mono text-[9px]" style={{ color: "var(--text-tertiary)" }}>/</span>
+              <button
+                type="button"
+                onClick={() => setGeoPath(geoPath.slice(0, index + 1))}
+                className="mono rounded px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] transition-colors hover:bg-white/5"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                {step}
+              </button>
+            </span>
           ))}
         </div>
-        <div className="grid gap-1.5">
-          {geoNodes.slice(0, 6).map((node) => (
-            <button
-              key={`${node.level}:${node.name}`}
-              type="button"
-              onClick={() => handleGeoNodeSelect(node.name)}
-              className="flex items-center justify-between rounded-[var(--radius-sm)] px-2 py-1.5 text-left transition-colors hover:bg-white/5"
-            >
-              <div className="min-w-0">
-                <div className="truncate text-[12px]" style={{ color: "var(--text-primary)" }}>
-                  {node.name}
-                </div>
-                <div className="mono text-[9px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>
-                  {node.level}
-                </div>
-              </div>
-              <span className="mono text-[10px]" style={{ color: "var(--rune)" }}>
-                {node.signalCount}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
 
       {/* Loading overlay */}
       {!loaded && (

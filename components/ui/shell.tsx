@@ -91,6 +91,46 @@ function SidebarLink({ item, badge }: Readonly<{ item: NavItem; badge?: number }
   );
 }
 
+function MobileNav({ nav, alertsUnread }: Readonly<{ nav: NavItem[]; alertsUnread: number }>) {
+  const pathname = usePathname();
+  return (
+    <nav className="flex gap-1">
+      {nav.map((item) => {
+        const Icon = item.icon;
+        const active = pathname === item.href;
+        const badge = item.href === "/alerts" ? alertsUnread : 0;
+        return (
+          <Link
+            href={item.href}
+            key={item.href}
+            className="relative flex h-8 items-center gap-1.5 rounded-[var(--radius-sm)] px-2 transition-all duration-[var(--dur-fast)]"
+            title={item.label}
+            style={{
+              background: active ? "rgba(201,169,97,0.12)" : "transparent",
+              color: active ? "var(--rune)" : "var(--text-tertiary)"
+            }}
+          >
+            <Icon size={14} strokeWidth={1.5} />
+            {active && (
+              <span className="mono text-[9px] uppercase tracking-[0.08em]">
+                {item.label}
+              </span>
+            )}
+            {badge > 0 && (
+              <span
+                className="mono absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-medium"
+                style={{ background: "var(--critical)", color: "white" }}
+              >
+                {badge > 99 ? "99+" : badge}
+              </span>
+            )}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
 export function Shell({
   children,
   messages,
@@ -123,7 +163,7 @@ export function Shell({
       >
         {/* Logo */}
         <Link href="/map" className="transition-opacity duration-[var(--dur-fast)] hover:opacity-80">
-          <OdimLogo size={36} />
+          <OdimLogo size={30} />
         </Link>
 
         <nav className="mt-7 grid gap-0.5">
@@ -166,25 +206,11 @@ export function Shell({
           borderBottom: "1px solid var(--line-soft)"
         }}
       >
-        <OdimLogo size={28} />
-        <nav className="flex gap-0.5">
-          {nav.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                href={item.href}
-                key={item.href}
-                className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--text-tertiary)] transition-all duration-[var(--dur-fast)] hover:bg-[var(--ink-700)] hover:text-[var(--text-secondary)]"
-                title={item.label}
-              >
-                <Icon size={15} strokeWidth={1.5} />
-              </Link>
-            );
-          })}
-        </nav>
+        <OdimLogo size={24} />
+        <MobileNav nav={nav} alertsUnread={alertsUnread} />
       </div>
 
-      <main className="min-h-screen md:ml-[calc(var(--sidebar-w)+20px)]">{children}</main>
+      <main className="min-h-screen md:ml-[calc(var(--sidebar-w)+12px)]">{children}</main>
     </div>
   );
 }

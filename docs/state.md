@@ -1,15 +1,22 @@
 # state.md
 
 ## Current
-- Branch: main
-- Active task: Phase 9+ UI polish — Huginn Quick Templates editor, shell layout refinements, gap analysis and entity workstation improvements
-- Current executor: Claude Code
-- Write lock: none
+- Branch: codex/ai-native-upgrades-1-2-20260603-154106
+- Active task: AI Native Upgrade 1+2 — Reality GraphRAG Decision Workbench and Agentic Watchtower Workflows
+- Current executor: CEO Agent
+- Write lock: CEO Agent owns overlapping implementation files; `Sagan` explorer is read-only
 - Coordinator: CEO Agent
-- Latest verification pointer: `pnpm typecheck` ✓ | `pnpm test` 94/94 ✓ (updated mobile-layout assertion to +12px) | `pnpm build` ✓
+- Latest verification pointer: AI Native Upgrade 1+2 completed; `test`, `typecheck`, `lint`, `build`, `verify`, and `browser:smoke` passed
 - Verification mode: standard
 
 ## Completed after v3.0
+
+### AI Native Upgrade 1+2
+- Added Evidence GraphRAG primitives and repository loading for source-backed entity/signal/alert/audit/source paths.
+- Huginn cascade now has an `evidence_graph` layer and passes graph paths into model context and the UI trace.
+- Entity Intelligence surfaces top evidence paths, citation coverage, and trace completeness for selected entities.
+- Added Agentic Watchtower playbooks, run generation, approval/reject/rerun state transitions, dashboard APIs, Alerts/Settings UI, and Supabase migration `0010_ai_native_workflows.sql`.
+- Verification: `rtk pnpm test` (98/98), `rtk pnpm typecheck`, `rtk pnpm lint`, `rtk pnpm build`, `rtk pnpm verify`, and `rtk pnpm browser:smoke` passed. Manual Chrome check confirmed Watchtower appears in `/alerts` and `/settings`; browser smoke confirmed `/`, `/map`, `/entity`, `/alerts`, `/huginn`, and `/settings` return production HTML.
 
 ### Release-critical refactoring and review
 - RC-001窶鼎C-031 are implemented as focused commits across security headers, CI, env validation, auth scope controls, prompt safety, AI/scraper timeouts, transactional ingestion, route rate limits, frontend resilience, RLS smoke coverage, parser coverage, and bias tests.
@@ -94,7 +101,7 @@
 - POST /api/huginn — answerHuginnQuestion with sycophancy auto-retry
 
 ## Current Blocker
-- Dev server background launch still fails in sandbox (Node/Windows spawn EINVAL); pnpm build is verified fallback.
+- No implementation blocker for AI Native Upgrade 1+2.
 - Supabase: single-environment (main/production-tagged); staging URL may match production until dedicated project created.
 
 ## Completed after v3.0

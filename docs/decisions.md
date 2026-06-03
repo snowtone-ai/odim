@@ -91,3 +91,11 @@
 ## D-023: Operate as a single Supabase environment for now
 - Decision: Current deployment uses one Supabase project/branch (`main`, production-tagged). `SUPABASE_STAGING_DATABASE_URL` and `SUPABASE_PRODUCTION_DATABASE_URL` may intentionally point to the same database until a dedicated staging project exists.
 - Reason: Team currently runs a single-environment operation; documenting this prevents false assumptions about staging/production separation during migrations and smoke tests.
+
+## D-024: Make evidence retrieval graph-native before model-native
+- Decision: Add a deterministic Evidence GraphRAG layer that materializes entities, raw signals, alerts, audit events, sources, and ontology links into scored paths before Huginn sends context to a model.
+- Reason: Investment-grade AI needs inspectable citations, trace completeness, and org-scoped fallback behavior. A graph layer keeps source support auditable instead of relying on unstructured prompt context.
+
+## D-025: Gate Watchtower automation with human approvals and durable traces
+- Decision: Implement Watchtower as predefined source-backed playbooks with run, step, approval, risk, and source-ref records; external dispatch remains blocked until all requested human approvals pass.
+- Reason: Agentic workflows can create operational risk. Approval gates, RLS-backed persistence, reruns, and trace metrics align automation with reliability, security, and reviewability requirements.

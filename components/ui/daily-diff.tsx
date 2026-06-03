@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { DailyDiff } from "@/lib/pipeline/diff";
 
 export function DailyDiffPanel({ diff }: Readonly<{ diff: DailyDiff }>) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   return (
     <div
       className="mb-3 overflow-hidden rounded-[var(--radius-md)]"

@@ -7,11 +7,11 @@ import remarkGfm from "remark-gfm";
 import { Panel } from "@/components/ui/panel";
 import { Confidence } from "@/components/ui/confidence";
 import { HuginnInput } from "@/components/ui/huginn-input";
+import { HuginnIcon } from "@/components/ui/huginn-icon";
 import { EvalButton } from "@/components/ui/eval-button";
 import type { ClientHuginnResponse } from "@/app/actions/huginn";
-import { HuginnIcon } from "@/components/ui/huginn-icon";
 import type { LayerKey } from "@/lib/map/types";
-import { HUGINN_PRESETS } from "@/lib/huginn/presets";
+import { useHuginnTemplates } from "@/lib/stores/huginn-templates";
 import { useQueryHistory } from "@/lib/stores/query-history";
 import { SavedSearchBar } from "@/components/ui/saved-search-bar";
 
@@ -35,6 +35,7 @@ type Props = {
   panelLabels: {
     dialogue: string;
     trace: string;
+    evidence?: string;
     munin: string;
     sources: string;
     eval: string;
@@ -160,6 +161,7 @@ export function HuginnConsole({
   action
 }: Readonly<Props>) {
   const router = useRouter();
+  const activePresets = useHuginnTemplates((s) => s.allPresets)();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandedTrace, setExpandedTrace] = useState<number | null>(null);
@@ -200,7 +202,7 @@ export function HuginnConsole({
   }
 
   function applyPreset(presetId: string) {
-    const preset = HUGINN_PRESETS.find((p) => p.id === presetId);
+    const preset = activePresets.find((p) => p.id === presetId);
     if (!preset) return;
     const template = locale === "ja" ? preset.templateJa : preset.template;
     if (preset.variables?.length) {
@@ -214,7 +216,7 @@ export function HuginnConsole({
 
   function submitVariableForm() {
     if (!variableForm) return;
-    const preset = HUGINN_PRESETS.find((p) => p.id === variableForm.presetId);
+    const preset = activePresets.find((p) => p.id === variableForm.presetId);
     if (!preset) return;
     const template = locale === "ja" ? preset.templateJa : preset.template;
     let filled = template;
@@ -263,18 +265,32 @@ export function HuginnConsole({
         >
           {messages.length === 0 && (
             <div className="flex min-h-[400px] items-center justify-center">
-              <div className="max-w-sm text-center">
-                <div
-                  className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full"
-                  style={{ background: "var(--rune-wash)", border: "1px solid rgba(201,169,97,0.15)", color: "var(--rune)" }}
-                >
-                  <HuginnIcon size={22} />
+              <div className="max-w-md text-center">
+                <div className="mx-auto mb-5 flex w-14 items-center justify-center">
+                  <HuginnIcon size={48} />
                 </div>
                 <div
                   className="text-[14px] leading-relaxed"
-                  style={{ color: "var(--text-tertiary)" }}
+                  style={{ color: "var(--text-secondary)" }}
                 >
                   {emptyStateText}
+                </div>
+                <div className="mt-5 flex flex-wrap justify-center gap-2">
+                  {activePresets.slice(0, 3).map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => applyPreset(preset.id)}
+                      className="mono rounded-full px-3 py-1.5 text-[11px] tracking-[0.04em] transition-all duration-[var(--dur-fast)] hover:bg-[var(--rune-wash)]"
+                      style={{
+                        background: "var(--ink-800)",
+                        border: "1px solid var(--line-faint)",
+                        color: "var(--text-secondary)"
+                      }}
+                    >
+                      {locale === "ja" ? preset.labelJa : preset.label}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -474,7 +490,7 @@ export function HuginnConsole({
           <div className="mx-auto max-w-2xl">
             {/* Variable form (shown inline when a preset with variables is selected) */}
             {variableForm && (() => {
-              const preset = HUGINN_PRESETS.find((p) => p.id === variableForm.presetId);
+              const preset = activePresets.find((p) => p.id === variableForm.presetId);
               if (!preset) return null;
               return (
                 <div
@@ -605,13 +621,13 @@ export function HuginnConsole({
               >
                 {presetsLabel}
               </span>
-              {HUGINN_PRESETS.map((preset) => (
+              {activePresets.map((preset) => (
                 <button
                   key={preset.id}
                   type="button"
                   title={locale === "ja" ? preset.labelJa : preset.label}
                   onClick={() => applyPreset(preset.id)}
-                  className="mono flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] tracking-[0.06em] transition-all duration-[var(--dur-fast)] hover:bg-[var(--rune-wash)] hover:border-[rgba(201,169,97,0.2)]"
+                  className="mono flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] tracking-[0.06em] transition-all duration-[var(--dur-fast)] hover:bg-[var(--rune-wash)] hover:border-[rgba(201,169,97,0.2)]"
                   style={{
                     background: "transparent",
                     border: "1px solid var(--line-faint)",
@@ -719,6 +735,68 @@ export function HuginnConsole({
           </div>
         </Panel>
 
+        {/* Evidence Graph */}
+        {latestResponse?.evidenceGraph && (
+          <Panel title={panelLabels.evidence ?? "Evidence Paths"}>
+            <div className="mb-3 grid grid-cols-2 gap-2">
+              <div
+                className="rounded-[var(--radius-sm)] px-2 py-1.5"
+                style={{ background: "var(--ink-850)", border: "1px solid var(--line-faint)" }}
+              >
+                <div className="mono text-[8px] uppercase tracking-[0.1em]" style={{ color: "var(--text-quaternary)" }}>
+                  citations
+                </div>
+                <div className="mono mt-0.5 text-[14px] tabular-nums" style={{ color: "var(--rune)" }}>
+                  {Math.round(latestResponse.evidenceGraph.metrics.citationCoverage * 100)}%
+                </div>
+              </div>
+              <div
+                className="rounded-[var(--radius-sm)] px-2 py-1.5"
+                style={{ background: "var(--ink-850)", border: "1px solid var(--line-faint)" }}
+              >
+                <div className="mono text-[8px] uppercase tracking-[0.1em]" style={{ color: "var(--text-quaternary)" }}>
+                  trace
+                </div>
+                <div className="mono mt-0.5 text-[14px] tabular-nums" style={{ color: "var(--rune)" }}>
+                  {Math.round(latestResponse.evidenceGraph.metrics.traceCompleteness * 100)}%
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-2">
+              {latestResponse.evidenceGraph.paths.slice(0, 3).map((path) => (
+                <div
+                  key={path.id}
+                  className="rounded-[var(--radius-sm)] px-2.5 py-2"
+                  style={{ background: "var(--ink-850)", border: "1px solid var(--line-faint)" }}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate text-[12px]" style={{ color: "var(--text-primary)" }}>
+                      {path.title}
+                    </span>
+                    <span className="mono shrink-0 text-[9px] tabular-nums" style={{ color: "var(--rune)" }}>
+                      {Math.round(path.confidence * 100)}%
+                    </span>
+                  </div>
+                  <div className="mt-1 line-clamp-2 text-[11px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                    {path.rationale}
+                  </div>
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {path.sources.slice(0, 3).map((source) => (
+                      <span
+                        key={`${path.id}:${source.sourceId}`}
+                        className="mono max-w-[110px] truncate rounded-[3px] px-1.5 py-0.5 text-[8px] uppercase tracking-[0.06em]"
+                        style={{ background: "rgba(201,169,97,0.08)", border: "1px solid rgba(201,169,97,0.14)", color: "var(--rune-dim)" }}
+                      >
+                        {source.sourceId}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        )}
+
         {/* Munin */}
         <Panel title={panelLabels.munin}>
           <div className="flex items-baseline gap-3">
@@ -742,19 +820,22 @@ export function HuginnConsole({
             <div className="grid gap-2.5">
               {latestResponse.sources.map((source: string) => (
                 <div
-                  className="flex items-center justify-between pb-2.5"
+                  className="flex items-center justify-between gap-2 pb-2.5"
                   style={{ borderBottom: "1px solid var(--line-faint)" }}
                   key={source}
                 >
-                  <span className="truncate text-[12px]" style={{ color: "var(--text-primary)" }}>
-                    {source}
-                  </span>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "var(--positive, #22c55e)" }} />
+                    <span className="truncate text-[12px]" style={{ color: "var(--text-primary)" }}>
+                      {source}
+                    </span>
+                  </div>
                   <span
-                    className="mono shrink-0 rounded-[var(--radius-sm)] px-2 py-0.5 text-[10px] font-medium"
+                    className="mono shrink-0 rounded-full px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.06em]"
                     style={{
-                      color: "var(--rune)",
-                      background: "var(--rune-wash)",
-                      border: "1px solid rgba(201,169,97,0.12)"
+                      color: "var(--positive, #22c55e)",
+                      background: "rgba(34,197,94,0.08)",
+                      border: "1px solid rgba(34,197,94,0.15)"
                     }}
                   >
                     {badgeLabels.reality}

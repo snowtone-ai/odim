@@ -9,11 +9,14 @@ import { getAdminSettings } from "@/lib/repositories/admin";
 import { listSeedMemories } from "@/lib/munin/seed";
 import { auditEvents } from "@/lib/data";
 import { SourceHealthPanel } from "@/components/ui/source-health-panel";
+import { HuginnTemplateEditor } from "@/components/ui/huginn-template-editor";
 import type { SourceHealthEntry } from "@/components/ui/source-health-panel";
 import { AlertRuleBuilder } from "@/components/ui/alert-rule-builder";
 import { WebhookSettings } from "@/components/ui/webhook-settings";
+import { WatchtowerWorkflows } from "@/components/ui/watchtower-workflows";
 import { AuditExportControls } from "@/components/ui/audit-export-controls";
 import { sourceBackedPlan } from "@/lib/data";
+import { listWatchtowerPlaybooks, listWatchtowerRuns } from "@/lib/repositories/watchtower";
 import { buildCalibrationObservations, buildCalibrationReport } from "@/lib/pipeline/calibration";
 import { computeSourceAttribution } from "@/lib/pipeline/attribution";
 import { checkFreshness } from "@/lib/pipeline/freshness";
@@ -53,6 +56,7 @@ export default async function SettingsPage() {
   const screen = messages.screens.settings;
   const settings = await getAdminSettings({ orgId: defaultSettingsOrgId });
   const seeds = await listSeedMemories(defaultSettingsOrgId);
+  const watchtower = await listWatchtowerRuns({ orgId: defaultSettingsOrgId });
   const orgLabel = settings.org
     ? `${settings.org.name} / ${settings.org.tier}`
     : locale === "ja" ? "組織未設定 / フォールバック" : "org not configured / fallback";
@@ -78,6 +82,19 @@ export default async function SettingsPage() {
             enabled: r.enabled
           }))}
           messages={screen.alertRuleBuilder}
+        />
+      )
+    },
+    {
+      id: "watchtower",
+      title: screen.panels.watchtower,
+      description: screen.copy.watchtower,
+      icon: SETTINGS_ICONS.alertRules,
+      content: (
+        <WatchtowerWorkflows
+          initialRuns={watchtower.runs}
+          playbooks={listWatchtowerPlaybooks()}
+          labels={screen.watchtower}
         />
       )
     },
@@ -131,7 +148,7 @@ export default async function SettingsPage() {
                 <span className="truncate text-[13px]" style={{ color: "var(--text-primary)" }}>
                   {member.displayName}
                 </span>
-                <span className="mono shrink-0 text-[11px]" style={{ color: "var(--text-tertiary)" }}>
+                <span className="mono shrink-0 text-[11px]" style={{ color: "var(--text-secondary)" }}>
                   {member.role}
                 </span>
               </div>
@@ -159,6 +176,13 @@ export default async function SettingsPage() {
       )
     },
     {
+      id: "huginnTemplates",
+      title: screen.huginnTemplates.title,
+      description: locale === "ja" ? "Huginnのクイックテンプレートを管理・カスタマイズします。" : "Manage and customize Huginn quick templates.",
+      icon: SETTINGS_ICONS.customKnowledge,
+      content: <HuginnTemplateEditor messages={screen.huginnTemplates} />
+    },
+    {
       id: "ingestion",
       title: locale === "ja" ? "取込オペレーション" : "Ingestion Operations",
       description: screen.copy.ingestion,
@@ -170,7 +194,7 @@ export default async function SettingsPage() {
           </div>
           <div className="mt-4 grid gap-3">
             {settings.source === "supabase" && settings.ingestionRuns.length === 0 ? (
-              <div className="mono text-[11px]" style={{ color: "var(--text-tertiary)" }}>
+              <div className="mono text-[11px]" style={{ color: "var(--text-secondary)" }}>
                 no runs recorded — if scrape has run, verify service_role permissions on ingestion_runs
               </div>
             ) : null}
@@ -205,7 +229,7 @@ export default async function SettingsPage() {
           </div>
           <div className="mt-4 grid gap-2">
             {settings.source === "supabase" && settings.sourceWatermarks.length === 0 ? (
-              <div className="mono text-[11px]" style={{ color: "var(--text-tertiary)" }}>
+              <div className="mono text-[11px]" style={{ color: "var(--text-secondary)" }}>
                 no watermarks recorded
               </div>
             ) : null}
@@ -216,7 +240,7 @@ export default async function SettingsPage() {
                 key={watermark.sourceId}
               >
                 <span className="truncate" style={{ color: "var(--text-primary)" }}>{watermark.sourceId}</span>
-                <span className="mono" style={{ color: "var(--text-tertiary)" }}>{shortDate(watermark.lastObservedAt)}</span>
+                <span className="mono" style={{ color: "var(--text-secondary)" }}>{shortDate(watermark.lastObservedAt)}</span>
                 <span className="mono" style={{ color: "var(--rune)" }}>{watermark.rawSignalCount}</span>
               </div>
             ))}
@@ -295,7 +319,7 @@ export default async function SettingsPage() {
                   <div className="h-2 overflow-hidden rounded-full" style={{ background: "var(--surface-secondary)" }}>
                     <div className="h-full rounded-full" style={{ width: `${bucket.actual * 100}%`, background: "var(--rune)" }} />
                   </div>
-                  <span className="mono" style={{ color: "var(--text-tertiary)" }}>
+                  <span className="mono" style={{ color: "var(--text-secondary)" }}>
                     {Math.round(bucket.actual * 100)}%
                   </span>
                 </div>

@@ -1,6 +1,6 @@
 import { RealityMap } from "@/components/ui/reality-map";
 import { DailyDiffPanel } from "@/components/ui/daily-diff";
-import { alerts, layerActivity } from "@/lib/data";
+
 import { getMessages } from "@/lib/i18n/messages";
 import { getLocale } from "@/lib/i18n/locale";
 import type { LayerKey } from "@/lib/map/types";
@@ -55,114 +55,20 @@ export default async function RealityMapPage(
         </div>
       </header>
 
-      {/* Map + sidebar: fill remaining height */}
-      <div className="grid min-h-0 flex-1 grid-cols-1 xl:grid-cols-[1fr_280px]">
-        {/* Map — full bleed, no panel wrapper */}
-        <div className="relative min-h-[400px]">
-          <div className="absolute inset-x-3 top-3 z-20">
-            <DailyDiffPanel diff={diff} />
-          </div>
-          <RealityMap
-            layerLabels={[...messages.layers]}
-            selectLabel={screen.panels.layers}
-            searchHint={screen.searchHint}
-            initialFilter={initialFilter}
-            initialCenter={initialCenter}
-            tooltipLabels={screen.tooltip}
-            filterLabels={screen.filters}
-          />
+      {/* Map — full bleed, fills remaining height */}
+      <div className="relative min-h-0 flex-1">
+        <div className="absolute inset-x-3 top-3 z-20">
+          <DailyDiffPanel diff={diff} />
         </div>
-
-        {/* Right sidebar */}
-        <div
-          className="hidden overflow-y-auto xl:flex xl:flex-col"
-          style={{
-            background: "var(--ink-850)",
-            borderLeft: "1px solid var(--line-soft)"
-          }}
-        >
-          {/* Layers section */}
-          <div
-            className="px-4 py-2.5"
-            style={{
-              borderBottom: "1px solid var(--line-faint)",
-              backgroundImage: "linear-gradient(90deg, color-mix(in srgb, var(--text-primary) 1%, transparent) 0%, transparent 50%)"
-            }}
-          >
-            <span
-              className="mono text-[11px] font-medium uppercase tracking-[0.12em]"
-              style={{ color: "var(--text-secondary)" }}
-            >
-              {screen.panels.layers}
-            </span>
-          </div>
-          <div className="px-4">
-            {layerActivity.map((layer, index) => (
-              <div
-                className="flex items-center justify-between py-2.5"
-                style={{ borderBottom: "1px solid var(--line-faint)" }}
-                key={layer.layer}
-              >
-                <div>
-                  <div className="text-[13px]" style={{ color: "var(--text-primary)" }}>
-                    {messages.layers[index] ?? layer.layer}
-                  </div>
-                  <div
-                    className="mono mt-0.5 text-[10px] uppercase tracking-[0.11em]"
-                    style={{ color: "var(--text-tertiary)" }}
-                  >
-                    {layer.source} · {Math.round(layer.confidence * 100)}%
-                  </div>
-                </div>
-                <span className="mono text-[12px]" style={{ color: "var(--text-secondary)" }}>
-                  {layer.count}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Live feed section */}
-          <div
-            className="mt-auto px-4 py-2.5"
-            style={{
-              borderTop: "1px solid var(--line-faint)",
-              borderBottom: "1px solid var(--line-faint)",
-              backgroundImage: "linear-gradient(90deg, color-mix(in srgb, var(--text-primary) 1%, transparent) 0%, transparent 50%)"
-            }}
-          >
-            <span
-              className="mono text-[11px] font-medium uppercase tracking-[0.12em]"
-              style={{ color: "var(--text-secondary)" }}
-            >
-              {screen.panels.liveFeed}
-            </span>
-          </div>
-          <div className="flex-1 overflow-y-auto px-4">
-            {alerts.slice(0, 5).map((alert) => (
-              <div
-                className="py-2.5"
-                style={{ borderBottom: "1px solid var(--line-faint)" }}
-                key={alert.title}
-              >
-                <div
-                  className="mono text-[10px] uppercase tracking-[0.12em]"
-                  style={{ color: "var(--critical)" }}
-                >
-                  {alert.priority}
-                </div>
-                <div className="mt-1 text-[13px] leading-snug" style={{ color: "var(--text-primary)" }}>
-                  {alert.title}
-                </div>
-                <div
-                  className="mono mt-1 text-[10px]"
-                  style={{ color: "var(--text-tertiary)" }}
-                >
-                  {alert.source}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <RealityMap
+          layerLabels={[...messages.layers]}
+          selectLabel={screen.panels.layers}
+          searchHint={screen.searchHint}
+          initialFilter={initialFilter}
+          initialCenter={initialCenter}
+          tooltipLabels={screen.tooltip}
+          filterLabels={screen.filters}
+        />
       </div>
     </section>
   );

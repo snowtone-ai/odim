@@ -47,7 +47,7 @@ export const messages = {
         filters: {
           label: "Filters",
           timeRange: "Time Range",
-          confidence: "Min Confidence",
+          confidence: "Confidence",
           "7d": "7d",
           "30d": "30d",
           "90d": "90d",
@@ -82,24 +82,44 @@ export const messages = {
         cascadeMap: "Cascade",
         cascadeMapTitle: "3-Level Cascade Map",
         lowCoverage: "Low Cov.",
-        cascadeClose: "Close"
+        cascadeClose: "Close",
+        evidenceGraph: "Evidence Graph",
+        evidencePaths: "paths",
+        citationCoverage: "citation",
+        traceCompleteness: "trace"
       },
       alerts: {
         title: "Signal Alerts",
         panels: {
           queue: "Alert Queue",
-          chain: "Signal Chain"
+          chain: "Signal Chain",
+          watchtower: "Watchtower Workflows"
         },
         markAllRead: "Mark all read",
         unread: "Unread",
         viewList: "List",
-        viewGrouped: "Grouped"
+        viewGrouped: "Grouped",
+        watchtower: {
+          title: "Agentic Watchtower",
+          playbooks: "Playbooks",
+          runs: "Runs",
+          approvals: "Approvals",
+          start: "Start",
+          approve: "Approve",
+          reject: "Reject",
+          rerun: "Re-run",
+          citations: "Citations",
+          trace: "Trace",
+          cost: "Tokens",
+          risks: "Risks"
+        }
       },
       huginn: {
         title: "Huginn",
         panels: {
           dialogue: "Dialogue",
           trace: "Reasoning Trace",
+          evidence: "Evidence Paths",
           munin: "Munin",
           sources: "Sources",
           eval: "Answer Eval"
@@ -121,6 +141,7 @@ export const messages = {
           munin_core: "Layer 1 · Core Munin",
           munin_archival: "Layer 1 · Archival Munin",
           odim_cache: "Layer 2 · Odim Cache",
+          evidence_graph: "Layer 2B · Evidence Graph",
           reality_gapfill: "Layer 3A · Reality Gapfill",
           narrative_capture: "Narrative Capture",
           opinion_search: "Opinion Search",
@@ -145,6 +166,7 @@ export const messages = {
         title: "Settings",
         panels: {
           alertRules: "Alert Rules",
+          watchtower: "Watchtower Workflows",
           apiKeys: "API Keys",
           permissions: "Team Permissions",
           ontology: "Ontology Explorer",
@@ -153,6 +175,7 @@ export const messages = {
         },
         copy: {
           alertRules: "Watchlist, layer, and confidence thresholds backed by deterministic alert evidence.",
+          watchtower: "Approval-gated agentic workflows with source coverage, trace completeness, and external dispatch controls.",
           apiKeys: "External AI agent access uses org-scoped API routes, extendable to MCP.",
           permissions: "Org roles: analyst / admin.",
           ontology: "Advanced object, link, and action type inspection.",
@@ -207,6 +230,36 @@ export const messages = {
           testSuccess: "Test sent",
           testFailed: "Test failed",
           minPriority: "Min priority"
+        },
+        watchtower: {
+          title: "Agentic Watchtower",
+          playbooks: "Playbooks",
+          runs: "Runs",
+          approvals: "Approvals",
+          start: "Start",
+          approve: "Approve",
+          reject: "Reject",
+          rerun: "Re-run",
+          citations: "Citations",
+          trace: "Trace",
+          cost: "Tokens",
+          risks: "Risks"
+        },
+        huginnTemplates: {
+          title: "Huginn Quick Templates",
+          addNew: "Add Template",
+          label: "Label",
+          template: "Template",
+          variables: "Variables",
+          variablesHint: "Comma-separated, e.g. entity_name, sector",
+          save: "Save",
+          cancel: "Cancel",
+          remove: "Remove",
+          defaults: "Built-in Templates",
+          custom: "Custom Templates",
+          enabled: "Enabled",
+          disabled: "Disabled",
+          empty: "No custom templates. Click \"Add Template\" to create one."
         }
       }
     }
@@ -256,7 +309,7 @@ export const messages = {
         filters: {
           label: "フィルター",
           timeRange: "期間",
-          confidence: "最低信頼度",
+          confidence: "信頼度",
           "7d": "7日",
           "30d": "30日",
           "90d": "90日",
@@ -291,24 +344,44 @@ export const messages = {
         cascadeMap: "カスケード",
         cascadeMapTitle: "3階層カスケードマップ",
         lowCoverage: "カバレッジ不足",
-        cascadeClose: "閉じる"
+        cascadeClose: "閉じる",
+        evidenceGraph: "根拠グラフ",
+        evidencePaths: "パス",
+        citationCoverage: "引用",
+        traceCompleteness: "トレース"
       },
       alerts: {
         title: "アラート",
         panels: {
           queue: "アラートキュー",
-          chain: "シグナルチェーン"
+          chain: "シグナルチェーン",
+          watchtower: "Watchtower ワークフロー"
         },
         markAllRead: "全て既読にする",
         unread: "未読",
         viewList: "リスト",
-        viewGrouped: "グループ"
+        viewGrouped: "グループ",
+        watchtower: {
+          title: "Agentic Watchtower",
+          playbooks: "プレイブック",
+          runs: "実行",
+          approvals: "承認",
+          start: "開始",
+          approve: "承認",
+          reject: "却下",
+          rerun: "再実行",
+          citations: "引用",
+          trace: "トレース",
+          cost: "トークン",
+          risks: "リスク"
+        }
       },
       huginn: {
         title: "Huginn",
         panels: {
           dialogue: "対話",
           trace: "推論トレース",
+          evidence: "根拠パス",
           munin: "Munin",
           sources: "出典",
           eval: "回答評価"
@@ -330,6 +403,7 @@ export const messages = {
           munin_core: "Layer 1 · コアMunin",
           munin_archival: "Layer 1 · アーカイブMunin",
           odim_cache: "Layer 2 · Odimキャッシュ",
+          evidence_graph: "Layer 2B · 根拠グラフ",
           reality_gapfill: "Layer 3A · リアリティ補完",
           narrative_capture: "ナラティブキャプチャ",
           opinion_search: "意見検索",
@@ -354,6 +428,7 @@ export const messages = {
         title: "設定",
         panels: {
           alertRules: "アラートルール",
+          watchtower: "Watchtower ワークフロー",
           apiKeys: "APIキー",
           permissions: "チーム権限",
           ontology: "オントロジー",
@@ -362,6 +437,7 @@ export const messages = {
         },
         copy: {
           alertRules: "ウォッチリスト・レイヤー・信頼度のしきい値に基づくルール設定です。",
+          watchtower: "出典カバレッジ、推論トレース、人間承認を必須にするエージェント型ワークフローです。",
           apiKeys: "外部AIエージェントのアクセスはAPIファーストで設計されており、MCPへの拡張にも対応しています。",
           permissions: "組織ロール：アナリスト / 管理者",
           ontology: "オブジェクト・リンク・アクションタイプの高度な検査機能です。",
@@ -416,6 +492,36 @@ export const messages = {
           testSuccess: "テスト送信完了",
           testFailed: "テスト失敗",
           minPriority: "最低優先度"
+        },
+        watchtower: {
+          title: "Agentic Watchtower",
+          playbooks: "プレイブック",
+          runs: "実行",
+          approvals: "承認",
+          start: "開始",
+          approve: "承認",
+          reject: "却下",
+          rerun: "再実行",
+          citations: "引用",
+          trace: "トレース",
+          cost: "トークン",
+          risks: "リスク"
+        },
+        huginnTemplates: {
+          title: "Huginn クイックテンプレート",
+          addNew: "テンプレート追加",
+          label: "ラベル",
+          template: "テンプレート",
+          variables: "変数",
+          variablesHint: "カンマ区切り（例: entity_name, sector）",
+          save: "保存",
+          cancel: "キャンセル",
+          remove: "削除",
+          defaults: "組み込みテンプレート",
+          custom: "カスタムテンプレート",
+          enabled: "有効",
+          disabled: "無効",
+          empty: "カスタムテンプレートがありません。「テンプレート追加」で作成してください。"
         }
       }
     }

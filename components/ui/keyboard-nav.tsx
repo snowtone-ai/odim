@@ -61,20 +61,56 @@ export function KeyboardNav() {
   }, [pending, router]);
 
   if (!showHelp) return null;
+
+  const shortcuts: Array<{ keys: string[]; desc: string }> = [
+    { keys: ["g", "m"], desc: "Map" },
+    { keys: ["g", "e"], desc: "Entity" },
+    { keys: ["g", "a"], desc: "Alerts" },
+    { keys: ["g", "h"], desc: "Huginn" },
+    { keys: ["g", "s"], desc: "Settings" },
+    { keys: ["⌘", "K"], desc: "Command palette" },
+    { keys: ["/"], desc: "Focus search" },
+    { keys: ["j", "k"], desc: "Navigate list" },
+    { keys: ["↵"], desc: "Open selected" },
+    { keys: ["e"], desc: "Export" },
+    { keys: ["r"], desc: "Refresh" },
+    { keys: ["Esc"], desc: "Close / dismiss" },
+  ];
+
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 px-4">
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center px-4"
+      style={{ background: "rgba(0,0,0,0.60)", backdropFilter: "blur(4px)" }}
+      onClick={() => setShowHelp(false)}
+    >
       <div
-        className="w-full max-w-md rounded-[var(--radius-md)] p-4"
-        style={{ background: "var(--ink-850)", border: "1px solid var(--line-faint)" }}
+        className="w-full max-w-sm overflow-hidden rounded-[var(--radius-lg)] p-5"
+        style={{ background: "var(--ink-850)", border: "1px solid var(--line-soft)", boxShadow: "var(--shadow-lg)" }}
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="mono mb-3 text-[11px] uppercase tracking-[0.12em]" style={{ color: "var(--rune)" }}>
-          Keyboard Shortcuts
+        <div className="mono mb-4 flex items-center justify-between text-[11px] uppercase tracking-[0.12em]" style={{ color: "var(--rune)" }}>
+          <span>Keyboard Shortcuts</span>
+          <kbd
+            className="rounded-[4px] px-1.5 py-0.5 text-[10px] normal-case tracking-normal"
+            style={{ background: "var(--ink-700)", color: "var(--text-quaternary)", border: "1px solid var(--line-faint)" }}
+          >?</kbd>
         </div>
-        {["g m map", "g e entity", "g a alerts", "g h huginn", "g s settings", "j / k list move", "Enter open", "e export", "r refresh", "/ focus search", "Esc close"].map((line) => (
-          <div key={line} className="py-1 text-[12px]" style={{ color: "var(--text-secondary)" }}>
-            {line}
-          </div>
-        ))}
+        <div className="grid gap-1.5">
+          {shortcuts.map((s) => (
+            <div key={s.desc} className="flex items-center justify-between py-1">
+              <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{s.desc}</span>
+              <span className="flex items-center gap-1">
+                {s.keys.map((k) => (
+                  <kbd
+                    key={k}
+                    className="mono inline-flex min-w-[22px] items-center justify-center rounded-[4px] px-1.5 py-0.5 text-[10px]"
+                    style={{ background: "var(--ink-700)", color: "var(--text-tertiary)", border: "1px solid var(--line-faint)" }}
+                  >{k}</kbd>
+                ))}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

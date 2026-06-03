@@ -36,6 +36,7 @@ const requiredFiles = [
   "styles/tokens.css",
   "supabase/migrations/0001_initial.sql",
   "supabase/migrations/0005_ingestion_operations.sql",
+  "supabase/migrations/0010_ai_native_workflows.sql",
   "supabase/tests/rls-cross-org-smoke.sql",
   "supabase/tests/service-role-write-grants.sql",
   "config/sources.json",
@@ -135,6 +136,14 @@ for (const table of ["api_keys", "alert_rules"]) {
 const operationsMigration = readFileSync("supabase/migrations/0005_ingestion_operations.sql", "utf8");
 for (const table of ["ingestion_runs", "source_watermarks"]) {
   if (!operationsMigration.includes(`create table if not exists ${table}`)) throw new Error(`operations migration missing ${table}`);
+}
+
+const aiNativeMigration = readFileSync("supabase/migrations/0010_ai_native_workflows.sql", "utf8");
+for (const table of ["watchtower_runs", "watchtower_run_steps", "watchtower_approvals"]) {
+  if (!aiNativeMigration.includes(`create table if not exists ${table}`)) throw new Error(`ai-native migration missing ${table}`);
+}
+for (const marker of ["watchtower_runs_public_or_org", "watchtower_run_steps_run_scope", "watchtower_approvals_run_scope"]) {
+  if (!aiNativeMigration.includes(marker)) throw new Error(`ai-native migration missing ${marker}`);
 }
 
 const packageJson = JSON.parse(readFileSync("package.json", "utf8"));

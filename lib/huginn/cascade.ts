@@ -1,13 +1,15 @@
 import { listAlerts, listAuditEvents, listEntities, listSignals } from "../repositories/reality.ts";
+import { queryRealityEvidenceGraph } from "../repositories/evidence-graph.ts";
 import { buildFixtureMemories, searchMuninMemory, searchOpinions, type MuninMemory, type MuninOpinion, type RetrievedMemory } from "../munin/memory.ts";
 import type { SourceRef } from "../pipeline/types.ts";
+import type { EvidenceGraphMetrics, EvidencePath } from "../graphrag/evidence-graph.ts";
 import { realityGapfillSearch, type GapfillResult } from "./gapfill.ts";
 import { computeRDS, narrativeCaptureSearch, type NarrativeCaptureResult } from "./narrative-capture.ts";
 import { findPrecomputedAnswer, type PrecomputedAnswer } from "./precompute.ts";
 import type { SelfAssessmentPlan } from "./self-assessment.ts";
 import sourcesConfig from "../../config/sources.json" with { type: "json" };
 
-export type CascadeLayer = "precomputed" | "munin_core" | "munin_archival" | "odim_cache" | "reality_gapfill" | "opinion_search" | "narrative_capture";
+export type CascadeLayer = "precomputed" | "munin_core" | "munin_archival" | "evidence_graph" | "odim_cache" | "reality_gapfill" | "opinion_search" | "narrative_capture";
 
 export type CascadeEvidence = {
   id: string;
@@ -25,6 +27,11 @@ export type CascadeSearchResult = {
   narrative: NarrativeCaptureResult[];
   gapfill: GapfillResult[];
   layers_used: CascadeLayer[];
+  evidenceGraph?: {
+    paths: EvidencePath[];
+    metrics: EvidenceGraphMetrics;
+    source: "fallback" | "supabase";
+  };
   rds?: number;
   precomputed?: PrecomputedAnswer;
   contextCounts: {
@@ -53,6 +60,27 @@ export function evaluateSufficiency(evidence: Array<{ confidence: number }>, pla
 
 export function searchLayer1Munin(input: { orgId: string; question: string; memories?: MuninMemory[] }) {
   return searchMuninMemory({ orgId: input.orgId, question: input.question, memories: input.memories, topK: 8 });
+}
+
+function countsFromEvidenceGraph(graph: { nodes: Array<{ kind: string }> }) {
+  return {
+    alerts: graph.nodes.filter((node) => node.kind === "alert").length,
+    entities: graph.nodes.filter((node) => node.kind === "entity").length,
+    signals: graph.nodes.filter((node) => node.kind === "signal").length,
+    auditEvents: graph.nodes.filter((node) => node.kind === "audit").length
+  };
+}
+
+function mergeCounts(
+  left: { alerts: number; entities: number; signals: number; auditEvents: number },
+  right: { alerts: number; entities: number; signals: number; auditEvents: number }
+) {
+  return {
+    alerts: Math.max(left.alerts, right.alerts),
+    entities: Math.max(left.entities, right.entities),
+    signals: Math.max(left.signals, right.signals),
+    auditEvents: Math.max(left.auditEvents, right.auditEvents)
+  };
 }
 
 export async function searchLayer2OdimCache(orgId: string) {
@@ -154,12 +182,38 @@ export async function cascadeSearch(input: {
   let evidence = memoryEvidence;
   let contextSource: "fallback" | "supabase" = "fallback";
   let counts = { alerts: 0, entities: 0, signals: 0, auditEvents: 0 };
+  let evidenceGraph: CascadeSearchResult["evidenceGraph"] | undefined;
 
-  if (!evaluateSufficiency(evidence, input.plan)) {
+  if (input.plan.need_retrieval || !evaluateSufficiency(evidence, input.plan)) {
+    const graphResult = await queryRealityEvidenceGraph({ question: input.question, limit: 4 }, { orgId: input.orgId });
+    counts = countsFromEvidenceGraph(graphResult.graph);
+    if (graphResult.paths.length) {
+      layers.add("evidence_graph");
+      evidenceGraph = {
+        paths: graphResult.paths,
+        metrics: graphResult.metrics,
+        source: graphResult.source
+      };
+      evidence = [
+        ...evidence,
+        ...graphResult.paths.map((path) => ({
+          id: path.id,
+          layer: "evidence_graph" as const,
+          sourceType: "evidence_path",
+          content: path.rationale,
+          confidence: path.confidence,
+          sourceRefs: path.sources
+        }))
+      ];
+      contextSource = graphResult.source === "supabase" ? "supabase" : contextSource;
+    }
+  }
+
+  if (input.plan.need_retrieval || !evaluateSufficiency(evidence, input.plan)) {
     const odim = await searchLayer2OdimCache(input.orgId);
     evidence = [...evidence, ...odim.evidence];
     layers.add("odim_cache");
-    counts = odim.counts;
+    counts = mergeCounts(counts, odim.counts);
     contextSource = odim.source;
   }
 
@@ -196,6 +250,7 @@ export async function cascadeSearch(input: {
     narrative,
     gapfill,
     layers_used: [...layers],
+    evidenceGraph,
     rds,
     contextCounts: {
       ...counts,

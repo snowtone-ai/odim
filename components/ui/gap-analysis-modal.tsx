@@ -44,12 +44,12 @@ const LAYER_COLOR: Record<string, string> = {
 
 // ─── Chart constants ──────────────────────────────────────────────────────────
 
-const SVG_W = 580;
-const SVG_H = 150;
-const L = 44;
-const T = 14;
-const R = 12;
-const B = 24;
+const SVG_W = 640;
+const SVG_H = 220;
+const L = 52;
+const T = 28;
+const R = 20;
+const B = 32;
 const PW = SVG_W - L - R;
 const PH = SVG_H - T - B;
 
@@ -134,16 +134,22 @@ function buildChartData(events: TimelineEvent[], lead: number) {
     };
   });
 
-  const yTicks = [0, 0.33, 0.67, 1].map((frac) => ({
+  const yTicks = [0, 0.2, 0.4, 0.6, 0.8, 1].map((frac) => ({
     y: toY(Math.round(frac * n)),
     label: `${Math.round(frac * n)}`
   }));
 
   const gapX1 = toX(lastDay);
   const gapX2 = Math.min(toX(lastDay + lead), L + PW);
-  const gapAnnotY = T + 8;
+  const gapAnnotY = T + 10;
 
-  return { subLine, narrLine, subArea, narrArea, xTicks, yTicks, gapX1, gapX2, gapAnnotY, bottomY };
+  // Endpoint dots for both lines
+  const subEndPt = subPts[subPts.length - 1];
+  const narrEndPt = narrPts[narrPts.length - 1];
+  // "Today" marker — where substrate data ends
+  const todayX = toX(lastDay);
+
+  return { subLine, narrLine, subArea, narrArea, xTicks, yTicks, gapX1, gapX2, gapAnnotY, bottomY, subEndPt, narrEndPt, todayX };
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -287,53 +293,84 @@ export function GapAnalysisModal({
           {/* ── Body ────────────────────────────────────────────────────── */}
           <div className="flex flex-col gap-5 p-6">
 
-            {/* ── Divergence Chart ──────────────────────────────────────── */}
+            {/* ── Lead Time Chart ───────────────────────────────────────── */}
             <div>
-              <div className="mb-2.5 flex items-center justify-between">
-                <div className="mono text-[10px] uppercase tracking-[0.14em]" style={{ color: "var(--text-tertiary)" }}>
-                  Signal Accumulation Divergence
+              {/* Chart header */}
+              <div className="mb-2 flex items-center justify-between gap-4">
+                <div>
+                  <div className="mono text-[10px] uppercase tracking-[0.14em]" style={{ color: "var(--text-tertiary)" }}>
+                    Lead Time Analysis
+                  </div>
+                  <div className="mt-0.5 text-[11px]" style={{ color: "var(--text-quaternary)" }}>
+                    Cumulative signal count over time — substrate leads narrative
+                  </div>
                 </div>
-                <div className="flex items-center gap-5">
+                <div className="flex shrink-0 items-center gap-4">
                   <div className="flex items-center gap-1.5">
-                    <div className="h-[2px] w-6 rounded-full" style={{ background: "rgba(201,169,97,0.85)" }} />
-                    <span className="mono text-[9px] uppercase tracking-[0.1em]" style={{ color: "var(--text-quaternary)" }}>Substrate (Reality)</span>
+                    <div className="h-[2.5px] w-5 rounded-full" style={{ background: "rgba(201,169,97,0.9)" }} />
+                    <span className="mono text-[9px] uppercase tracking-[0.1em]" style={{ color: "var(--text-quaternary)" }}>Reality</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <svg width="24" height="2" viewBox="0 0 24 2">
-                      <line x1="0" y1="1" x2="24" y2="1" stroke="rgba(120,130,160,0.55)" strokeWidth="1.5" strokeDasharray="5,4" />
+                    <svg width="20" height="3" viewBox="0 0 20 3">
+                      <line x1="0" y1="1.5" x2="20" y2="1.5" stroke="rgba(120,130,160,0.6)" strokeWidth="1.5" strokeDasharray="4,3" />
                     </svg>
-                    <span className="mono text-[9px] uppercase tracking-[0.1em]" style={{ color: "var(--text-quaternary)" }}>Narrative (Lagged)</span>
+                    <span className="mono text-[9px] uppercase tracking-[0.1em]" style={{ color: "var(--text-quaternary)" }}>Narrative</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-3 w-3 rounded-[2px]" style={{ background: "rgba(201,169,97,0.12)", border: "1px solid rgba(201,169,97,0.3)" }} />
+                    <span className="mono text-[9px] uppercase tracking-[0.1em]" style={{ color: "var(--text-quaternary)" }}>Lead window</span>
                   </div>
                 </div>
               </div>
 
               <div
-                className="overflow-hidden rounded-[var(--radius-md)] p-2"
+                className="overflow-hidden rounded-[var(--radius-md)]"
                 style={{ background: "var(--ink-900)", border: "1px solid var(--line-faint)" }}
               >
+                {/* Y-axis label */}
+                <div className="relative">
+                  <div
+                    className="mono absolute left-1 top-1/2 -translate-y-1/2 text-[8px] uppercase tracking-[0.14em]"
+                    style={{
+                      color: "rgba(255,255,255,0.2)",
+                      writingMode: "vertical-rl",
+                      transform: "translateY(-50%) rotate(180deg)"
+                    }}
+                  >
+                    Signals
+                  </div>
                 {chart ? (
                   <svg
                     viewBox={`0 0 ${SVG_W} ${SVG_H}`}
                     className="w-full"
-                    style={{ height: SVG_H, display: "block" }}
+                    style={{ display: "block" }}
                   >
                     <defs>
                       <linearGradient id="subGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="rgba(201,169,97,0.22)" />
-                        <stop offset="100%" stopColor="rgba(201,169,97,0)" />
+                        <stop offset="0%" stopColor="rgba(201,169,97,0.28)" />
+                        <stop offset="100%" stopColor="rgba(201,169,97,0.01)" />
                       </linearGradient>
                       <linearGradient id="narrGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="rgba(100,110,150,0.12)" />
-                        <stop offset="100%" stopColor="rgba(100,110,150,0)" />
+                        <stop offset="0%" stopColor="rgba(100,110,150,0.15)" />
+                        <stop offset="100%" stopColor="rgba(100,110,150,0.00)" />
+                      </linearGradient>
+                      <linearGradient id="gapFill" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="rgba(201,169,97,0.10)" />
+                        <stop offset="100%" stopColor="rgba(201,169,97,0.02)" />
                       </linearGradient>
                     </defs>
+
+                    {/* Background: plot area */}
+                    <rect x={L} y={T} width={PW} height={PH} fill="rgba(255,255,255,0.01)" rx="2" />
 
                     {/* Horizontal grid lines */}
                     {chart.yTicks.map((tick, i) => (
                       <line
                         key={i}
                         x1={L} y1={tick.y} x2={L + PW} y2={tick.y}
-                        stroke="rgba(255,255,255,0.04)" strokeWidth={1} strokeDasharray="4,4"
+                        stroke={i === 0 ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.05)"}
+                        strokeWidth={1}
+                        strokeDasharray={i === 0 ? "0" : "3,6"}
                       />
                     ))}
 
@@ -341,30 +378,49 @@ export function GapAnalysisModal({
                     {chart.yTicks.map((tick, i) => (
                       <text
                         key={i}
-                        x={L - 6} y={tick.y + 3}
-                        textAnchor="end" fontSize={8} fontFamily="monospace"
-                        fill="rgba(255,255,255,0.18)"
+                        x={L - 6} y={tick.y + 4}
+                        textAnchor="end" fontSize={9} fontFamily="monospace"
+                        fill="rgba(255,255,255,0.28)"
                       >
                         {tick.label}
                       </text>
                     ))}
 
-                    {/* Gap annotation bracket */}
-                    {chart.gapX2 - chart.gapX1 > 20 && (
+                    {/* Lead window: shaded gap region */}
+                    {chart.gapX2 - chart.gapX1 > 8 && (
                       <>
-                        <line x1={chart.gapX1} y1={chart.gapAnnotY} x2={chart.gapX2} y2={chart.gapAnnotY}
-                          stroke="rgba(201,169,97,0.35)" strokeWidth={1} />
-                        <line x1={chart.gapX1} y1={chart.gapAnnotY - 3} x2={chart.gapX1} y2={chart.gapAnnotY + 3}
-                          stroke="rgba(201,169,97,0.35)" strokeWidth={1} />
-                        <line x1={chart.gapX2} y1={chart.gapAnnotY - 3} x2={chart.gapX2} y2={chart.gapAnnotY + 3}
-                          stroke="rgba(201,169,97,0.35)" strokeWidth={1} />
+                        <rect
+                          x={chart.gapX1} y={T}
+                          width={chart.gapX2 - chart.gapX1} height={PH}
+                          fill="url(#gapFill)"
+                        />
+                        {/* Vertical start line */}
+                        <line
+                          x1={chart.gapX1} y1={T}
+                          x2={chart.gapX1} y2={T + PH}
+                          stroke="rgba(201,169,97,0.3)" strokeWidth={1} strokeDasharray="2,3"
+                        />
+                        {/* Lead annotation */}
                         <text
-                          x={(chart.gapX1 + chart.gapX2) / 2} y={chart.gapAnnotY - 4}
-                          textAnchor="middle" fontSize={8} fontFamily="monospace"
-                          fill="rgba(201,169,97,0.6)"
+                          x={(chart.gapX1 + chart.gapX2) / 2}
+                          y={chart.gapAnnotY}
+                          textAnchor="middle" fontSize={9} fontFamily="monospace" fontWeight="700"
+                          fill="rgba(201,169,97,0.75)"
+                          letterSpacing="0.06em"
                         >
-                          +{entity.lead}d gap
+                          +{entity.lead}d LEAD
                         </text>
+                        {/* Bracket lines */}
+                        <line
+                          x1={chart.gapX1 + 4} y1={chart.gapAnnotY + 5}
+                          x2={(chart.gapX1 + chart.gapX2) / 2 - 24} y2={chart.gapAnnotY + 5}
+                          stroke="rgba(201,169,97,0.35)" strokeWidth={1}
+                        />
+                        <line
+                          x1={(chart.gapX1 + chart.gapX2) / 2 + 24} y1={chart.gapAnnotY + 5}
+                          x2={chart.gapX2 - 4} y2={chart.gapAnnotY + 5}
+                          stroke="rgba(201,169,97,0.35)" strokeWidth={1}
+                        />
                       </>
                     )}
 
@@ -372,47 +428,89 @@ export function GapAnalysisModal({
                     <path d={chart.narrArea} fill="url(#narrGrad)" />
                     <path d={chart.subArea} fill="url(#subGrad)" />
 
-                    {/* Narrative smooth line */}
+                    {/* Narrative line */}
                     <path
                       d={chart.narrLine}
                       fill="none"
                       stroke="rgba(120,130,160,0.55)"
-                      strokeWidth={1.5}
-                      strokeDasharray="6,4"
+                      strokeWidth={1.8}
+                      strokeDasharray="5,4"
                       strokeLinecap="round"
                     />
 
-                    {/* Substrate smooth line */}
+                    {/* Substrate (Reality) line — primary */}
                     <path
                       d={chart.subLine}
                       fill="none"
-                      stroke="rgba(201,169,97,0.92)"
-                      strokeWidth={2.2}
+                      stroke="rgba(201,169,97,1)"
+                      strokeWidth={2.5}
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
 
+                    {/* Endpoint dot — substrate */}
+                    {chart.subEndPt && (
+                      <>
+                        <circle
+                          cx={chart.subEndPt[0]} cy={chart.subEndPt[1]}
+                          r={4}
+                          fill="rgba(201,169,97,1)"
+                          stroke="rgba(14,18,24,1)"
+                          strokeWidth={1.5}
+                        />
+                        <circle
+                          cx={chart.subEndPt[0]} cy={chart.subEndPt[1]}
+                          r={7}
+                          fill="none"
+                          stroke="rgba(201,169,97,0.2)"
+                          strokeWidth={1}
+                        />
+                      </>
+                    )}
+
+                    {/* Endpoint dot — narrative */}
+                    {chart.narrEndPt && (
+                      <circle
+                        cx={chart.narrEndPt[0]} cy={chart.narrEndPt[1]}
+                        r={3}
+                        fill="rgba(120,130,160,0.7)"
+                        stroke="rgba(14,18,24,1)"
+                        strokeWidth={1.5}
+                      />
+                    )}
+
                     {/* X-axis baseline */}
-                    <line x1={L} y1={chart.bottomY} x2={L + PW} y2={chart.bottomY}
-                      stroke="rgba(255,255,255,0.07)" strokeWidth={1} />
+                    <line
+                      x1={L} y1={chart.bottomY}
+                      x2={L + PW} y2={chart.bottomY}
+                      stroke="rgba(255,255,255,0.14)" strokeWidth={1}
+                    />
 
                     {/* X-axis tick labels */}
                     {chart.xTicks.map((tick, i) => (
                       <text
                         key={i}
-                        x={tick.x} y={SVG_H - 5}
-                        textAnchor="middle" fontSize={8} fontFamily="monospace"
-                        fill="rgba(255,255,255,0.22)"
+                        x={tick.x} y={SVG_H - 8}
+                        textAnchor="middle" fontSize={9} fontFamily="monospace"
+                        fill="rgba(255,255,255,0.30)"
                       >
                         {tick.label}
                       </text>
                     ))}
+
+                    {/* Y-axis line */}
+                    <line
+                      x1={L} y1={T}
+                      x2={L} y2={T + PH}
+                      stroke="rgba(255,255,255,0.10)" strokeWidth={1}
+                    />
                   </svg>
                 ) : (
                   <div className="flex items-center justify-center py-10 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
                     Insufficient data for chart
                   </div>
                 )}
+                </div>
               </div>
             </div>
 

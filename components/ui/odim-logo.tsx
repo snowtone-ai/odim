@@ -1,11 +1,14 @@
 import Image from "next/image";
 
-export function OdimLogo({ size = 32, className }: Readonly<{ size?: number; className?: string }>) {
+// Intrinsic ratio: 714 × 420 (≈ 1.7 : 1)
+const RATIO = 714 / 420;
+
+export function OdimLogo({ size = 30, className }: Readonly<{ size?: number; className?: string }>) {
   return (
     <Image
       src="/odim-logo.png"
       alt="Odim"
-      width={size}
+      width={Math.round(size * RATIO)}
       height={size}
       className={className}
       priority

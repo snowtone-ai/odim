@@ -21,6 +21,25 @@ type Props = {
   };
 };
 
+const TYPE_ICONS: Record<Result["type"], React.ReactNode> = {
+  entity: (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 21h18M3 7v1a3 3 0 006 0V7m0 1a3 3 0 006 0V7m0 1a3 3 0 006 0V7H3l2-4h14l2 4M4 21V10.87M20 21V10.87" />
+    </svg>
+  ),
+  alert: (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+    </svg>
+  ),
+  setting: (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+};
+
 const SETTINGS_ITEMS: Result[] = [
   { id: "s-alerts",   label: "Alert Rules",       type: "setting", href: "/settings" },
   { id: "s-keys",     label: "API Keys",           type: "setting", href: "/settings" },
@@ -105,19 +124,32 @@ export function CommandPalette({ entities, alerts, labels }: Readonly<Props>) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <input
-          ref={inputRef}
-          type="text"
-          value={query}
-          onChange={(e) => { setQuery(e.target.value); setCursor(0); }}
-          placeholder={labels.hint}
-          className="w-full px-5 py-4 text-[14px] outline-none"
-          style={{
-            background: "transparent",
-            color: "var(--text-primary)",
-            borderBottom: "1px solid var(--line-faint)"
-          }}
-        />
+        {/* Search row */}
+        <div
+          className="flex items-center gap-3 px-5"
+          style={{ borderBottom: "1px solid var(--line-faint)" }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            className="shrink-0" style={{ color: "var(--text-quaternary)" }}>
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setCursor(0); }}
+            placeholder={labels.hint}
+            className="flex-1 py-4 text-[14px] outline-none"
+            style={{ background: "transparent", color: "var(--text-primary)" }}
+          />
+          <kbd
+            className="mono shrink-0 rounded-[4px] px-1.5 py-0.5 text-[10px]"
+            style={{ background: "var(--ink-700)", color: "var(--text-quaternary)", border: "1px solid var(--line-faint)" }}
+          >
+            ESC
+          </kbd>
+        </div>
         <div className="max-h-[360px] overflow-y-auto">
           {(["entity", "alert", "setting"] as const).map((type) => {
             const items = grouped[type];
@@ -139,14 +171,20 @@ export function CommandPalette({ entities, alerts, labels }: Readonly<Props>) {
                       type="button"
                       onClick={() => selectItem(item)}
                       onMouseEnter={() => setCursor(idx)}
-                      className="flex w-full items-center px-5 py-3 text-left text-[13px] transition-all duration-[var(--dur-fast)]"
+                      className="flex w-full items-center gap-3 px-5 py-2.5 text-left text-[13px] transition-all duration-[var(--dur-fast)]"
                       style={{
                         background: cursor === idx ? "var(--rune-wash)" : "transparent",
                         color: cursor === idx ? "var(--rune)" : "var(--text-primary)",
                         borderLeft: cursor === idx ? "2px solid var(--rune)" : "2px solid transparent"
                       }}
                     >
-                      {item.label}
+                      <span style={{ color: cursor === idx ? "var(--rune)" : "var(--text-quaternary)" }}>
+                        {TYPE_ICONS[item.type]}
+                      </span>
+                      <span className="flex-1 truncate">{item.label}</span>
+                      {cursor === idx && (
+                        <span className="mono shrink-0 text-[10px]" style={{ color: "var(--text-quaternary)" }}>↵</span>
+                      )}
                     </button>
                   );
                 })}
@@ -154,8 +192,15 @@ export function CommandPalette({ entities, alerts, labels }: Readonly<Props>) {
             );
           })}
           {flat.length === 0 && (
-            <div className="px-5 py-6 text-center text-[13px]" style={{ color: "var(--text-tertiary)" }}>
-              —
+            <div className="flex flex-col items-center gap-2 px-5 py-8">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+                style={{ color: "var(--text-quaternary)" }}>
+                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <span className="text-[13px]" style={{ color: "var(--text-tertiary)" }}>
+                No results for &ldquo;{query}&rdquo;
+              </span>
             </div>
           )}
         </div>

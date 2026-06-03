@@ -44,7 +44,8 @@ const files = migrations.length
       "supabase/migrations/0006_ingest_transaction.sql",
       "supabase/migrations/0007_performance_indexes.sql",
       "supabase/migrations/0008_entity_score_history.sql",
-      "supabase/migrations/0009_push_subscriptions.sql"
+      "supabase/migrations/0009_push_subscriptions.sql",
+      "supabase/migrations/0010_ai_native_workflows.sql"
     ];
 
 for (const file of files) {
