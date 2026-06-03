@@ -6,6 +6,14 @@ function stringValue(value: unknown, maxLength = 160) {
   return typeof value === "string" && value.trim() ? value.trim().slice(0, maxLength) : undefined;
 }
 
+function safeErrorResponse(error: unknown) {
+  const message = error instanceof Error ? error.message : "Internal server error";
+  if (/not found/i.test(message)) return Response.json({ error: message }, { status: 404 });
+  if (/modified by another request/i.test(message)) return Response.json({ error: message }, { status: 409 });
+  console.error("watchtower approval route failed", error);
+  return Response.json({ error: "Internal server error" }, { status: 500 });
+}
+
 export async function POST(request: Request) {
   try {
     const auth = await authorizeApiRequest(request, "admin:write");
@@ -31,7 +39,6 @@ export async function POST(request: Request) {
     );
     return Response.json({ run });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Internal server error";
-    return Response.json({ error: message }, { status: /not found/i.test(message) ? 404 : 500 });
+    return safeErrorResponse(error);
   }
 }

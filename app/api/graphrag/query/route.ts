@@ -9,6 +9,10 @@ function cleanString(value: unknown, maxLength: number) {
   return trimmed.slice(0, maxLength);
 }
 
+function allowsAuthDisabledOrgOverride() {
+  return process.env.GRAPHRAG_ALLOW_AUTH_DISABLED_ORG_OVERRIDE === "true";
+}
+
 export async function POST(request: Request) {
   try {
     const auth = await authorizeApiRequest(request, "entities:read");
@@ -25,6 +29,10 @@ export async function POST(request: Request) {
     const orgId = cleanString(body.orgId, 80) ?? auth.context.orgId;
     if (auth.mode !== "disabled" && body.orgId && orgId !== auth.context.orgId) {
       return Response.json({ error: "orgId override is not allowed" }, { status: 403 });
+    }
+    if (auth.mode === "disabled" && body.orgId && orgId !== auth.context.orgId && !allowsAuthDisabledOrgOverride()) {
+      console.warn("graphrag orgId override blocked while auth is disabled", { requestedOrgId: orgId });
+      return Response.json({ error: "orgId override requires GRAPHRAG_ALLOW_AUTH_DISABLED_ORG_OVERRIDE=true" }, { status: 403 });
     }
     if (auth.mode !== "disabled" && !orgId) {
       return Response.json({ error: "orgId is required" }, { status: 403 });

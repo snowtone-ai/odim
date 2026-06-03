@@ -14,13 +14,13 @@
   - Entity workstation surfaces top evidence paths for the selected entity without blocking current workflows.
 - Verification:
   - Focused graph build/query metrics and Huginn integration tests added in `tests/ai-native-upgrades.test.mjs`.
-  - Passed: `rtk pnpm test` (98/98), `rtk pnpm typecheck`, `rtk pnpm lint`, `rtk pnpm build`, `rtk pnpm verify`, `rtk pnpm browser:smoke`.
-- Evidence: implemented `lib/graphrag/**`, repository/API integration, Huginn `evidence_graph` cascade/context output, Entity/Huginn UI panels, i18n labels, and bounded citation/trace metrics.
+  - Review hardening passed: `rtk pnpm test` (100/100), `rtk pnpm typecheck`, `rtk pnpm lint`, `rtk pnpm build`, `rtk pnpm verify`, `rtk pnpm browser:smoke`.
+- Evidence: implemented `lib/graphrag/**`, repository/API integration, Huginn `evidence_graph` cascade/context output, Entity/Huginn UI panels, i18n labels, bounded citation/trace metrics, bounded BFS fanout, false-positive edge suppression, entity-scoped metrics, and TTL graph caching.
 
 ### AI-NATIVE-002 — Agentic Watchtower Workflows
 - Owner: CEO Agent
 - Depends On: alerts repository/data, API auth/rate-limit helpers, Supabase migrations, settings and alerts dashboard surfaces
-- Write Scope: `lib/watchtower/**`, `lib/repositories/watchtower.ts`, `app/api/watchtower/**`, `app/api/v1/watchtower/**`, `app/(dashboard)/alerts/page.tsx`, `app/(dashboard)/settings/page.tsx`, `components/ui/alerts-workstation.tsx`, `components/ui/watchtower-workflows.tsx`, `supabase/migrations/0010_ai_native_workflows.sql`, `scripts/apply-db-migrations.mjs`, focused tests
+- Write Scope: `lib/watchtower/**`, `lib/repositories/watchtower.ts`, `app/api/watchtower/**`, `app/api/v1/watchtower/**`, `app/(dashboard)/alerts/page.tsx`, `app/(dashboard)/settings/page.tsx`, `components/ui/alerts-workstation.tsx`, `components/ui/watchtower-workflows.tsx`, `supabase/migrations/0010_ai_native_workflows.sql`, `supabase/migrations/0011_watchtower_hardening.sql`, `scripts/apply-db-migrations.mjs`, focused tests
 - Standard Applied: predefined workflow paths, human approval gates before dispatch, durable run/step/approval trace, bounded local fallback, production fail-closed semantics
 - Acceptance:
   - Three production-shaped playbooks exist for data center buildout, water-rights stress, and incentive/subsidy watch.
@@ -30,8 +30,8 @@
   - Supabase migration adds append-only workflow persistence tables with RLS.
 - Verification:
   - Focused tests added for run generation, approval transitions, rerun behavior, and migration registration/RLS checks.
-  - Passed: `rtk pnpm test` (98/98), `rtk pnpm typecheck`, `rtk pnpm lint`, `rtk pnpm build`, `rtk pnpm verify`, `rtk pnpm browser:smoke`.
-- Evidence: implemented `lib/watchtower/**`, repository/API integration, Alerts/Settings Watchtower UI, append-only Supabase migration `0010_ai_native_workflows.sql`, migration runner inclusion, and Windows-safe smoke script startup.
+  - Review hardening passed: `rtk pnpm test` (100/100), `rtk pnpm typecheck`, `rtk pnpm lint`, `rtk pnpm build`, `rtk pnpm verify`, `rtk pnpm browser:smoke`.
+- Evidence: implemented `lib/watchtower/**`, repository/API integration, Alerts/Settings Watchtower UI, append-only Supabase migrations `0010_ai_native_workflows.sql` and `0011_watchtower_hardening.sql`, optimistic revision locking for Supabase approval updates, in-process local-store write serialization, bounded local fallback storage, sanitized API errors, auth-disabled org override gates, migration runner inclusion, and API-backed browser smoke coverage.
 
 ### Coordination Notes
 - Git safety point: `backup/pre-ai-native-upgrade-20260603-154106` at pre-update HEAD plus `stash@{0}` named `pre-ai-native-upgrade-20260603-154106`.

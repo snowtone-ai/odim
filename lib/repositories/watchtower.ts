@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { tenantOrPublicFilter, type OrgContext } from "../api/org.ts";
 import { sourceBackedPlan } from "../data.ts";
@@ -18,6 +18,8 @@ type JsonRecord = Record<string, unknown>;
 
 const LOCAL_STORE_DIR = path.join(process.cwd(), ".odim");
 const LOCAL_STORE_FILE = path.join(LOCAL_STORE_DIR, "watchtower-runs.json");
+const MAX_LOCAL_RUNS = 100;
+let localWriteQueue: Promise<unknown> = Promise.resolve();
 
 function shouldFallbackFromSupabaseError(message: string) {
   if (isProductionRuntime()) return false;
@@ -29,6 +31,13 @@ function assertSupabaseWriteEnv() {
   if (!hasSupabaseWriteEnv() && isProductionRuntime()) {
     throw new Error("Supabase write environment is required in production");
   }
+}
+
+function assertWatchtowerWriteScope(orgId: string | null | undefined) {
+  if (!hasSupabaseWriteEnv()) return;
+  if (orgId) return;
+  if (process.env.WATCHTOWER_ALLOW_PUBLIC_RUNS === "true") return;
+  throw new Error("orgId is required for Watchtower Supabase writes");
 }
 
 function jsonArray(value: unknown) {
@@ -161,7 +170,27 @@ function readLocalRuns(context: OrgContext = {}) {
 
 function writeLocalRuns(runs: WatchtowerRun[]) {
   mkdirSync(LOCAL_STORE_DIR, { recursive: true });
-  writeFileSync(LOCAL_STORE_FILE, JSON.stringify(runs, null, 2));
+  const bounded = runs
+    .slice()
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+    .slice(0, MAX_LOCAL_RUNS);
+  const tempFile = `${LOCAL_STORE_FILE}.${process.pid}.tmp`;
+  writeFileSync(tempFile, JSON.stringify(bounded, null, 2));
+  renameSync(tempFile, LOCAL_STORE_FILE);
+}
+
+async function withLocalRunsLock<T>(operation: () => T | Promise<T>) {
+  const previous = localWriteQueue;
+  let release: () => void = () => {};
+  localWriteQueue = new Promise((resolve) => {
+    release = () => resolve(undefined);
+  });
+  await previous.catch(() => undefined);
+  try {
+    return await operation();
+  } finally {
+    release();
+  }
 }
 
 async function listSupabaseRuns(context: OrgContext = {}) {
@@ -206,9 +235,32 @@ async function listSupabaseRuns(context: OrgContext = {}) {
 }
 
 async function upsertSupabaseRun(run: WatchtowerRun) {
+  assertWatchtowerWriteScope(run.orgId);
   const client = createServiceSupabaseClient();
   const { error: runError } = await client.from("watchtower_runs").upsert(toRunRow(run), { onConflict: "id" });
   if (runError) throw new Error(runError.message);
+  const { error: stepError } = await client
+    .from("watchtower_run_steps")
+    .upsert(run.steps.map((step) => toStepRow(run.id, step)), { onConflict: "id" });
+  if (stepError) throw new Error(stepError.message);
+  const { error: approvalError } = await client
+    .from("watchtower_approvals")
+    .upsert(run.approvals.map((approval) => toApprovalRow(run.id, approval)), { onConflict: "id" });
+  if (approvalError) throw new Error(approvalError.message);
+}
+
+async function updateSupabaseRunWithRevision(run: WatchtowerRun, expectedRevision: number) {
+  assertWatchtowerWriteScope(run.orgId);
+  const client = createServiceSupabaseClient();
+  const { data, error: runError } = await client
+    .from("watchtower_runs")
+    .update(toRunRow(run))
+    .eq("id", run.id)
+    .eq("revision", expectedRevision)
+    .select("id")
+    .maybeSingle();
+  if (runError) throw new Error(runError.message);
+  if (!data) throw new Error("Watchtower run was modified by another request; refresh and retry");
   const { error: stepError } = await client
     .from("watchtower_run_steps")
     .upsert(run.steps.map((step) => toStepRow(run.id, step)), { onConflict: "id" });
@@ -255,8 +307,10 @@ export async function startWatchtowerRun(input: WatchtowerRunInput, context: Org
     await upsertSupabaseRun(run);
   } else {
     assertSupabaseWriteEnv();
-    const runs = readLocalRuns({ orgId: orgId ?? undefined }).filter((candidate) => candidate.id !== run.id);
-    writeLocalRuns([run, ...runs]);
+    await withLocalRunsLock(() => {
+      const runs = readLocalRuns({ orgId: orgId ?? undefined }).filter((candidate) => candidate.id !== run.id);
+      writeLocalRuns([run, ...runs]);
+    });
   }
   return run;
 }
@@ -273,10 +327,18 @@ export async function updateWatchtowerApproval(input: WatchtowerApprovalDecision
     now: new Date().toISOString()
   });
   if (hasSupabaseWriteEnv()) {
-    await upsertSupabaseRun(updated);
+    await updateSupabaseRunWithRevision(updated, run.revision);
   } else {
     assertSupabaseWriteEnv();
-    writeLocalRuns(payload.runs.map((candidate) => candidate.id === updated.id ? updated : candidate));
+    await withLocalRunsLock(() => {
+      const latestPayload = readLocalRuns(context);
+      const latest = latestPayload.find((candidate) => candidate.id === input.runId);
+      if (!latest) throw new Error("runId was not found");
+      if (latest.revision !== run.revision) {
+        throw new Error("Watchtower run was modified by another request; refresh and retry");
+      }
+      writeLocalRuns(latestPayload.map((candidate) => candidate.id === updated.id ? updated : candidate));
+    });
   }
   return updated;
 }
@@ -294,7 +356,10 @@ export async function rerunWatchtower(input: { runId: string; actor?: string }, 
     await upsertSupabaseRun(updated);
   } else {
     assertSupabaseWriteEnv();
-    writeLocalRuns([updated, ...payload.runs.filter((candidate) => candidate.id !== updated.id)]);
+    await withLocalRunsLock(() => {
+      const runs = readLocalRuns(context).filter((candidate) => candidate.id !== updated.id);
+      writeLocalRuns([updated, ...runs]);
+    });
   }
   return updated;
 }

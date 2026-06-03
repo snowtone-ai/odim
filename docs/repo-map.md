@@ -37,7 +37,7 @@ Next.js 16 App Router + Supabase + Gemini AI. Ingests public signals (SEC, FERC,
 | Entity UI | `components/ui/entity-workstation.tsx` | `app/(dashboard)/entity/page.tsx` |
 | Huginn UI | `components/ui/huginn-console.tsx` | `app/(dashboard)/huginn/page.tsx` |
 | Settings | `app/(dashboard)/settings/page.tsx` | `components/ui/seed-memory-manager.tsx` |
-| DB schema | `supabase/migrations/0001-0010` | `supabase/tests/rls-cross-org-smoke.sql` |
+| DB schema | `supabase/migrations/0001-0011` | `supabase/tests/rls-cross-org-smoke.sql` |
 
 ## Critical Flows
 | Flow | Entry | Core Path | Risk |
@@ -58,7 +58,7 @@ Next.js 16 App Router + Supabase + Gemini AI. Ingests public signals (SEC, FERC,
 | API | `app/api/*/route.ts` | `lib/auth/request.ts`, `lib/auth/sso.ts`, `lib/api/v1-router.ts`, service modules in `lib/` |
 | AI/query logic | `lib/huginn/query.ts` | `cascade.ts`, `grader.ts`, `bias-test.ts`, huginn tests |
 | Evidence GraphRAG | `lib/graphrag/evidence-graph.ts` | `lib/repositories/evidence-graph.ts`, Huginn/entity UI, `tests/ai-native-upgrades.test.mjs` |
-| Watchtower | `lib/watchtower/` | `lib/repositories/watchtower.ts`, `app/api/watchtower/`, Alerts/Settings UI, migration 0010 |
+| Watchtower | `lib/watchtower/` | `lib/repositories/watchtower.ts`, `app/api/watchtower/`, Alerts/Settings UI, migrations 0010-0011 |
 | Memory | `lib/munin/memory.ts` | `write-gate.ts`, `seed.ts`, dream tests |
 | Ingestion | `lib/pipeline/ingest.ts` | `ontologize.ts`, `alert.ts`, `scrapers/run.ts`, `calibration.ts`, `attribution.ts`, `anomaly.ts`, `sentiment.ts`, `sector-rotation.ts`, `backtest.ts` |
 | Scrapers | `scrapers/<name>.ts` | `scrapers/run.ts`, `config/sources.json`, pipeline tests |

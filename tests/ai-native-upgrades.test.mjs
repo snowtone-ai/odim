@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { sourceBackedPlan } from "../lib/data.ts";
-import { buildEvidenceGraph, queryEvidenceGraph } from "../lib/graphrag/evidence-graph.ts";
+import { buildEvidenceGraph, buildEvidenceWorkbench, queryEvidenceGraph } from "../lib/graphrag/evidence-graph.ts";
 import { answerHuginnQuestion } from "../lib/huginn/query.ts";
 import { WATCHTOWER_PLAYBOOKS } from "../lib/watchtower/playbooks.ts";
 import {
@@ -59,6 +59,50 @@ test("Evidence GraphRAG materializes cited graph paths with bounded quality metr
   }
 });
 
+test("Evidence GraphRAG avoids generic substring false positive support edges", () => {
+  const plan = {
+    ontologyObjects: [
+      {
+        id: "grid-systems-inc",
+        objectType: "company",
+        attributes: { name: "Grid Systems Inc", confidence: 0.8 },
+        orgVisible: null,
+        sourceRefs: [{ sourceId: "companies", title: "Company registry", url: "odim://companies" }]
+      }
+    ],
+    ontologyLinks: [],
+    rawSignals: [
+      {
+        id: "signal-power-grid",
+        layer: "energy",
+        source: "ferc",
+        externalId: "ferc-1",
+        orgId: null,
+        payload: { title: "Power grid interconnection queue expands" },
+        observedAt: "2026-06-03T00:00:00.000Z",
+        sourceRefs: [{ sourceId: "ferc", title: "FERC queue", url: "odim://ferc" }],
+        fingerprint: "signal-power-grid",
+        confidence: 0.8,
+        freshness: 1,
+        isProprietary: false
+      }
+    ],
+    alerts: [],
+    auditEvents: []
+  };
+  const graph = buildEvidenceGraph(plan);
+  assert.equal(graph.edges.some((edge) => edge.id === "supports:signal-power-grid:grid-systems-inc"), false);
+});
+
+test("Evidence Workbench computes entity-scoped metrics instead of reusing graph-wide metrics", () => {
+  const workbench = buildEvidenceWorkbench(sourceBackedPlan);
+  const summary = workbench.entitySummaries.find((item) => item.paths.length > 0);
+  assert.ok(summary);
+  assert.ok(summary.metrics.nodeCount <= workbench.metrics.nodeCount);
+  assert.ok(summary.metrics.edgeCount <= workbench.metrics.edgeCount);
+  assert.notEqual(summary.metrics.nodeCount, workbench.metrics.nodeCount);
+});
+
 test("Huginn injects evidence graph paths into reasoning and model context", async () => {
   await withoutSupabaseEnv(async () => {
     let capturedContext = "";
@@ -109,6 +153,7 @@ test("Watchtower workflows require approval before dispatch and support determin
     actor: "human-reviewer",
     now: "2026-06-03T00:05:00.000Z"
   });
+  assert.equal(partiallyApproved.revision, run.revision + 1);
   const fullyApproved = partiallyApproved.approvals
     .filter((approval) => approval.status === "pending")
     .reduce(
@@ -145,12 +190,19 @@ test("Watchtower workflows require approval before dispatch and support determin
 test("AI-native workflow migration is registered with RLS scope policies", () => {
   const runner = readFileSync("scripts/apply-db-migrations.mjs", "utf8");
   const migration = readFileSync("supabase/migrations/0010_ai_native_workflows.sql", "utf8");
+  const hardeningMigration = readFileSync("supabase/migrations/0011_watchtower_hardening.sql", "utf8");
 
   assert.match(runner, /0010_ai_native_workflows\.sql/);
+  assert.match(runner, /0011_watchtower_hardening\.sql/);
   for (const table of ["watchtower_runs", "watchtower_run_steps", "watchtower_approvals"]) {
     assert.match(migration, new RegExp(`create table if not exists ${table}`));
     assert.match(migration, new RegExp(`alter table ${table} enable row level security`));
   }
   assert.match(migration, /org_id = current_request_org_id\(\)/);
   assert.match(migration, /grant all privileges on watchtower_runs, watchtower_run_steps, watchtower_approvals to service_role/);
+  assert.match(hardeningMigration, /begin;/);
+  assert.match(hardeningMigration, /watchtower_runs_alert_id_idx/);
+  assert.match(hardeningMigration, /watchtower_runs_set_updated_at/);
+  assert.match(hardeningMigration, /create policy watchtower_runs_org_scope/);
+  assert.doesNotMatch(hardeningMigration, /org_id is null/);
 });

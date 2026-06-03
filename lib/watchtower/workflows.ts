@@ -322,6 +322,7 @@ export function applyApprovalDecision(run: WatchtowerRun, input: { approvalId: s
     approvals,
     steps,
     status: rejected ? "rejected" as const : allApproved ? "succeeded" as const : "waiting_approval" as const,
+    revision: run.revision + 1,
     updatedAt: input.now,
     completedAt: rejected || allApproved ? input.now : run.completedAt
   };

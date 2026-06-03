@@ -6,7 +6,7 @@
 - Current executor: CEO Agent
 - Write lock: CEO Agent owns overlapping implementation files; `Sagan` explorer is read-only
 - Coordinator: CEO Agent
-- Latest verification pointer: AI Native Upgrade 1+2 completed; `test`, `typecheck`, `lint`, `build`, `verify`, and `browser:smoke` passed
+- Latest verification pointer: AI Native Upgrade 1+2 review hardening completed; `test`, `typecheck`, `lint`, `build`, `verify`, and `browser:smoke` passed
 - Verification mode: standard
 
 ## Completed after v3.0
@@ -16,7 +16,8 @@
 - Huginn cascade now has an `evidence_graph` layer and passes graph paths into model context and the UI trace.
 - Entity Intelligence surfaces top evidence paths, citation coverage, and trace completeness for selected entities.
 - Added Agentic Watchtower playbooks, run generation, approval/reject/rerun state transitions, dashboard APIs, Alerts/Settings UI, and Supabase migration `0010_ai_native_workflows.sql`.
-- Verification: `rtk pnpm test` (98/98), `rtk pnpm typecheck`, `rtk pnpm lint`, `rtk pnpm build`, `rtk pnpm verify`, and `rtk pnpm browser:smoke` passed. Manual Chrome check confirmed Watchtower appears in `/alerts` and `/settings`; browser smoke confirmed `/`, `/map`, `/entity`, `/alerts`, `/huginn`, and `/settings` return production HTML.
+- Review hardening added Evidence GraphRAG TTL caching, bounded BFS fanout, false-positive edge suppression, entity-scoped metrics, Watchtower approval optimistic revision locking, local write serialization, sanitized Watchtower API errors, auth-disabled org override gates, API smoke coverage, and append-only migration `0011_watchtower_hardening.sql` for Watchtower RLS/index/updated_at hardening.
+- Verification: `rtk pnpm test` (100/100), `rtk pnpm typecheck`, `rtk pnpm lint`, `rtk pnpm build`, `rtk pnpm verify`, and `rtk pnpm browser:smoke` passed. Manual Chrome check confirmed Watchtower appears in `/alerts` and `/settings`; browser smoke confirmed `/`, `/map`, `/entity`, `/alerts`, `/huginn`, `/settings`, `/api/watchtower/runs`, `/api/graphrag/query`, `/api/watchtower/approvals`, and `/api/watchtower/rerun`.
 
 ### Release-critical refactoring and review
 - RC-001窶鼎C-031 are implemented as focused commits across security headers, CI, env validation, auth scope controls, prompt safety, AI/scraper timeouts, transactional ingestion, route rate limits, frontend resilience, RLS smoke coverage, parser coverage, and bias tests.

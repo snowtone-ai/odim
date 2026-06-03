@@ -1,11 +1,17 @@
 import { rawSignalVisibilityFilter, tenantOrPublicFilter, type OrgContext } from "../api/org.ts";
 import { sourceBackedPlan } from "../data.ts";
 import { isProductionRuntime } from "../env/runtime.ts";
-import { buildEvidenceGraph, buildEvidenceWorkbench, queryEvidenceGraph, type EvidenceGraphQuery } from "../graphrag/evidence-graph.ts";
+import { buildEvidenceGraph, buildEvidenceWorkbench, queryEvidenceGraph, type EvidenceGraph, type EvidenceGraphQuery } from "../graphrag/evidence-graph.ts";
 import type { AlertDraft, AuditEventDraft, IngestionPlan, NormalizedSignal, OntologyLinkDraft, OntologyObjectDraft, SourceRef } from "../pipeline/types.ts";
 import { createServerSupabaseReadClient, hasSupabaseReadEnv } from "../supabase/client.ts";
 
 type JsonRecord = Record<string, unknown>;
+type CachedPlan = { plan: IngestionPlan; source: "fallback" | "supabase"; expiresAt: number };
+type CachedGraph = { graph: EvidenceGraph; expiresAt: number };
+
+const CACHE_TTL_MS = Number(process.env.EVIDENCE_GRAPH_CACHE_TTL_MS ?? 60_000);
+const planCache = new Map<string, CachedPlan>();
+const graphCache = new Map<string, CachedGraph>();
 
 function shouldFallbackFromSupabaseError(message: string) {
   if (isProductionRuntime()) return false;
@@ -17,6 +23,24 @@ function assertSupabaseReadEnv() {
   if (!hasSupabaseReadEnv() && isProductionRuntime()) {
     throw new Error("Supabase read environment is required in production");
   }
+}
+
+function cacheKey(context: OrgContext = {}) {
+  return context.orgId ?? "public";
+}
+
+function planHash(plan: IngestionPlan) {
+  return [
+    plan.ontologyObjects.length,
+    plan.ontologyLinks.length,
+    plan.rawSignals.length,
+    plan.alerts.length,
+    plan.auditEvents.length,
+    plan.ontologyObjects.at(0)?.id ?? "",
+    plan.rawSignals.at(0)?.fingerprint ?? "",
+    plan.alerts.at(0)?.id ?? "",
+    plan.auditEvents.at(0)?.id ?? ""
+  ].join(":");
 }
 
 function jsonRecord(value: unknown): JsonRecord {
@@ -165,28 +189,46 @@ async function readSupabasePlan(context: OrgContext): Promise<IngestionPlan> {
 }
 
 export async function loadEvidencePlan(context: OrgContext = {}) {
-  assertSupabaseReadEnv();
+  const key = cacheKey(context);
+  const cached = planCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return { plan: cached.plan, source: cached.source };
   if (!hasSupabaseReadEnv()) return { plan: sourceBackedPlan, source: "fallback" as const };
+  assertSupabaseReadEnv();
   try {
-    return { plan: await readSupabasePlan(context), source: "supabase" as const };
+    const plan = await readSupabasePlan(context);
+    planCache.set(key, { plan, source: "supabase", expiresAt: Date.now() + CACHE_TTL_MS });
+    return { plan, source: "supabase" as const };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    if (shouldFallbackFromSupabaseError(message)) return { plan: sourceBackedPlan, source: "fallback" as const };
+    if (shouldFallbackFromSupabaseError(message)) {
+      planCache.set(key, { plan: sourceBackedPlan, source: "fallback", expiresAt: Date.now() + CACHE_TTL_MS });
+      return { plan: sourceBackedPlan, source: "fallback" as const };
+    }
     throw new Error(`evidence graph read failed: ${message}`);
   }
 }
 
+async function getCachedEvidenceGraph(context: OrgContext = {}) {
+  const { plan, source } = await loadEvidencePlan(context);
+  const key = `${cacheKey(context)}:${planHash(plan)}`;
+  const cached = graphCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return { graph: cached.graph, source };
+  const graph = buildEvidenceGraph(plan);
+  graphCache.set(key, { graph, expiresAt: Date.now() + CACHE_TTL_MS });
+  return { graph, source };
+}
+
 export async function getEvidenceWorkbench(context: OrgContext = {}) {
   const { plan, source } = await loadEvidencePlan(context);
+  const { graph } = await getCachedEvidenceGraph(context);
   return {
-    ...buildEvidenceWorkbench(plan),
+    ...buildEvidenceWorkbench(plan, 3, graph),
     source
   };
 }
 
 export async function queryRealityEvidenceGraph(query: EvidenceGraphQuery, context: OrgContext = {}) {
-  const { plan, source } = await loadEvidencePlan(context);
-  const graph = buildEvidenceGraph(plan);
+  const { graph, source } = await getCachedEvidenceGraph(context);
   return {
     ...queryEvidenceGraph(graph, query),
     source

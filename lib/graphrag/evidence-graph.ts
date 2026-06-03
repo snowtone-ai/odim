@@ -92,6 +92,8 @@ const OBJECT_NODE_PREFIX = "object:";
 const SIGNAL_NODE_PREFIX = "signal:";
 const ALERT_NODE_PREFIX = "alert:";
 const AUDIT_NODE_PREFIX = "audit:";
+const MAX_PATH_QUEUE = 512;
+const MAX_EDGE_FANOUT = 6;
 
 function clamp01(value: number) {
   if (!Number.isFinite(value)) return 0;
@@ -245,11 +247,27 @@ function refsOverlap(left: SourceRef[], right: SourceRef[]) {
   return left.some((ref) => rightIds.has(ref.sourceId));
 }
 
-function signalMentionsObject(signal: NormalizedSignal, object: OntologyObjectDraft) {
-  const signalText = signalSearchText(signal);
-  const label = objectLabel(object).toLowerCase();
-  if (label.length >= 4 && signalText.includes(label.slice(0, Math.min(label.length, 18)))) return true;
-  return refsOverlap(signal.sourceRefs, object.sourceRefs);
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function matchableObjectNeedles(object: OntologyObjectDraft) {
+  return uniqueStrings(
+    [
+      objectLabel(object),
+      String(object.attributes.name ?? ""),
+      String(object.attributes.companyName ?? ""),
+      String(object.attributes.projectName ?? ""),
+      String(object.attributes.facilityName ?? "")
+    ]
+      .map((value) => value.toLowerCase().trim())
+      .filter((value) => value.length >= 6)
+  ).slice(0, 4);
+}
+
+function signalMentionsObject(signalText: string, signalRefs: SourceRef[], object: OntologyObjectDraft, needles: string[]) {
+  if (refsOverlap(signalRefs, object.sourceRefs)) return true;
+  return needles.some((needle) => new RegExp(`(^|[^a-z0-9])${escapeRegExp(needle)}([^a-z0-9]|$)`, "i").test(signalText));
 }
 
 function computeMetrics(nodes: EvidenceGraphNode[], edges: EvidenceGraphEdge[]): EvidenceGraphMetrics {
@@ -276,6 +294,7 @@ function computeMetrics(nodes: EvidenceGraphNode[], edges: EvidenceGraphEdge[]):
 export function buildEvidenceGraph(plan: IngestionPlan): EvidenceGraph {
   const nodes = new Map<string, EvidenceGraphNode>();
   const edges = new Map<string, EvidenceGraphEdge>();
+  const objectNeedles = new Map(plan.ontologyObjects.map((object) => [object.id, matchableObjectNeedles(object)]));
 
   for (const object of plan.ontologyObjects) {
     const nodeId = `${OBJECT_NODE_PREFIX}${object.id}`;
@@ -298,6 +317,7 @@ export function buildEvidenceGraph(plan: IngestionPlan): EvidenceGraph {
 
   for (const signal of plan.rawSignals) {
     const nodeId = `${SIGNAL_NODE_PREFIX}${signal.fingerprint}`;
+    const signalText = signalSearchText(signal);
     addNode(nodes, {
       id: nodeId,
       sourceId: signal.fingerprint,
@@ -316,7 +336,7 @@ export function buildEvidenceGraph(plan: IngestionPlan): EvidenceGraph {
     addSourceSupport(nodes, edges, nodeId, signal.sourceRefs, signal.confidence);
 
     for (const object of plan.ontologyObjects) {
-      if (!signalMentionsObject(signal, object)) continue;
+      if (!signalMentionsObject(signalText, signal.sourceRefs, object, objectNeedles.get(object.id) ?? [])) continue;
       addEdge(edges, {
         id: `supports:${signal.fingerprint}:${object.id}`,
         from: nodeId,
@@ -517,10 +537,12 @@ function collectPaths(graph: EvidenceGraph, anchors: string[], limit: number) {
   const seen = new Set<string>();
   for (const anchor of anchors) {
     const queue: Array<{ nodeId: string; nodeIds: string[]; edgeIds: string[] }> = [{ nodeId: anchor, nodeIds: [anchor], edgeIds: [] }];
-    while (queue.length && paths.length < limit * 4) {
+    let explored = 0;
+    while (queue.length && paths.length < limit * 4 && explored < MAX_PATH_QUEUE) {
+      explored += 1;
       const current = queue.shift()!;
       if (current.edgeIds.length >= 3) continue;
-      const edges = [...(adj.get(current.nodeId) ?? [])].sort((left, right) => right.confidence - left.confidence).slice(0, 8);
+      const edges = [...(adj.get(current.nodeId) ?? [])].sort((left, right) => right.confidence - left.confidence).slice(0, MAX_EDGE_FANOUT);
       for (const edge of edges) {
         const nextNodeId = edgeOther(edge, current.nodeId);
         if (current.nodeIds.includes(nextNodeId)) continue;
@@ -572,8 +594,31 @@ export function queryEvidenceGraph(graph: EvidenceGraph, query: EvidenceGraphQue
   };
 }
 
-export function buildEvidenceWorkbench(plan: IngestionPlan, limitPerEntity = 3): EvidenceWorkbench {
-  const graph = buildEvidenceGraph(plan);
+function metricsForPaths(graph: EvidenceGraph, paths: EvidencePath[]): EvidenceGraphMetrics {
+  if (!paths.length) return { ...graph.metrics, nodeCount: 0, edgeCount: 0, sourceCount: 0, unsupportedNodeCount: 0, highConfidencePathCount: 0 };
+  const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
+  const edgeById = new Map(graph.edges.map((edge) => [edge.id, edge]));
+  const nodeIds = uniqueStrings(paths.flatMap((path) => path.nodeIds));
+  const edgeIds = uniqueStrings(paths.flatMap((path) => path.edgeIds));
+  const nodes = nodeIds.map((id) => nodeById.get(id)).filter((node): node is EvidenceGraphNode => Boolean(node));
+  const edges = edgeIds.map((id) => edgeById.get(id)).filter((edge): edge is EvidenceGraphEdge => Boolean(edge));
+  const nonSourceNodes = nodes.filter((node) => node.kind !== "source");
+  const supportedNodes = nonSourceNodes.filter((node) => node.sourceRefs.length > 0);
+  const sources = uniqueStrings(paths.flatMap((path) => path.sources.map((ref) => ref.sourceId)));
+  return {
+    nodeCount: nodes.length,
+    edgeCount: edges.length,
+    sourceCount: sources.length,
+    citationCoverage: round2(paths.reduce((sum, path) => sum + path.citationCoverage, 0) / paths.length),
+    traceCompleteness: round2(paths.reduce((sum, path) => sum + path.traceCompleteness, 0) / paths.length),
+    averageConfidence: round2(paths.reduce((sum, path) => sum + path.confidence, 0) / paths.length),
+    unsupportedNodeCount: Math.max(0, nonSourceNodes.length - supportedNodes.length),
+    highConfidencePathCount: paths.filter((path) => path.confidence >= 0.75 && path.sources.length > 0).length
+  };
+}
+
+export function buildEvidenceWorkbench(plan: IngestionPlan, limitPerEntity = 3, existingGraph?: EvidenceGraph): EvidenceWorkbench {
+  const graph = existingGraph ?? buildEvidenceGraph(plan);
   const entitySummaries = graph.nodes
     .filter((node) => node.kind === "entity")
     .map((node) => {
@@ -582,7 +627,7 @@ export function buildEvidenceWorkbench(plan: IngestionPlan, limitPerEntity = 3):
         entityId: node.sourceId,
         entityLabel: node.label,
         paths: result.paths,
-        metrics: result.metrics
+        metrics: metricsForPaths(graph, result.paths)
       };
     });
   return { graph, entitySummaries, metrics: graph.metrics };

@@ -6,6 +6,19 @@ function stringValue(value: unknown, maxLength = 120) {
   return typeof value === "string" && value.trim() ? value.trim().slice(0, maxLength) : undefined;
 }
 
+function allowsAuthDisabledOrgOverride() {
+  return process.env.WATCHTOWER_ALLOW_AUTH_DISABLED_ORG_OVERRIDE === "true";
+}
+
+function safePostErrorResponse(error: unknown) {
+  const message = error instanceof Error ? error.message : "Internal server error";
+  if (/Unknown|No alert|not found|orgId is required/i.test(message)) {
+    return Response.json({ error: message }, { status: 400 });
+  }
+  console.error("watchtower start route failed", error);
+  return Response.json({ error: "Internal server error" }, { status: 500 });
+}
+
 export async function GET(request: Request) {
   try {
     const auth = await authorizeApiRequest(request, "alerts:read");
@@ -37,6 +50,10 @@ export async function POST(request: Request) {
     if (auth.mode !== "disabled" && body.orgId && orgId !== auth.context.orgId) {
       return Response.json({ error: "orgId override is not allowed" }, { status: 403 });
     }
+    if (auth.mode === "disabled" && body.orgId && orgId !== auth.context.orgId && !allowsAuthDisabledOrgOverride()) {
+      console.warn("watchtower orgId override blocked while auth is disabled", { requestedOrgId: orgId });
+      return Response.json({ error: "orgId override requires WATCHTOWER_ALLOW_AUTH_DISABLED_ORG_OVERRIDE=true" }, { status: 403 });
+    }
     const run = await startWatchtowerRun(
       {
         playbookId,
@@ -48,7 +65,6 @@ export async function POST(request: Request) {
     );
     return Response.json({ run });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Internal server error";
-    return Response.json({ error: message }, { status: /Unknown|No alert|not found/i.test(message) ? 400 : 500 });
+    return safePostErrorResponse(error);
   }
 }

@@ -4,6 +4,12 @@ import { fileURLToPath } from "node:url";
 const port = Number(process.env.BROWSER_SMOKE_PORT || "3010");
 const baseUrl = `http://127.0.0.1:${port}`;
 const routes = ["/", "/map", "/entity", "/alerts", "/huginn", "/settings"];
+const apiChecks = [
+  { route: "/api/watchtower/runs", method: "GET", okStatuses: [200] },
+  { route: "/api/graphrag/query", method: "POST", body: { question: "source-backed AI infrastructure evidence", limit: 2 }, okStatuses: [200] },
+  { route: "/api/watchtower/approvals", method: "POST", body: {}, okStatuses: [400] },
+  { route: "/api/watchtower/rerun", method: "POST", body: {}, okStatuses: [400] }
+];
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -22,6 +28,26 @@ async function fetchWithRetry(url, attempts = 30) {
     await wait(1000);
   }
   throw lastError ?? new Error(`Failed to fetch ${url}`);
+}
+
+async function fetchApiWithRetry(check, attempts = 10) {
+  let lastError;
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      const response = await fetch(`${baseUrl}${check.route}`, {
+        method: check.method,
+        headers: check.body ? { "content-type": "application/json" } : undefined,
+        body: check.body ? JSON.stringify(check.body) : undefined,
+        redirect: "follow"
+      });
+      if (check.okStatuses.includes(response.status)) return response;
+      lastError = new Error(`HTTP ${response.status} for ${check.method} ${check.route}`);
+    } catch (error) {
+      lastError = error;
+    }
+    await wait(1000);
+  }
+  throw lastError ?? new Error(`Failed API check ${check.method} ${check.route}`);
 }
 
 function startServer() {
@@ -59,6 +85,14 @@ try {
       throw new Error(`Route ${route} did not return HTML`);
     }
     console.log(JSON.stringify({ route, status: response.status, length: html.length }));
+  }
+  for (const check of apiChecks) {
+    const response = await fetchApiWithRetry(check);
+    const payload = await response.json();
+    if (!payload || typeof payload !== "object") {
+      throw new Error(`API ${check.route} did not return a JSON object`);
+    }
+    console.log(JSON.stringify({ route: check.route, method: check.method, status: response.status }));
   }
   await shutdown(0);
 } catch (error) {
