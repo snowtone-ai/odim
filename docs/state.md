@@ -1,12 +1,12 @@
 # state.md
 
 ## Current
-- Branch: codex/ai-native-upgrades-1-2-20260603-154106
-- Active task: AI Native Upgrade 1+2 — Reality GraphRAG Decision Workbench and Agentic Watchtower Workflows
-- Current executor: CEO Agent
-- Write lock: CEO Agent owns overlapping implementation files; `Sagan` explorer is read-only
-- Coordinator: CEO Agent
-- Latest verification pointer: AI Native Upgrade 1+2 review hardening completed; `test`, `typecheck`, `lint`, `build`, `verify`, and `browser:smoke` passed
+- Branch: main after AI Native Upgrade 1+2 adoption
+- Active task: none
+- Current executor: none
+- Write lock: none
+- Coordinator: none
+- Latest verification pointer: AI Native Upgrade 1+2 completed, reviewed, browser-confirmed, and prepared for main; `test`, `typecheck`, `lint`, `build`, `verify`, and CSS-aware `browser:smoke` passed
 - Verification mode: standard
 
 ## Completed after v3.0
@@ -102,7 +102,7 @@
 - POST /api/huginn — answerHuginnQuestion with sycophancy auto-retry
 
 ## Current Blocker
-- No implementation blocker for AI Native Upgrade 1+2.
+- No active implementation blocker.
 - Supabase: single-environment (main/production-tagged); staging URL may match production until dedicated project created.
 
 ## Completed after v3.0

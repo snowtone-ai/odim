@@ -1,6 +1,6 @@
 # tasks.md
 
-## Active Ledger: AI Native Upgrade 1+2
+## Completed Ledger: AI Native Upgrade 1+2
 
 ### AI-NATIVE-001 — Reality GraphRAG Decision Workbench
 - Owner: CEO Agent
@@ -35,5 +35,6 @@
 
 ### Coordination Notes
 - Git safety point: `backup/pre-ai-native-upgrade-20260603-154106` at pre-update HEAD plus `stash@{0}` named `pre-ai-native-upgrade-20260603-154106`.
-- Working branch: `codex/ai-native-upgrades-1-2-20260603-154106`.
-- Delegation: `Sagan` explorer owns read-only touchpoint investigation. CEO owns overlapping implementation files to avoid same-file conflicts.
+- Working branch used for implementation: `codex/ai-native-upgrades-1-2-20260603-154106`.
+- Main adoption: ready after review hardening, Supabase SQL confirmation, browser recovery, README cleanup, and final verification.
+- Delegation: `Sagan` explorer completed read-only touchpoint investigation. CEO owned overlapping implementation files to avoid same-file conflicts.

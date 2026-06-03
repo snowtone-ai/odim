@@ -1,14 +1,14 @@
-# Odim — Reality Intelligence OS
+# Odim - Reality Intelligence OS
 
-**"No fakes. No noise. Just truth, and profit."**
+**No fakes. No noise. Just truth, and profit.**
 
-Odim is a Reality Intelligence platform that detects the real decisions of corporations and states from substrate-layer signals — before official announcements.
+Odim is a Reality Intelligence platform that detects the real decisions of corporations and states from substrate-layer signals before official announcements.
 
 ---
 
 ## What it does
 
-While the market watches press releases and earnings calls, Odim monitors the physical and financial substrate: energy permits, land acquisitions, water rights, capital flows, compute buildouts, raw material procurement, and logistics contracts. When the substrate moves in a pattern that doesn't match the public narrative, Odim surfaces the divergence and quantifies the lead time — the information asymmetry window.
+While the market watches press releases and earnings calls, Odim monitors the physical and financial substrate: energy permits, land acquisitions, water rights, capital flows, compute buildouts, raw material procurement, and logistics contracts. When the substrate moves in a pattern that does not match the public narrative, Odim surfaces the divergence, links the supporting evidence, and quantifies the lead-time window.
 
 ---
 
@@ -18,7 +18,7 @@ While the market watches press releases and earnings calls, Odim monitors the ph
 |---|---|
 | Frontend | Next.js 16 App Router · TypeScript · Tailwind CSS |
 | Map | MapLibre GL v5 · OpenFreeMap vector tiles |
-| AI | Google Gemini (Huginn query cascade + Munin memory) |
+| AI | Google Gemini / provider adapters (Huginn cascade + Munin memory + Evidence GraphRAG) |
 | Database | Supabase (PostgreSQL + Row-Level Security) |
 | Ingestion | Custom scrapers — SEC/EDGAR, FERC, EIA, FRED, Federal Register, EDINET, Companies House, USAspending, OpenSanctions, FEMA, SAM.gov, NRC, PatentsView, USGS, port statistics, building permits |
 | Auth | API key + SSO + org-scoped sessions |
@@ -26,15 +26,26 @@ While the market watches press releases and earnings calls, Odim monitors the ph
 
 ---
 
+## Current Capabilities
+
+- **Evidence GraphRAG** - source-backed graph paths across entities, signals, alerts, audits, sources, and ontology links.
+- **Huginn analyst cascade** - precomputed answers, Munin memory, live signal retrieval, Evidence GraphRAG context, and optional web augmentation.
+- **Agentic Watchtower** - approval-gated workflows for data-center buildouts, water-rights stress, and subsidy/incentive monitoring.
+- **Institutional API surface** - scoped REST endpoints, rate limits, pagination, audit trails, and production fail-closed environment checks.
+- **Operational ingestion** - daily and backfill scrapers with source-level reports, freshness checks, durable upserts, and visible run state.
+- **Enterprise controls** - Supabase RLS, API keys, SSO plumbing, tenant-scoped memory, security headers, and release audit checks.
+
+---
+
 ## Screens
 
 | Screen | Purpose |
 |---|---|
-| Reality Map | MapLibre substrate map — 7 layers, clustering, hover tooltips, ontology connection lines |
-| Entity Intelligence | Entity scoring, narrative–reality gap analysis, evidence modal with divergence chart |
-| Signal Alerts | Alert feed with chain evidence and confidence scoring |
-| Huginn | Interactive AI query with reasoning trace, web search toggle, file attachment |
-| Settings | API keys, audit trail, Huginn Custom Knowledge (seed memory) |
+| Reality Map | MapLibre substrate map with 7 layers, clustering, hover tooltips, geographic drill-down, and ontology connection lines |
+| Entity Intelligence | Entity scoring, narrative-reality gap analysis, evidence graph paths, citation coverage, and comparison tools |
+| Signal Alerts | Alert feed with chain evidence, confidence scoring, and Watchtower approval actions |
+| Huginn | Interactive AI query with reasoning trace, Evidence GraphRAG context, web search toggle, and file attachment |
+| Settings | API keys, audit trail, ingestion visibility, calibration/attribution controls, and Huginn Custom Knowledge |
 | Custom Dashboard | Drag-and-drop builder, persistent layouts, org-scoped panel config |
 
 ---
@@ -70,9 +81,10 @@ Required environment variables: see `.env.example`.
 pnpm dev          # start dev server
 pnpm typecheck    # TypeScript check
 pnpm lint         # ESLint
-pnpm test         # Vitest (94 tests)
+pnpm test         # Node test suite (100 tests)
 pnpm build        # production build
 pnpm verify       # full pre-release check
+pnpm browser:smoke # production server smoke test for pages, APIs, and CSS assets
 ```
 
 ---
