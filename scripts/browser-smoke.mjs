@@ -50,6 +50,30 @@ async function fetchApiWithRetry(check, attempts = 10) {
   throw lastError ?? new Error(`Failed API check ${check.method} ${check.route}`);
 }
 
+function extractStylesheetHrefs(html) {
+  return [...html.matchAll(/<link\b[^>]*rel=["']stylesheet["'][^>]*>/gi)]
+    .map(([tag]) => tag.match(/\bhref=["']([^"']+)["']/i)?.[1])
+    .filter(Boolean);
+}
+
+async function assertStylesheets(route, html) {
+  const hrefs = extractStylesheetHrefs(html);
+  if (hrefs.length === 0) {
+    throw new Error(`Route ${route} did not include any stylesheet links`);
+  }
+
+  for (const href of hrefs) {
+    const url = new URL(href, baseUrl);
+    const response = await fetch(url, { redirect: "follow" });
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!response.ok || !contentType.toLowerCase().includes("text/css")) {
+      throw new Error(
+        `Stylesheet ${url.pathname} for ${route} returned HTTP ${response.status} with content-type ${contentType || "missing"}`
+      );
+    }
+  }
+}
+
 function startServer() {
   const nextCli = fileURLToPath(new URL("../node_modules/next/dist/bin/next", import.meta.url));
   const child = spawn(process.execPath, [nextCli, "start", "-H", "127.0.0.1", "-p", String(port)], {
@@ -84,6 +108,7 @@ try {
     if (!html.includes("<html")) {
       throw new Error(`Route ${route} did not return HTML`);
     }
+    await assertStylesheets(route, html);
     console.log(JSON.stringify({ route, status: response.status, length: html.length }));
   }
   for (const check of apiChecks) {
