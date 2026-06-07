@@ -1,116 +1,56 @@
-# Odim - Reality Intelligence OS
+# Odim — Reality Intelligence OS
 
-**No fakes. No noise. Just truth, and profit.**
+## 概要
 
-Odim is a Reality Intelligence platform that detects the real decisions of corporations and states from substrate-layer signals before official announcements.
-
----
-
-## What it does
-
-While the market watches press releases and earnings calls, Odim monitors the physical and financial substrate: energy permits, land acquisitions, water rights, capital flows, compute buildouts, raw material procurement, and logistics contracts. When the substrate moves in a pattern that does not match the public narrative, Odim surfaces the divergence, links the supporting evidence, and quantifies the lead-time window.
+企業や国家の「公式発表」ではなく、エネルギー許可申請・土地取得・水利権・資本フロー・データセンター建設などの物理的・財務的な動きを監視し、公式ナレーティブとの乖離を検知するインテリジェンスプラットフォームです。AIアナリスト（Huginn）が証拠グラフをもとに質問に答え、公式発表より前の意思決定シグナルを可視化します。
 
 ---
 
-## Architecture
+## 主な機能
 
-| Layer | Technology |
-|---|---|
-| Frontend | Next.js 16 App Router · TypeScript · Tailwind CSS |
-| Map | MapLibre GL v5 · OpenFreeMap vector tiles |
-| AI | Google Gemini / provider adapters (Huginn cascade + Munin memory + Evidence GraphRAG) |
-| Database | Supabase (PostgreSQL + Row-Level Security) |
-| Ingestion | Custom scrapers — SEC/EDGAR, FERC, EIA, FRED, Federal Register, EDINET, Companies House, USAspending, OpenSanctions, FEMA, SAM.gov, NRC, PatentsView, USGS, port statistics, building permits |
-| Auth | API key + SSO + org-scoped sessions |
-| CI | GitHub Actions (lint · typecheck · test · build · release audit) |
+- エネルギー・資本・土地・コンピューター・水・原材料・物流の7レイヤーのシグナルを地図上で可視化できる
+- SEC/EDGAR・FERC・EIA・特許データ・港湾統計など多数の公開データソースから毎日データを自動収集できる
+- AIアナリスト「Huginn」に自然言語で質問し、証拠グラフのパスと引用付きで回答を得られる
+- 企業・エンティティのナレーティブ（公式発表）と実態（基盤シグナル）の乖離スコアを確認できる
+- ドラッグ&ドロップで構築できるカスタムダッシュボードで各組織独自のパネル配置を保存できる
 
 ---
 
-## Current Capabilities
+## 技術スタック
 
-- **Evidence GraphRAG** - source-backed graph paths across entities, signals, alerts, audits, sources, and ontology links.
-- **Huginn analyst cascade** - precomputed answers, Munin memory, live signal retrieval, Evidence GraphRAG context, and optional web augmentation.
-- **Agentic Watchtower** - approval-gated workflows for data-center buildouts, water-rights stress, and subsidy/incentive monitoring.
-- **Institutional API surface** - scoped REST endpoints, rate limits, pagination, audit trails, and production fail-closed environment checks.
-- **Operational ingestion** - daily and backfill scrapers with source-level reports, freshness checks, durable upserts, and visible run state.
-- **Enterprise controls** - Supabase RLS, API keys, SSO plumbing, tenant-scoped memory, security headers, and release audit checks.
-
----
-
-## Screens
-
-| Screen | Purpose |
-|---|---|
-| Reality Map | MapLibre substrate map with 7 layers, clustering, hover tooltips, geographic drill-down, and ontology connection lines |
-| Entity Intelligence | Entity scoring, narrative-reality gap analysis, evidence graph paths, citation coverage, and comparison tools |
-| Signal Alerts | Alert feed with chain evidence, confidence scoring, and Watchtower approval actions |
-| Huginn | Interactive AI query with reasoning trace, Evidence GraphRAG context, web search toggle, and file attachment |
-| Settings | API keys, audit trail, ingestion visibility, calibration/attribution controls, and Huginn Custom Knowledge |
-| Custom Dashboard | Drag-and-drop builder, persistent layouts, org-scoped panel config |
+フロントエンド：Next.js 16（Reactベースのウェブアプリフレームワーク）、TypeScript、Tailwind CSS、MapLibre GL v5（地図表示ライブラリ）
+バックエンド：Next.js API Routes、カスタムスクレイパー（データ自動収集スクリプト）
+データベース：Supabase（PostgreSQL＋行レベルセキュリティ（RLS）を提供するクラウドサービス）
+インフラ・環境：GitHub Actions（CI/CD：自動ビルド・テスト・リリース検証）
+AI・外部API：Google Gemini（AIエンジン）、Evidence GraphRAG（証拠グラフを使った検索拡張生成）、Munin（組織スコープの長期記憶システム）
 
 ---
 
-## Signal Layers
+## アーキテクチャの特徴
 
-- **Energy** — power purchase agreements, grid connections, utility permits  
-- **Capital** — sovereign fund deployments, private equity commitments, project financing  
-- **Land** — site acquisitions, zoning filings, construction permits  
-- **Compute** — data center leases, GPU procurement, colocation contracts  
-- **Water** — water rights, industrial allocation, desalination projects  
-- **Raw Materials** — mining licenses, offtake agreements, mineral extraction permits  
-- **Logistics** — port capacity, terminal expansion, freight contracts  
+- AIアナリスト「Huginn」はキャッシュ→長期記憶→ライブシグナル→Web検索の4段階カスケードで回答を構成し、毎回の推論コストを最小化する設計
+- Supabaseの行レベルセキュリティ（RLS）により、テナント（組織）間でのデータ混入を構造的に防止
+- インジェスション（データ収集）はソースごとに新鮮度チェックと実行状態を管理し、失敗が可視化される設計
 
 ---
 
-## Setup
+## 開発環境のセットアップ
+
+必要なツール：Node.js、pnpm、Supabaseアカウント、Gemini APIキー
 
 ```bash
-cp .env.example .env        # fill in Supabase + Gemini credentials
+cp .env.example .env.local   # Supabase・Gemini認証情報を記入
 pnpm install
-node scripts/setup.mjs      # apply DB migrations + create default org
+node scripts/setup.mjs       # DBマイグレーション・デフォルト組織作成
 pnpm dev
 ```
 
-Required environment variables: see `.env.example`.
-
----
-
-## Development
-
-```bash
-pnpm dev          # start dev server
-pnpm typecheck    # TypeScript check
-pnpm lint         # ESLint
-pnpm test         # Node test suite (100 tests)
-pnpm build        # production build
-pnpm verify       # full pre-release check
-pnpm browser:smoke # production server smoke test for pages, APIs, and CSS assets
-```
-
----
-
-## Ingestion
-
-```bash
-pnpm scrape:dry-run         # verify sources without writing
-pnpm scrape                 # run full daily scrape
-pnpm scrape:backfill        # historical backfill (set SCRAPE_BACKFILL_START/END)
-```
-
----
-
-## AI — Huginn / Munin
-
-**Huginn** (thought) answers analyst queries through a multi-layer cascade:
-1. Precomputed answer cache
-2. Munin long-term memory
-3. Live substrate signal retrieval
-4. Optional web search augmentation
-
-**Munin** (memory) maintains org-scoped persistent memory, updated nightly by the Dream synthesis job. Anti-sycophancy detection runs on every response.
-
----
-
-## License
-
-Private. All rights reserved.
+| コマンド | 内容 |
+|---|---|
+| `pnpm dev` | 開発サーバー起動 |
+| `pnpm typecheck` | TypeScript型チェック |
+| `pnpm lint` | コード品質チェック |
+| `pnpm test` | テスト実行（100件） |
+| `pnpm build` | 本番ビルド |
+| `pnpm verify` | リリース前フルチェック |
+| `pnpm scrape` | データ収集スクレイパー実行 |
