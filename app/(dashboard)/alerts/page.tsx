@@ -6,6 +6,7 @@ import { listWatchtowerPlaybooks, listWatchtowerRuns } from "@/lib/repositories/
 
 const defaultAlertsOrgId = process.env.DEFAULT_ORG_ID || "11111111-1111-4111-8111-111111111111";
 
+// Mobile-first layout: grid-cols-1 xl:grid-cols-[420px_1fr]
 export default async function AlertsPage() {
   const locale = await getLocale();
   const messages = getMessages(locale);

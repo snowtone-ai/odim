@@ -106,7 +106,7 @@ function MobileNav({ nav, alertsUnread }: Readonly<{ nav: NavItem[]; alertsUnrea
             className="relative flex h-8 items-center gap-1.5 rounded-[var(--radius-sm)] px-2 transition-all duration-[var(--dur-fast)]"
             title={item.label}
             style={{
-              background: active ? "rgba(201,169,97,0.12)" : "transparent",
+              background: active ? "var(--rune-active-bg)" : "transparent",
               color: active ? "var(--rune)" : "var(--text-tertiary)"
             }}
           >
@@ -210,7 +210,7 @@ export function Shell({
         <MobileNav nav={nav} alertsUnread={alertsUnread} />
       </div>
 
-      <main className="min-h-screen md:ml-[calc(var(--sidebar-w)+12px)]">{children}</main>
+      <main className="min-h-screen md:ml-[calc(var(--sidebar-w)+20px)]">{children}</main>
     </div>
   );
 }
