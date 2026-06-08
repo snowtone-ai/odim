@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Screen } from "@/components/ui/screen";
 import { SeedMemoryManager } from "@/components/ui/seed-memory-manager";
 import { LocaleSwitcher } from "@/components/ui/locale-switcher";
@@ -54,9 +56,34 @@ export default async function SettingsPage() {
   const locale = await getLocale();
   const messages = getMessages(locale);
   const screen = messages.screens.settings;
-  const settings = await getAdminSettings({ orgId: defaultSettingsOrgId });
-  const seeds = await listSeedMemories(defaultSettingsOrgId);
-  const watchtower = await listWatchtowerRuns({ orgId: defaultSettingsOrgId });
+  const [settings, seeds, watchtower] = await Promise.all([
+    getAdminSettings({ orgId: defaultSettingsOrgId }).catch((err: Error) => {
+      console.error("[settings] getAdminSettings failed:", err.message);
+      return null;
+    }),
+    listSeedMemories(defaultSettingsOrgId).catch(() => [] as Awaited<ReturnType<typeof listSeedMemories>>),
+    listWatchtowerRuns({ orgId: defaultSettingsOrgId }).catch(() => ({ runs: [] as Awaited<ReturnType<typeof listWatchtowerRuns>>["runs"] }))
+  ]);
+
+  if (!settings) {
+    return (
+      <Screen title="Settings">
+        <div className="flex flex-col gap-3 p-8">
+          <p className="mono text-[13px]" style={{ color: "var(--critical)" }}>
+            {locale === "ja"
+              ? "設定データを読み込めませんでした。データベースマイグレーションが必要な可能性があります。"
+              : "Failed to load settings. A database migration may be required."}
+          </p>
+          <p className="mono text-[11px]" style={{ color: "var(--text-tertiary)" }}>
+            {locale === "ja"
+              ? "管理者に連絡するか、マイグレーションスクリプトを実行してください: node scripts/apply-db-migrations.mjs production"
+              : "Contact your administrator or run: node scripts/apply-db-migrations.mjs production"}
+          </p>
+        </div>
+      </Screen>
+    );
+  }
+
   const orgLabel = settings.org
     ? `${settings.org.name} / ${settings.org.tier}`
     : locale === "ja" ? "組織未設定 / フォールバック" : "org not configured / fallback";
