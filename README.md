@@ -18,11 +18,13 @@
 
 ## 技術スタック
 
-フロントエンド：Next.js 16（Reactベースのウェブアプリフレームワーク）、TypeScript、Tailwind CSS、MapLibre GL v5（地図表示ライブラリ）
-バックエンド：Next.js API Routes、カスタムスクレイパー（データ自動収集スクリプト）
-データベース：Supabase（PostgreSQL＋行レベルセキュリティ（RLS）を提供するクラウドサービス）
-インフラ・環境：GitHub Actions（CI/CD：自動ビルド・テスト・リリース検証）
-AI・外部API：Google Gemini（AIエンジン）、Evidence GraphRAG（証拠グラフを使った検索拡張生成）、Munin（組織スコープの長期記憶システム）
+| カテゴリ | 技術・ツール |
+|---|---|
+| フロントエンド | Next.js 16（Reactベースのウェブアプリフレームワーク）、TypeScript、Tailwind CSS、MapLibre GL v5（地図表示ライブラリ） |
+| バックエンド | Next.js API Routes、カスタムスクレイパー（データ自動収集スクリプト） |
+| データベース | Supabase（PostgreSQL＋行レベルセキュリティ（RLS）を提供するクラウドサービス） |
+| インフラ・環境 | GitHub Actions（CI/CD：自動ビルド・テスト・リリース検証） |
+| AI・外部API | Google Gemini（AIエンジン）、Evidence GraphRAG（証拠グラフを使った検索拡張生成）、Munin（組織スコープの長期記憶システム） |
 
 ---
 
