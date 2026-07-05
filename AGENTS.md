@@ -1,9 +1,9 @@
-# Project AGENTS.md -- pm-zero v9.5
+# Project AGENTS.md -- pm-zero v11
 
 ## Language
 - Completion reports, error reports, and manual confirmation requests: Japanese.
 - Code identifiers: English.
-- Ask immediately when 3+ HIGH assumptions accumulate.
+- Ask immediately when 3+ HIGH assumptions accumulate (batched).
 
 ## Source of Truth
 - Product intent: docs/vision.md
@@ -21,25 +21,52 @@
 - Read this file.
 - Read docs/state.md.
 - Read docs/decisions.md.
-- Read docs/repo-map.md Summary.
+- Read docs/repo-map.md Summary. Nothing else by default.
 
 ## Repository Navigation
 - Use rg before broad manual browsing.
 - Read detailed repo-map sections only when target files are unclear.
 - Update docs/repo-map.md after structural changes.
 
+## Budget (Pro plan, hard wall)
+- One task per session. Plan -> /handoff -> execute for big features.
+- Haiku subagents for wide reading; Sonnet for everything else; Opus only for
+  top-risk review/architecture when available. Never block on Opus.
+- Long builds/tests run in background. Batch questions. Compact at checkpoints.
+- Keep effort at medium for routine work; raise per-task only for genuinely hard problems.
+
+## Autonomy
+- bypassPermissions is active; never ask permission for tool calls.
+- The global guard hook blocks the dangerous set (rm -rf /, force push, git reset --hard,
+  secret-file reads); if blocked, do not work around it — find a safe alternative or surface it.
+- Human gate only for irreversible real-world acts: authentication, billing, production deploy
+  approval, and personal data handling.
+
+## Continuity (auto-compact at 50%)
+- Checkpoint to tasks.md + docs/state.md and commit after each logical unit.
+- When compacting, always preserve: active task ID, modified files list, verify command.
+- The file system is the memory; the transcript is disposable.
+
+## Memory Layers
+- Git-tracked ledger files (vision / tasks / state / decisions / issues / repo-map) are the
+  project system of record.
+- Auto-memory (MEMORY.md) holds cross-project operator preferences and lessons only —
+  never project facts.
+
 ## Task Ledger Rule
 - tasks.md is the only execution ledger.
 - Every ready task includes owner, dependencies, write scope, acceptance, verification, and evidence.
-- CEO Agent updates tasks.md and docs/state.md as coordinator.
+- The main agent updates tasks.md and docs/state.md as coordinator.
 
 ## Agent Coordination
-- CEO Agent owns tasks.md and docs/state.md as coordinator.
-- CEO Agent decides whether to parallelize based on Write Scope separation.
-- Worker agents own only their assigned Write Scope.
+- The main agent owns tasks.md and docs/state.md as coordinator.
+- The main agent decides whether to parallelize based on Write Scope separation.
+- Worker subagents own only their assigned Write Scope; they report, they do not write ledgers.
 - Parallel implementation requires disjoint Write Scopes or isolated worktrees.
+  When scopes overlap or are uncertain, spawn the worker with isolation "worktree".
 - Same file -> serialize. Separate scope -> parallelize.
-- Maximum 3 concurrent agents including CEO.
+- Default cap: <=2 concurrent worker subagents; raise only when scopes are disjoint and
+  the session budget clearly allows.
 
 ## Engineering Role
 - Act as a principal-level full-stack engineer.
@@ -49,16 +76,19 @@
 ## Thinking Protocol
 - Decompose work into atomic subtasks before code changes.
 - Prefer the simplest correct solution after comparing practical alternatives.
+- Verify the real call shape of an external API/library before using it.
 - Use Chain-of-Verification: draft internally, plan failure-revealing checks, verify independently, revise using verified facts.
 - Keep progress reports short.
 
 ## Coding Priorities
+- Correctness
 - Security
 - Reliability
-- Monitoring
+- Data Integrity
+- Observability
 - Maintainability
+- Performance
 - Scalability
-- UX polish
 
 ## Release-Critical Coding Rules
 - Keep each change focused on one concern. Do not mix refactors, behavior changes, tests, and documentation beyond what the active task requires.
@@ -70,6 +100,20 @@
 - Frontend resilience changes must preserve accessibility: visible page headings, loading/error states, reduced-motion support, and no background animation loops while the tab is hidden.
 - Verification is part of the work. Run the narrowest useful check after each focused change, then run the repository-level command required by the task or group before declaring completion.
 
+## Self-Review (no human reviewer)
+- Tier 0 (always): scripts/verify.mjs + tests + lint + typecheck + git diff --check + gitleaks when available.
+- Tier 1 (review classes): fresh-context Sonnet subagent reads the diff, acceptance criteria,
+  and relevant tests. Triggers: 300+ line diff, new external API, behavior changes in critical
+  workflows, and all Tier 2 classes.
+- Tier 2 (highest-risk classes, budget permitting): fresh Opus subagent for auth, billing,
+  DB schema, RLS/permissions, deploy, security, production data, personal information.
+  If Opus is unavailable, run Tier 1 at high effort and record the substitution in tasks.md Review Notes.
+
+## Self-Evolution
+- Log failures in docs/issues.md. On 3 identical failures, web-search a fix and record the source URL.
+- Promote always-applicable lessons into CLAUDE.md/AGENTS.md; reference-level lessons into
+  docs/lessons.md; operator-level lessons into auto-memory.
+
 ## Commands
 - install: pnpm install
 - lint: pnpm lint
@@ -78,6 +122,7 @@
 - build: pnpm build
 - verify: pnpm verify
 - setup: node scripts/setup.mjs
+- Use only commands that exist in this repository.
 
 ## RTK Usage
 - File read: rtk read <file>
@@ -113,7 +158,13 @@
 ### Pull Requests
 - Open a PR to `main` when the branch is complete. Do not wait for the user to ask.
 - PR title: conventional commit format matching the branch type.
-- PR body: what changed and why.
+- PR body: what changed and why, plus review result and verification evidence.
+
+### Merge Gate
+- Gate on final verify green AND fresh-context self-review passed (tiers above).
+- Low/medium risk: squash-merge to main, delete branch.
+- High-risk classes (auth, billing, DB schema, deploy, security, production data): implement and
+  review fully, but stop before any irreversible real-world side effect and surface a Japanese summary.
 
 ### Pre-push Security Check
 - Confirm `.gitignore` covers secret and credential patterns before the first push on any branch.
