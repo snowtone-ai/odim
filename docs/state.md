@@ -1,14 +1,16 @@
 # state.md
 
 ## Current
-- Branch: feat/lp-005-observability (LP-004 merged to main via PR #6)
-- Active task: LP-005 observability & error tracking — implemented, reviewed, recommendations applied
+- Branch: feat/lp-006-008-public-surfaces (LP-005 merged to main via PR #7)
+- Active task: LP-006/007/008 public surfaces (API docs, legal pages, SEO/meta) — implemented, reviewed, recommendations applied
 - Current executor: main agent
 - Write lock: none
 - Coordinator: main agent
-- Latest verification pointer: LP-005 — `lib/observability/**` (structured logger with redaction, bounded per-route metrics, SDK-free Sentry-protocol reporter, route instrumentation wrapper, Supabase latency probe), extended `/api/health`, admin-scoped `/api/observability`, 9 v1 routes instrumented; `tests/observability.test.mjs` 12/12, full suite 133/133, typecheck/lint/build/verify green
-- Verification mode: Tier 1 class (new external API + 300+ line diff) — fresh-context Sonnet review PASS-with-recommendations, all recommendations applied (see tasks.md LP-005 Review Notes)
-- Human gate outstanding: Supabase project `xyvioekqwmbgrwlinzxe` no longer exists (staging+production URLs both dead — docs/issues.md 2026-07-06); restore/recreate in dashboard, update env, then `pnpm db:migrate:production`. `SELF_SERVE_SIGNUP` decision recorded in D-028.
+- Latest verification pointer: LP-006/007/008 — public `/docs` (renders `docs/api-reference.md` via trusted markdown parser, no raw HTML), `/terms` `/privacy` `/security` legal pages with shared `PublicShell`, landing footer links, OG/twitter metadata + title template in root layout, `sitemap.xml` (public routes only), `robots.txt` (disallows `/api/`, dashboard prefixes, `/invite`), per-page titles on 13 pages; launch-surfaces tests extended; typecheck/lint/build/verify green
+- Verification mode: Tier 1 class (300+ line diff) — fresh-context Sonnet review PASS-with-recommendations, all applied (see tasks.md LP-006/007/008 Review Notes)
+- Human gates outstanding:
+  - Legal content approval before first public deploy (governing law Japan/Tokyo drafted; no published contact address; processor list must match deployed config) — tasks.md LP-007.
+  - Supabase project `xyvioekqwmbgrwlinzxe` no longer exists (staging+production URLs both dead — docs/issues.md 2026-07-06); restore/recreate in dashboard, update env, then `pnpm db:migrate:production`. `SELF_SERVE_SIGNUP` decision recorded in D-028.
 
 ## Completed after v3.0
 
