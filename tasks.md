@@ -56,8 +56,18 @@ Ordered by launch impact per token. One LP task group per session.
 - Review Notes: Tier 2 class run as fresh-context Sonnet review at high effort (Opus substitution per budget rule — recorded). Verdict PASS-with-recommendations; blockers fixed in follow-up commit: (1) rate-limit client key now resists x-forwarded-for spoofing and adds instance-wide global buckets; (2) public signup/accept 500s no longer echo internal error messages; (3) `invitedBy` audit metadata capped. Accepted-as-designed: SSO session secret fallback to `API_KEY_PEPPER` (pre-existing design), service-role read client with app-layer org filters (D-011), compensating deletes instead of DB transactions (repo idiom), no email-ownership verification at signup (env-gated surface; email verification is an LP follow-up candidate).
 - Human gate: applying migration 0013 to production Supabase (`pnpm db:migrate:production`) and enabling `SELF_SERVE_SIGNUP` in any deployed environment remain operator actions.
 
-### LP-005 — Observability & error tracking — BACKLOG
-- Structured request logging, env-gated Sentry (or equivalent) hook, error-rate visibility; extend `/api/health` with dependency latency probes.
+### LP-005 — Observability & error tracking — DONE (this session)
+- Owner: main agent
+- Risk: MEDIUM (new external call class → Tier 1 review; no auth/billing/schema changes).
+- Write Scope: `lib/observability/{logger,metrics,error-tracking,instrument,probes}.ts`, `app/api/health/route.ts`, `app/api/observability/route.ts`, `app/api/v1/**` (9 routes wrapped), `.env.example`, `tests/observability.test.mjs`
+- Acceptance:
+  - Structured single-line JSON logs with secret-field-name and token-shape redaction; `api.request` logs (route/method/status/duration) on the instrumented surface, opt-out via `REQUEST_LOGGING=false`.
+  - Env-gated Sentry-protocol error reporter (`SENTRY_DSN`, no SDK): envelope over fetch, 3s timeout, never throws, always logs locally, delivery failures logged visibly.
+  - In-process per-route request/error counters (bounded: 200 routes + `(other)` overflow bucket, 20-entry error ring buffer, messages capped at 200 chars); aggregate totals + error rate on public `/api/health`, full per-route snapshot behind admin:read `/api/observability`.
+  - `/api/health` gains a Supabase REST latency probe (HEAD, 1.5s timeout, booleans/latency only — no URLs or key material) and an `errorTracking` check.
+  - All 9 `app/api/v1/**` routes wrapped by `instrumentApiRoute` with signatures preserved (Next route type checking unaffected); crashes convert to generic 500 JSON.
+- Verification: `tests/observability.test.mjs` 10/10 (redaction, DSN parsing, envelope shape, no-throw delivery failure, counter/ring-buffer bounds, instrumented pass-through + crash path, probe leak guard, health shape incl. existing secret-leak regex, admin snapshot); full suite 131/131; typecheck/lint/build green.
+- Operator-gate follow-through (delegated 2026-07-06): migration 0013 apply attempted — blocked, Supabase tenant `xyvioekqwmbgrwlinzxe` not found for both staging/production URLs (see docs/issues.md); `SELF_SERVE_SIGNUP` decision recorded in D-028 (no deployed environment exists yet).
 
 ### LP-006 — Public API docs surface — BACKLOG
 - Publish `docs/api-reference.md` as a public `/docs` route from the landing page.

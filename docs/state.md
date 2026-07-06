@@ -1,14 +1,14 @@
 # state.md
 
 ## Current
-- Branch: feat/org-onboarding (LP-004; LP-003 merged to main via PR #4)
-- Active task: LP-004 self-serve org onboarding — implementation + review complete, PR open
+- Branch: feat/lp-005-observability (LP-004 merged to main via PR #6)
+- Active task: LP-005 observability & error tracking — implemented, verification green
 - Current executor: main agent
 - Write lock: none
 - Coordinator: main agent
-- Latest verification pointer: LP-004 — invite token logic `lib/onboarding/invites.ts`, onboarding repository `lib/repositories/onboarding.ts`, migration 0013 (`org_invites` + `users.email`), env-gated signup `app/api/orgs`, invite lifecycle `app/api/org-invites{,/accept}`, Settings API-key/members UI, public `/signup` + `/invite`; `tests/org-onboarding.test.mjs` 10/10, full suite 121/121, typecheck/lint/build/verify green
-- Verification mode: Tier 2 class (auth) — fresh-context Sonnet high-effort substitution, blockers fixed
-- Human gate outstanding: apply migration 0013 to production Supabase; decide whether/where to set `SELF_SERVE_SIGNUP=true`
+- Latest verification pointer: LP-005 — `lib/observability/**` (structured logger with redaction, bounded per-route metrics, SDK-free Sentry-protocol reporter, route instrumentation wrapper, Supabase latency probe), extended `/api/health`, admin-scoped `/api/observability`, 9 v1 routes instrumented; `tests/observability.test.mjs` 10/10, full suite 131/131, typecheck/lint/build green
+- Verification mode: Tier 1 class (new external API + 300+ line diff) — fresh-context Sonnet review
+- Human gate outstanding: Supabase project `xyvioekqwmbgrwlinzxe` no longer exists (staging+production URLs both dead — docs/issues.md 2026-07-06); restore/recreate in dashboard, update env, then `pnpm db:migrate:production`. `SELF_SERVE_SIGNUP` decision recorded in D-028.
 
 ## Completed after v3.0
 

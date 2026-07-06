@@ -39,6 +39,7 @@ Next.js 16 App Router + Supabase + Gemini AI. Ingests public signals (SEC, FERC,
 | Settings | `app/(dashboard)/settings/page.tsx` | `components/ui/seed-memory-manager.tsx` |
 | Billing & entitlements | `lib/billing/plans.ts` + `lib/repositories/billing.ts` | `tests/billing.test.mjs` |
 | Org onboarding & invites | `lib/onboarding/invites.ts` + `lib/repositories/onboarding.ts` | `tests/org-onboarding.test.mjs` |
+| Observability | `lib/observability/instrument.ts` + `app/api/observability/route.ts` | `tests/observability.test.mjs` |
 | DB schema | `supabase/migrations/0001-0013` | `supabase/tests/rls-cross-org-smoke.sql` |
 
 ## Critical Flows
