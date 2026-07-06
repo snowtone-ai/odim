@@ -51,14 +51,38 @@ const files = migrations.length
       "supabase/migrations/0013_org_onboarding.sql"
     ];
 
+// On Windows, PostgreSQL tools may not be on PATH; try common install locations.
+const PSQL_FALLBACKS = [
+  "C:\\Program Files\\PostgreSQL\\17\\bin\\psql.exe",
+  "C:\\Program Files\\PostgreSQL\\16\\bin\\psql.exe",
+  "C:\\Program Files\\PostgreSQL\\15\\bin\\psql.exe",
+];
+
+function resolvePsql() {
+  const probe = spawnSync("psql", ["--version"], { encoding: "utf8", windowsHide: true });
+  if (!probe.error) return "psql";
+  for (const candidate of PSQL_FALLBACKS) {
+    if (existsSync(candidate)) return candidate;
+  }
+  return null;
+}
+
+const psqlBin = resolvePsql();
+if (!psqlBin) {
+  throw new Error(
+    "psql not found. Add PostgreSQL bin to PATH or install PostgreSQL client tools.\n" +
+    "Checked: " + PSQL_FALLBACKS.join(", ")
+  );
+}
+
 for (const file of files) {
   if (!existsSync(file)) throw new Error(`${file} is missing`);
-  const result = spawnSync("psql", ["-X", "-v", "ON_ERROR_STOP=1", databaseUrl, "-f", file], {
+  const result = spawnSync(psqlBin, ["-X", "-v", "ON_ERROR_STOP=1", databaseUrl, "-f", file], {
     encoding: "utf8",
     windowsHide: true
   });
   if (result.error) {
-    throw new Error(`Failed to start psql. Install PostgreSQL client tools first. ${result.error.message}`);
+    throw new Error(`Failed to start psql: ${result.error.message}`);
   }
   if (result.status !== 0) {
     process.stderr.write(result.stderr);

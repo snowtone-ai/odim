@@ -10,7 +10,7 @@
 - Verification mode: Tier 1 class (300+ line diff) — fresh-context Sonnet review PASS-with-recommendations, all applied (see tasks.md LP-006/007/008 Review Notes)
 - Human gates outstanding:
   - Legal content approval before first public deploy (governing law Japan/Tokyo drafted; no published contact address; processor list must match deployed config) — tasks.md LP-007.
-  - Supabase project `xyvioekqwmbgrwlinzxe` no longer exists (staging+production URLs both dead — docs/issues.md 2026-07-06); restore/recreate in dashboard, update env, then `pnpm db:migrate:production`. `SELF_SERVE_SIGNUP` decision recorded in D-028.
+  - (resolved 2026-07-06) Supabase project `xyvioekqwmbgrwlinzxe` restored by operator; migrations 0001–0013 applied successfully.
 
 ## Completed after v3.0
 
