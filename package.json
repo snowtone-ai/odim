@@ -24,6 +24,7 @@
     "issue:bootstrap-api-key": "node scripts/issue-bootstrap-api-key.mjs",
     "db:migrate:staging": "node scripts/apply-db-migrations.mjs staging",
     "db:migrate:production": "node scripts/apply-db-migrations.mjs production",
+    "db:seed:default-org": "node scripts/seed-default-org.mjs",
     "rls:staging": "node scripts/run-staging-rls-smoke.mjs",
     "release:audit": "node scripts/release-audit.mjs",
     "verify": "node scripts/verify.mjs",

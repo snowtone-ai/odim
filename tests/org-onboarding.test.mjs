@@ -259,7 +259,7 @@ test("invite acceptance fails closed when the pepper is not configured", async (
 });
 
 test("onboarding endpoints are SSO-exempt and migration 0013 is registered with RLS", () => {
-  const middleware = readFileSync("middleware.ts", "utf8");
+  const middleware = readFileSync("proxy.ts", "utf8");
   assert.match(middleware, /"\/api\/orgs"/);
   assert.match(middleware, /"\/api\/org-invites\/accept"/);
 
