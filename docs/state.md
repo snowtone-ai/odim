@@ -2,12 +2,12 @@
 
 ## Current
 - Branch: feat/lp-005-observability (LP-004 merged to main via PR #6)
-- Active task: LP-005 observability & error tracking — implemented, verification green
+- Active task: LP-005 observability & error tracking — implemented, reviewed, recommendations applied
 - Current executor: main agent
 - Write lock: none
 - Coordinator: main agent
-- Latest verification pointer: LP-005 — `lib/observability/**` (structured logger with redaction, bounded per-route metrics, SDK-free Sentry-protocol reporter, route instrumentation wrapper, Supabase latency probe), extended `/api/health`, admin-scoped `/api/observability`, 9 v1 routes instrumented; `tests/observability.test.mjs` 10/10, full suite 131/131, typecheck/lint/build green
-- Verification mode: Tier 1 class (new external API + 300+ line diff) — fresh-context Sonnet review
+- Latest verification pointer: LP-005 — `lib/observability/**` (structured logger with redaction, bounded per-route metrics, SDK-free Sentry-protocol reporter, route instrumentation wrapper, Supabase latency probe), extended `/api/health`, admin-scoped `/api/observability`, 9 v1 routes instrumented; `tests/observability.test.mjs` 12/12, full suite 133/133, typecheck/lint/build/verify green
+- Verification mode: Tier 1 class (new external API + 300+ line diff) — fresh-context Sonnet review PASS-with-recommendations, all recommendations applied (see tasks.md LP-005 Review Notes)
 - Human gate outstanding: Supabase project `xyvioekqwmbgrwlinzxe` no longer exists (staging+production URLs both dead — docs/issues.md 2026-07-06); restore/recreate in dashboard, update env, then `pnpm db:migrate:production`. `SELF_SERVE_SIGNUP` decision recorded in D-028.
 
 ## Completed after v3.0

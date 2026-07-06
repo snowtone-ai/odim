@@ -154,7 +154,28 @@ test("reportError is a no-op sink without a DSN and never throws on delivery fai
       fetchImpl: async () => new Response("nope", { status: 403 })
     });
     assert.deepEqual(rejected, { delivered: false, reason: "rejected" });
+
+    // AbortSignal.timeout raises a DOMException named TimeoutError, not a plain
+    // Error — the never-throws contract must hold for that class too.
+    const timedOut = await reportError(new Error("boom"), {}, {
+      env: { SENTRY_DSN: "https://pubkey@sentry.example.io/42" },
+      fetchImpl: async () => {
+        throw new DOMException("The operation was aborted due to timeout", "TimeoutError");
+      }
+    });
+    assert.deepEqual(timedOut, { delivered: false, reason: "network" });
   });
+});
+
+test("sentry envelopes scrub token shapes and connection-string credentials from error messages", () => {
+  const { body } = buildSentryEnvelope({
+    error: new Error('relation missing: postgres://postgres:hunter2@db.example.com/app token odim_key_abc123'),
+    environment: "local"
+  });
+  const event = JSON.parse(body.split("\n")[2]);
+  const value = event.exception.values[0].value;
+  assert.doesNotMatch(value, /hunter2|odim_key_abc123/);
+  assert.match(value, /\[redacted\]@db\.example\.com/);
 });
 
 test("api metrics aggregate per-route counters and cap the error ring buffer", () => {
@@ -186,6 +207,9 @@ test("instrumented routes pass responses through and convert crashes to generic 
     const okResponse = await ok(new Request("http://localhost/test", { method: "POST" }));
     assert.equal(okResponse.status, 201);
 
+    // The message below is a fixture: it appears in local app.error log output
+    // by design (local logs are trusted); the assertion is that it never
+    // reaches the HTTP response body.
     const crash = instrumentApiRoute("test/crash", async () => {
       throw new Error("supabase schema detail that must not leak");
     });
@@ -254,5 +278,14 @@ test("observability endpoint returns the admin metrics snapshot", async () => {
     assert.equal(body.errorTracking.enabled, false);
     assert.equal(body.requestLogging.enabled, false);
     resetApiMetrics();
+  });
+});
+
+test("observability endpoint requires an API key when auth is enforced", async () => {
+  await withEnv({ ...quietLocalEnv, AUTH_REQUIRED: "true" }, async () => {
+    const response = await observabilityGet(new Request("http://localhost/api/observability"));
+    assert.equal(response.status, 401, "metrics must not be readable without credentials");
+    const body = await response.json();
+    assert.ok(!("metrics" in body), "auth failures must not include the snapshot");
   });
 });

@@ -1,5 +1,5 @@
 import { getRuntimeEnvironment } from "../env/runtime.ts";
-import { logEvent, redactLogFields } from "./logger.ts";
+import { logEvent, redactLogFields, scrubSecretTextShapes } from "./logger.ts";
 
 export type ParsedSentryDsn = {
   protocol: string;
@@ -45,7 +45,7 @@ export function buildSentryEnvelope(input: {
     platform: "javascript",
     level: "error",
     environment: input.environment,
-    exception: { values: [{ type, value: value.slice(0, 500) }] },
+    exception: { values: [{ type, value: scrubSecretTextShapes(value).slice(0, 500) }] },
     tags: { app: "odim" },
     extra: redactLogFields(input.context ?? {})
   };

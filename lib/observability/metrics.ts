@@ -28,7 +28,8 @@ const MAX_RECENT_ERRORS = 20;
 const MAX_ERROR_MESSAGE_LENGTH = 200;
 
 function counterKey(route: string) {
-  // Unknown-route growth is bounded; overflow traffic aggregates into one bucket.
+  // Unknown-route growth is bounded at MAX_TRACKED_ROUTES + 1 entries:
+  // overflow traffic aggregates into the extra "(other)" bucket.
   return routeCounters.has(route) || routeCounters.size < MAX_TRACKED_ROUTES ? route : "(other)";
 }
 
