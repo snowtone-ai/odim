@@ -9,6 +9,12 @@ export default function LoginPage() {
         <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
           Complete SSO with your identity provider, then return through `/api/auth/callback`.
         </p>
+        <p className="mt-4 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
+          New to Odim?{" "}
+          <a href="/signup" style={{ color: "var(--rune)" }}>
+            Create a workspace →
+          </a>
+        </p>
       </div>
     </main>
   );

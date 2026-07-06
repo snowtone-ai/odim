@@ -1,9 +1,13 @@
 export type SsoProvider = "none" | "saml" | "oidc";
 
+// "selfserve" sessions are issued by the env-gated signup and token-verified
+// invite-accept routes rather than an external identity provider.
+export type SsoSessionProvider = Exclude<SsoProvider, "none"> | "selfserve";
+
 export type SsoSession = {
   email: string;
   orgId: string;
-  provider: Exclude<SsoProvider, "none">;
+  provider: SsoSessionProvider;
   exp: number;
 };
 
@@ -71,7 +75,7 @@ export function resolveSsoOrgId(email: string, explicitOrgId?: string | null) {
   return process.env.DEFAULT_ORG_ID ?? "11111111-1111-4111-8111-111111111111";
 }
 
-export async function issueSsoSession(input: { email: string; orgId?: string | null; provider: Exclude<SsoProvider, "none">; ttlSeconds?: number }) {
+export async function issueSsoSession(input: { email: string; orgId?: string | null; provider: SsoSessionProvider; ttlSeconds?: number }) {
   const body = {
     email: input.email,
     orgId: resolveSsoOrgId(input.email, input.orgId),

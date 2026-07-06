@@ -41,6 +41,17 @@ function CtaButtons() {
         Open Console
       </Link>
       <Link
+        href="/signup"
+        className="rounded-[var(--radius-md)] px-5 py-2.5 text-sm font-medium transition-colors hover:text-[var(--text-primary)]"
+        style={{
+          border: "1px solid var(--line-soft)",
+          color: "var(--text-secondary)",
+          background: "transparent"
+        }}
+      >
+        Start Free Trial
+      </Link>
+      <Link
         href="/login"
         className="rounded-[var(--radius-md)] px-5 py-2.5 text-sm font-medium transition-colors hover:text-[var(--text-primary)]"
         style={{
