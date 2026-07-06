@@ -23,7 +23,7 @@ test("health endpoint returns ok status with non-sensitive checks only", async (
 });
 
 test("health endpoint is exempt from SSO middleware gating", () => {
-  const middleware = readFileSync("middleware.ts", "utf8");
+  const middleware = readFileSync("proxy.ts", "utf8");
   assert.match(middleware, /\/api\/health/);
 });
 
@@ -114,7 +114,7 @@ test("landing footer links to docs and legal pages", () => {
 });
 
 test("new public pages are not gated by middleware protected prefixes", () => {
-  const middleware = readFileSync("middleware.ts", "utf8");
+  const middleware = readFileSync("proxy.ts", "utf8");
   for (const path of ["/docs", "/terms", "/privacy", "/security"]) {
     assert.ok(!middleware.includes(`"${path}"`), `${path} must stay public`);
   }

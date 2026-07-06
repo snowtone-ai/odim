@@ -194,7 +194,7 @@ test("webhook route fails closed without billing env and rejects bad signatures"
 });
 
 test("stripe webhook is exempt from SSO middleware and migration 0012 is registered", () => {
-  const middleware = readFileSync("middleware.ts", "utf8");
+  const middleware = readFileSync("proxy.ts", "utf8");
   assert.match(middleware, /\/api\/billing\/webhook/);
 
   const runner = readFileSync("scripts/apply-db-migrations.mjs", "utf8");

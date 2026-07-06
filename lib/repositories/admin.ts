@@ -173,7 +173,7 @@ export async function getAdminSettings(context: OrgContext = {}) {
 
   const client = createServerSupabaseReadClient();
   const [orgResult, usersResult, apiKeysResult, alertRulesResult, ingestionRunsResult, sourceWatermarksResult] = await Promise.all([
-    client.from("orgs").select("id, name, tier").eq("id", orgId).single(),
+    client.from("orgs").select("id, name, tier").eq("id", orgId).maybeSingle(),
     client.from("users").select("id, org_id, display_name, role").eq("org_id", orgId).limit(100),
     client
       .from("api_keys")
@@ -214,6 +214,10 @@ export async function getAdminSettings(context: OrgContext = {}) {
   if (firstError) {
     if (shouldFallbackFromSupabaseError(firstError.message)) return fallbackAdminSettings(orgId);
     throw new Error(`admin settings read failed: ${firstError.message}`);
+  }
+  if (!orgResult.data) {
+    if (!isProductionRuntime()) return fallbackAdminSettings(orgId);
+    throw new Error(`admin settings read failed: org ${orgId} is not provisioned (run pnpm db:seed:default-org)`);
   }
 
   return {

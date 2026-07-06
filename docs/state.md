@@ -10,7 +10,8 @@
 - Verification mode: Tier 1 class (300+ line diff) — fresh-context Sonnet review PASS-with-recommendations, all applied (see tasks.md LP-006/007/008 Review Notes)
 - Human gates outstanding: none.
 - Legal pages (`/terms`, `/privacy`, `/security`): substantive content complete (Japan/Tokyo governing law, APPI/GDPR, processor list, support-channel contact). Formal legal review deferred — practice product.
-- Supabase: project `xyvioekqwmbgrwlinzxe` restored by operator; migrations 0001–0013 applied 2026-07-06.
+- Supabase: project `xyvioekqwmbgrwlinzxe` restored by operator; migrations 0001–0014 applied 2026-07-06.
+- Settings page fix (2026-07-06): migration `0014_service_role_grants.sql` grants service_role/authenticated on org_billing/billing_events/org_invites (0012/0013 omitted them → "permission denied for table org_billing"); `scripts/seed-default-org.mjs` seeds the DEFAULT_ORG_ID org so `getAdminSettings` resolves it. Applied to production; `/settings` returns 200 clean. verify/typecheck/lint/test (143/143) green.
 
 ## Completed after v3.0
 

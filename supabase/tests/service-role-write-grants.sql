@@ -9,5 +9,8 @@ grant all privileges on
   ontology_links,
   alerts,
   audit_log,
-  munin_memory
+  munin_memory,
+  org_billing,
+  billing_events,
+  org_invites
 to service_role;
