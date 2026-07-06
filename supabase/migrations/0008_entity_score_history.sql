@@ -16,5 +16,8 @@ CREATE INDEX IF NOT EXISTS idx_entity_score_history_lookup
 
 ALTER TABLE entity_score_history ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "entity_score_history_read"
-  ON entity_score_history FOR SELECT USING (true);
+DO $$ BEGIN
+  CREATE POLICY "entity_score_history_read"
+    ON entity_score_history FOR SELECT USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
