@@ -1,5 +1,53 @@
 # tasks.md
 
+## Active Program: Launch Readiness (LP)
+
+Goal: close the gap between "code-complete platform" and "marketable commercial product".
+Ordered by launch impact per token. One LP task group per session.
+
+### LP-000 — Baseline repair: failing mobile-layout test — DONE (this session)
+- Owner: main agent
+- Write Scope: `tests/mobile-layout.test.mjs`
+- Acceptance: full test suite green on main baseline.
+- Evidence: commit 3086b9f changed shell main margin to `+20px` without updating the test; test expectation aligned to implementation.
+
+### LP-001 — Operational health endpoint — DONE (this session)
+- Owner: main agent
+- Write Scope: `app/api/health/route.ts`, `middleware.ts`, `tests/launch-surfaces.test.mjs`
+- Acceptance: `GET /api/health` returns status/runtime/uptime/non-sensitive booleans, is SSO-exempt, never leaks secrets/URLs/key material.
+- Verification: `tests/launch-surfaces.test.mjs` includes a secret-leak regex guard.
+
+### LP-002 — Public landing page + shell scoping — DONE (this session)
+- Owner: main agent
+- Write Scope: `app/page.tsx`, `app/layout.tsx`, `app/(dashboard)/layout.tsx`, `tests/launch-surfaces.test.mjs`
+- Acceptance: root `/` is a public marketing surface (hero, principles, layers, audiences, sources, CTA to `/login` and `/map`); dashboard Shell/CommandPalette move to `(dashboard)` group layout so `/` and `/login` render without the sidebar; `/` remains outside the SSO-protected path list.
+- Verification: launch-surfaces tests + full suite + build.
+
+### LP-002.1 — Stop build-time DB reads on dashboard pages — DONE (this session)
+- Owner: main agent
+- Write Scope: `app/(dashboard)/alerts/page.tsx`, `app/(dashboard)/entity/page.tsx`
+- Finding: `/alerts` and `/entity` were statically prerendered while calling Supabase-backed repositories, so builds fetched live data and baked it into static HTML (stale + tenant-boundary risk; build fails entirely when Supabase is unreachable). `/settings` and `/huginn` were already `force-dynamic`.
+- Fix: added `export const dynamic = "force-dynamic"` to both pages so repository reads happen per-request.
+
+### LP-003 — Billing & plan entitlements (env-gated) — BACKLOG
+- Risk: HIGH (billing class → Tier 2 review; stop before any live Stripe activation).
+- Scope sketch: plan catalog (trial/pro/enterprise), org entitlement persistence + migration, env-gated Stripe checkout + webhook routes, entitlement checks in `lib/auth/request.ts` scopes, Settings billing panel. Local mode stays free/open.
+
+### LP-004 — Self-serve org onboarding — BACKLOG
+- Risk: HIGH (auth class). Org creation flow, member invites, API key issuance UI in Settings, first-run guidance.
+
+### LP-005 — Observability & error tracking — BACKLOG
+- Structured request logging, env-gated Sentry (or equivalent) hook, error-rate visibility; extend `/api/health` with dependency latency probes.
+
+### LP-006 — Public API docs surface — BACKLOG
+- Publish `docs/api-reference.md` as a public `/docs` route from the landing page.
+
+### LP-007 — Legal readiness pages — BACKLOG
+- Terms, privacy, and security posture pages linked from landing footer (content approval is a human gate).
+
+### LP-008 — Landing SEO/meta polish — BACKLOG
+- OG metadata, sitemap.xml, robots.txt, per-page titles.
+
 ## Completed Ledger: AI Native Upgrade 1+2
 
 ### AI-NATIVE-001 — Reality GraphRAG Decision Workbench

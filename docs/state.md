@@ -1,12 +1,12 @@
 # state.md
 
 ## Current
-- Branch: main after AI Native Upgrade 1+2 adoption
-- Active task: none
-- Current executor: none
+- Branch: feat/launch-readiness (Launch Readiness Program LP-000..LP-002)
+- Active task: LP-000..LP-002 implemented; LP-003+ in tasks.md backlog
+- Current executor: main agent
 - Write lock: none
-- Coordinator: none
-- Latest verification pointer: AI Native Upgrade 1+2 completed, reviewed, browser-confirmed, and prepared for main; `test`, `typecheck`, `lint`, `build`, `verify`, and CSS-aware `browser:smoke` passed
+- Coordinator: main agent
+- Latest verification pointer: LP session — mobile-layout test aligned to shell `+20px`, `/api/health` added (SSO-exempt, non-sensitive), root `/` is a public landing page with Shell moved to `app/(dashboard)/layout.tsx`; focused `tests/launch-surfaces.test.mjs` 6/6, full suite results recorded in tasks.md
 - Verification mode: standard
 
 ## Completed after v3.0
