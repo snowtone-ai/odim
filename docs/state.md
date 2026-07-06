@@ -8,9 +8,9 @@
 - Coordinator: main agent
 - Latest verification pointer: LP-006/007/008 — public `/docs` (renders `docs/api-reference.md` via trusted markdown parser, no raw HTML), `/terms` `/privacy` `/security` legal pages with shared `PublicShell`, landing footer links, OG/twitter metadata + title template in root layout, `sitemap.xml` (public routes only), `robots.txt` (disallows `/api/`, dashboard prefixes, `/invite`), per-page titles on 13 pages; launch-surfaces tests extended; typecheck/lint/build/verify green
 - Verification mode: Tier 1 class (300+ line diff) — fresh-context Sonnet review PASS-with-recommendations, all applied (see tasks.md LP-006/007/008 Review Notes)
-- Human gates outstanding:
-  - Legal content approval before first public deploy (governing law Japan/Tokyo drafted; no published contact address; processor list must match deployed config) — tasks.md LP-007.
-  - (resolved 2026-07-06) Supabase project `xyvioekqwmbgrwlinzxe` restored by operator; migrations 0001–0013 applied successfully.
+- Human gates outstanding: none.
+- Legal pages (`/terms`, `/privacy`, `/security`): substantive content complete (Japan/Tokyo governing law, APPI/GDPR, processor list, support-channel contact). Formal legal review deferred — practice product.
+- Supabase: project `xyvioekqwmbgrwlinzxe` restored by operator; migrations 0001–0013 applied 2026-07-06.
 
 ## Completed after v3.0
 
