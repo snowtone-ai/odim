@@ -1,13 +1,14 @@
 # state.md
 
 ## Current
-- Branch: feat/billing-entitlements (LP-003; LP-000..LP-002 merged to main via PR #3)
-- Active task: LP-003 billing & plan entitlements (env-gated Stripe)
+- Branch: feat/org-onboarding (LP-004; LP-003 merged to main via PR #4)
+- Active task: LP-004 self-serve org onboarding — implementation + review complete, PR open
 - Current executor: main agent
 - Write lock: none
 - Coordinator: main agent
-- Latest verification pointer: LP-003 — plan catalog `lib/billing/plans.ts`, env-gated Stripe REST + webhook signature verification `lib/billing/stripe.ts`, `org_billing`/`billing_events` migration 0012, checkout/webhook API routes, entitlement gate in `lib/auth/request.ts` (BILLING_ENFORCED), Settings billing panel; `tests/billing.test.mjs` 7/7, full suite 111/111
-- Verification mode: Tier 2 (billing class)
+- Latest verification pointer: LP-004 — invite token logic `lib/onboarding/invites.ts`, onboarding repository `lib/repositories/onboarding.ts`, migration 0013 (`org_invites` + `users.email`), env-gated signup `app/api/orgs`, invite lifecycle `app/api/org-invites{,/accept}`, Settings API-key/members UI, public `/signup` + `/invite`; `tests/org-onboarding.test.mjs` 10/10, full suite 121/121, typecheck/lint/build/verify green
+- Verification mode: Tier 2 class (auth) — fresh-context Sonnet high-effort substitution, blockers fixed
+- Human gate outstanding: apply migration 0013 to production Supabase; decide whether/where to set `SELF_SERVE_SIGNUP=true`
 
 ## Completed after v3.0
 
