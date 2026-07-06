@@ -65,9 +65,9 @@ export function ProseSections({ sections }: { sections: { heading: string; body:
           <h2 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
             {section.heading}
           </h2>
-          {section.body.map((paragraph) => (
+          {section.body.map((paragraph, index) => (
             <p
-              key={paragraph.slice(0, 40)}
+              key={index}
               className="mt-3 text-sm leading-relaxed"
               style={{ color: "var(--text-secondary)" }}
             >

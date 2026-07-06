@@ -66,6 +66,17 @@ test("markdown parser handles headings, nested lists, inline and fenced code", (
   assert.equal(blocks[3].code, '{ "data": [] }');
 });
 
+test("markdown parser terminates on malformed input", () => {
+  // Unclosed fence must consume to EOF without hanging.
+  const unclosed = parseMarkdown('```json\n{ "x": 1 }');
+  assert.equal(unclosed[0].type, "code");
+  assert.equal(unclosed[0].code, '{ "x": 1 }');
+  // Blank-only input and odd indentation must not loop or throw.
+  assert.deepEqual(parseMarkdown("\n\n  \n"), []);
+  const odd = parseMarkdown("      - deep item\n\ttabbed text");
+  assert.ok(odd.length >= 1);
+});
+
 test("docs route renders the real API reference without raw HTML injection", () => {
   const page = readFileSync("app/docs/page.tsx", "utf8");
   assert.match(page, /api-reference\.md/);

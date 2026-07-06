@@ -33,7 +33,7 @@ export function parseMarkdown(markdown: string): MarkdownBlock[] {
       continue;
     }
 
-    const fence = line.match(/^```(\w*)\s*$/);
+    const fence = line.match(/^```([\w+-]*)\s*$/);
     if (fence) {
       const code: string[] = [];
       index += 1;
