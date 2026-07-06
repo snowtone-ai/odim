@@ -11,8 +11,8 @@ Next.js 16 App Router + Supabase + Gemini AI. Ingests public signals (SEC, FERC,
 5. `lib/auth/request.ts` — auth flow, every API route calls this
 
 ## Architecture
-- **UI:** `app/(dashboard)/` — 5 pages: map, entity, alerts, huginn, settings; `components/ui/`
-- **Routing:** Next.js App Router; `middleware.ts` applies security headers plus SSO session enforcement; `app/api/` includes `v1/`, export, audit-export, push-subscribe, auth callback, and existing handlers.
+- **UI:** `app/(dashboard)/` — 5 pages: map, entity, alerts, huginn, settings; Shell/CommandPalette live in `app/(dashboard)/layout.tsx`; `app/page.tsx` is the public landing page; `components/ui/`
+- **Routing:** Next.js App Router; `middleware.ts` applies security headers plus SSO session enforcement (`/`, `/login`, `/api/health` stay public); `app/api/` includes `v1/`, health, export, audit-export, push-subscribe, auth callback, and existing handlers.
 - **Domain:** `lib/huginn/` (cascade, grading, bias, precompute); `lib/graphrag/` (Evidence GraphRAG); `lib/watchtower/` (playbooks, runs, approvals); `lib/munin/` (memory, dream, write-gate, seed); `lib/ai/ensemble.ts` for multi-provider generation.
 - **Data:** `lib/repositories/admin.ts`, `reality.ts`, `evidence-graph.ts`, and `watchtower.ts` — Supabase or fallback fixtures; `lib/pipeline/` adds scoring, freshness, diff, calibration, attribution, anomaly, sentiment, sector-rotation, and backtest.
 - **External:** Gemini/OpenAI/Claude provider hooks; Supabase (`lib/supabase/client.ts`); scrapers (`scrapers/`) now include SEC expansion, FRED, Federal Register, EDINET, Companies House, USAspending, OpenSanctions, FEMA, SAM.gov, NRC, and ISO queue coverage.
