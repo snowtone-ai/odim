@@ -1,8 +1,9 @@
 import { jsonApiResponse, parsePagination, authorizeV1Request, enforceV1RateLimit } from "@/lib/api/v1-router";
+import { instrumentApiRoute } from "@/lib/observability/instrument";
 import { listEntities } from "@/lib/repositories/reality";
 import { NextResponse } from "next/server";
 
-export async function GET(request: Request) {
+async function handleGet(request: Request) {
   try {
     const auth = await authorizeV1Request(request, "entities:read");
     if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
@@ -22,3 +23,5 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export const GET = instrumentApiRoute("v1/entities", handleGet);

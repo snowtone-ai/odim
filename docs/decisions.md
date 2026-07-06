@@ -103,3 +103,11 @@
 ## D-026: Self-serve onboarding is env-gated with hashed single-use invite tokens
 - Decision: Public org signup requires `SELF_SERVE_SIGNUP=true` (fail-closed 503 otherwise); member invites store only peppered HMAC token hashes, are claimed atomically exactly once, and sessions issued by signup/accept use a distinct `selfserve` provider tag. Seat ceilings bind only when `BILLING_ENFORCED=true`.
 - Reason: Commercial onboarding must not widen the enterprise SSO/API-key attack surface by default; token-as-credential endpoints stay SSO-exempt but rate-limited (spoof-resistant client key + global buckets) and indistinguishable-on-failure.
+
+## D-027: Observability is SDK-free, env-gated, and in-process
+- Decision: Structured JSON request logs (secret-name and token-shape redaction, `REQUEST_LOGGING=false` opt-out), a Sentry-protocol error reporter over plain fetch gated on `SENTRY_DSN` (3s timeout, never throws, local log always emitted), and bounded in-process per-route counters surfaced as aggregates on public `/api/health` and in full behind admin:read `/api/observability`. The v1 API surface is wrapped by `instrumentApiRoute`.
+- Reason: No new dependencies or vendor lock; fail-visible external delivery; per-instance counters are an accepted bound for a pre-launch product. Route names and error messages stay behind admin scope while the public health probe exposes only booleans, latencies, and totals.
+
+## D-028: Operator gates executed by agent on operator instruction (practice product)
+- Decision: The operator delegated LP-004 human gates (2026-07-06). Migration 0013 application was attempted but is blocked: both staging and production DSNs point at Supabase tenant `xyvioekqwmbgrwlinzxe`, which the pooler reports as not found (project deleted or paused). `SELF_SERVE_SIGNUP` stays `false` in `.env.example` (fail-closed template); it should be set `true` per deployed environment once one exists — no linked deployment (no `.vercel`/`vercel.json`) exists today.
+- Reason: This is a non-launching practice product; the operator granted decision authority. Restoring or recreating the Supabase project requires dashboard authentication, which remains a human task.

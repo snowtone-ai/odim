@@ -1,8 +1,9 @@
 import { authorizeV1Request, enforceV1RateLimit } from "@/lib/api/v1-router";
+import { instrumentApiRoute } from "@/lib/observability/instrument";
 import { getEntityDetail } from "@/lib/repositories/reality";
 import { NextResponse } from "next/server";
 
-export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
+async function handleGet(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const auth = await authorizeV1Request(request, "entities:read");
     if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
@@ -17,3 +18,5 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export const GET = instrumentApiRoute("v1/entity-detail", handleGet);

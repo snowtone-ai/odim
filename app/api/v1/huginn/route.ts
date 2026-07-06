@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { authorizeV1Request, enforceV1RateLimit } from "@/lib/api/v1-router";
+import { instrumentApiRoute } from "@/lib/observability/instrument";
 import { answerHuginnQuestion } from "@/lib/huginn/query";
 
-export async function POST(request: Request) {
+async function handlePost(request: Request) {
   try {
     const auth = await authorizeV1Request(request, "huginn:query");
     if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
@@ -21,3 +22,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export const POST = instrumentApiRoute("v1/huginn", handlePost);

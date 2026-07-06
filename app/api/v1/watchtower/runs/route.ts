@@ -1,8 +1,9 @@
 import { enforceV1RateLimit, authorizeV1Request, parsePagination, paginateRows, buildLinks } from "@/lib/api/v1-router";
+import { instrumentApiRoute } from "@/lib/observability/instrument";
 import { listWatchtowerRuns } from "@/lib/repositories/watchtower";
 import { NextResponse } from "next/server";
 
-export async function GET(request: Request) {
+async function handleGet(request: Request) {
   try {
     const auth = await authorizeV1Request(request, "alerts:read");
     if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
@@ -29,3 +30,5 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export const GET = instrumentApiRoute("v1/watchtower-runs", handleGet);
