@@ -29,9 +29,18 @@ Ordered by launch impact per token. One LP task group per session.
 - Finding: `/alerts` and `/entity` were statically prerendered while calling Supabase-backed repositories, so builds fetched live data and baked it into static HTML (stale + tenant-boundary risk; build fails entirely when Supabase is unreachable). `/settings` and `/huginn` were already `force-dynamic`.
 - Fix: added `export const dynamic = "force-dynamic"` to both pages so repository reads happen per-request.
 
-### LP-003 — Billing & plan entitlements (env-gated) — BACKLOG
-- Risk: HIGH (billing class → Tier 2 review; stop before any live Stripe activation).
-- Scope sketch: plan catalog (trial/pro/enterprise), org entitlement persistence + migration, env-gated Stripe checkout + webhook routes, entitlement checks in `lib/auth/request.ts` scopes, Settings billing panel. Local mode stays free/open.
+### LP-003 — Billing & plan entitlements (env-gated) — DONE (this session)
+- Owner: main agent
+- Risk: HIGH (billing class → Tier 2 review; no live Stripe activation — all Stripe behavior is env-gated and no real keys exist in the repo).
+- Write Scope: `lib/billing/plans.ts`, `lib/billing/stripe.ts`, `lib/repositories/billing.ts`, `app/api/billing/checkout/route.ts`, `app/api/billing/webhook/route.ts`, `lib/auth/request.ts`, `middleware.ts`, `supabase/migrations/0012_billing_entitlements.sql`, `scripts/apply-db-migrations.mjs`, `app/(dashboard)/settings/page.tsx`, `components/ui/billing-panel.tsx`, `lib/i18n/messages.ts`, `.env.example`, `tests/billing.test.mjs`
+- Acceptance:
+  - Plan catalog (trial/pro/enterprise) with ascending entitlements; `org_billing` + append-only `billing_events` tables with RLS (org read-only; writes service-role only).
+  - Checkout route authorizes `admin:write`, validates plan, fails closed (503) when Stripe env is absent; redirect URLs are always same-origin.
+  - Webhook route verifies Stripe HMAC signatures (replay-window tolerance), is idempotent via unique `stripe_event_id`, and maps checkout/subscription lifecycle events to org billing state.
+  - Entitlement gate in `authorizeApiRequest`: only when `BILLING_ENFORCED=true` — blocks canceled subscriptions/expired trials (403) and applies per-plan API rate ceilings (429). Local mode stays free/open.
+  - Settings shows a Plan & Billing panel (en/ja) with env-gated upgrade buttons.
+- Verification: `tests/billing.test.mjs` 7/7 (signature verify, event mapping, fail-closed routes, activity gate, middleware exemption, migration registration); full suite 111/111; typecheck/lint/build/verify green.
+- Review Notes: Tier 2 (billing class) fresh-context review required before merge.
 
 ### LP-004 — Self-serve org onboarding — BACKLOG
 - Risk: HIGH (auth class). Org creation flow, member invites, API key issuance UI in Settings, first-run guidance.

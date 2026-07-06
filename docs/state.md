@@ -1,13 +1,13 @@
 # state.md
 
 ## Current
-- Branch: feat/launch-readiness (Launch Readiness Program LP-000..LP-002)
-- Active task: LP-000..LP-002 implemented; LP-003+ in tasks.md backlog
+- Branch: feat/billing-entitlements (LP-003; LP-000..LP-002 merged to main via PR #3)
+- Active task: LP-003 billing & plan entitlements (env-gated Stripe)
 - Current executor: main agent
 - Write lock: none
 - Coordinator: main agent
-- Latest verification pointer: LP session — mobile-layout test aligned to shell `+20px`, `/api/health` added (SSO-exempt, non-sensitive), root `/` is a public landing page with Shell moved to `app/(dashboard)/layout.tsx`; focused `tests/launch-surfaces.test.mjs` 6/6, full suite results recorded in tasks.md
-- Verification mode: standard
+- Latest verification pointer: LP-003 — plan catalog `lib/billing/plans.ts`, env-gated Stripe REST + webhook signature verification `lib/billing/stripe.ts`, `org_billing`/`billing_events` migration 0012, checkout/webhook API routes, entitlement gate in `lib/auth/request.ts` (BILLING_ENFORCED), Settings billing panel; `tests/billing.test.mjs` 7/7, full suite 111/111
+- Verification mode: Tier 2 (billing class)
 
 ## Completed after v3.0
 

@@ -167,6 +167,7 @@ export const messages = {
         panels: {
           alertRules: "Alert Rules",
           watchtower: "Watchtower Workflows",
+          billing: "Plan & Billing",
           apiKeys: "API Keys",
           permissions: "Team Permissions",
           ontology: "Ontology Explorer",
@@ -176,6 +177,7 @@ export const messages = {
         copy: {
           alertRules: "Watchlist, layer, and confidence thresholds backed by deterministic alert evidence.",
           watchtower: "Approval-gated agentic workflows with source coverage, trace completeness, and external dispatch controls.",
+          billing: "Subscription plan, entitlements, and Stripe-backed upgrades.",
           apiKeys: "External AI agent access uses org-scoped API routes, extendable to MCP.",
           permissions: "Org roles: analyst / admin.",
           ontology: "Advanced object, link, and action type inspection.",
@@ -198,6 +200,17 @@ export const messages = {
         language: {
           panel: "Language",
           description: "Interface language for all screens."
+        },
+        billing: {
+          currentPlan: "Current plan",
+          status: "Status",
+          periodEnd: "Renews",
+          upgradePro: "Upgrade to Pro",
+          upgradeEnterprise: "Upgrade to Enterprise",
+          notEnabled: "Billing not enabled in this environment — all features unlocked",
+          checkoutFailed: "Checkout failed",
+          planNames: { trial: "Trial", pro: "Pro", enterprise: "Enterprise" },
+          statusNames: { trialing: "Trialing", active: "Active", pastDue: "Past due", canceled: "Canceled" }
         },
         sourceHealth: {
           title: "Data Source Health",
@@ -429,6 +442,7 @@ export const messages = {
         panels: {
           alertRules: "アラートルール",
           watchtower: "Watchtower ワークフロー",
+          billing: "プランと課金",
           apiKeys: "APIキー",
           permissions: "チーム権限",
           ontology: "オントロジー",
@@ -438,6 +452,7 @@ export const messages = {
         copy: {
           alertRules: "ウォッチリスト・レイヤー・信頼度のしきい値に基づくルール設定です。",
           watchtower: "出典カバレッジ、推論トレース、人間承認を必須にするエージェント型ワークフローです。",
+          billing: "サブスクリプションプラン・エンタイトルメント・Stripeによるアップグレードです。",
           apiKeys: "外部AIエージェントのアクセスはAPIファーストで設計されており、MCPへの拡張にも対応しています。",
           permissions: "組織ロール：アナリスト / 管理者",
           ontology: "オブジェクト・リンク・アクションタイプの高度な検査機能です。",
@@ -460,6 +475,17 @@ export const messages = {
         language: {
           panel: "言語設定",
           description: "全画面の表示言語を切り替えます。"
+        },
+        billing: {
+          currentPlan: "現在のプラン",
+          status: "ステータス",
+          periodEnd: "更新日",
+          upgradePro: "Proにアップグレード",
+          upgradeEnterprise: "Enterpriseにアップグレード",
+          notEnabled: "この環境では課金が無効です — 全機能が利用可能",
+          checkoutFailed: "チェックアウトに失敗しました",
+          planNames: { trial: "トライアル", pro: "Pro", enterprise: "Enterprise" },
+          statusNames: { trialing: "トライアル中", active: "有効", pastDue: "支払い遅延", canceled: "解約済み" }
         },
         sourceHealth: {
           title: "データソース状態",
