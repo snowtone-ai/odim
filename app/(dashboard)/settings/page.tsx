@@ -17,7 +17,10 @@ import { AlertRuleBuilder } from "@/components/ui/alert-rule-builder";
 import { WebhookSettings } from "@/components/ui/webhook-settings";
 import { WatchtowerWorkflows } from "@/components/ui/watchtower-workflows";
 import { AuditExportControls } from "@/components/ui/audit-export-controls";
+import { BillingPanel } from "@/components/ui/billing-panel";
 import { sourceBackedPlan } from "@/lib/data";
+import { billingEnabled } from "@/lib/billing/stripe";
+import { getOrgBilling } from "@/lib/repositories/billing";
 import { listWatchtowerPlaybooks, listWatchtowerRuns } from "@/lib/repositories/watchtower";
 import { buildCalibrationObservations, buildCalibrationReport } from "@/lib/pipeline/calibration";
 import { computeSourceAttribution } from "@/lib/pipeline/attribution";
@@ -56,13 +59,17 @@ export default async function SettingsPage() {
   const locale = await getLocale();
   const messages = getMessages(locale);
   const screen = messages.screens.settings;
-  const [settings, seeds, watchtower] = await Promise.all([
+  const [settings, seeds, watchtower, billing] = await Promise.all([
     getAdminSettings({ orgId: defaultSettingsOrgId }).catch((err: Error) => {
       console.error("[settings] getAdminSettings failed:", err.message);
       return null;
     }),
     listSeedMemories(defaultSettingsOrgId).catch(() => [] as Awaited<ReturnType<typeof listSeedMemories>>),
-    listWatchtowerRuns({ orgId: defaultSettingsOrgId }).catch(() => ({ runs: [] as Awaited<ReturnType<typeof listWatchtowerRuns>>["runs"] }))
+    listWatchtowerRuns({ orgId: defaultSettingsOrgId }).catch(() => ({ runs: [] as Awaited<ReturnType<typeof listWatchtowerRuns>>["runs"] })),
+    getOrgBilling(defaultSettingsOrgId).catch((err: Error) => {
+      console.error("[settings] getOrgBilling failed:", err.message);
+      return null;
+    })
   ]);
 
   if (!settings) {
@@ -125,6 +132,25 @@ export default async function SettingsPage() {
         />
       )
     },
+    ...(billing
+      ? [
+          {
+            id: "billing",
+            title: screen.panels.billing,
+            description: screen.copy.billing,
+            icon: SETTINGS_ICONS.permissions,
+            content: (
+              <BillingPanel
+                plan={billing.plan}
+                status={billing.status}
+                periodEnd={billing.currentPeriodEnd}
+                billingEnabled={billingEnabled()}
+                labels={screen.billing}
+              />
+            )
+          } satisfies SettingsSection
+        ]
+      : []),
     {
       id: "apiKeys",
       title: screen.panels.apiKeys,

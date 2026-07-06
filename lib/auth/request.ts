@@ -1,5 +1,8 @@
 import { getOrgContextFromRequest, type OrgContext } from "../api/org.ts";
+import { checkRequestRateLimit } from "../api/rate-limit.ts";
 import { assertApiKeyPepperConfigured, isCommercialProductionEnv, prefixForToken, verifyApiKey, type ApiKeyRecord } from "./api-keys.ts";
+import { getPlan } from "../billing/plans.ts";
+import { billingEnforced, getCachedOrgBilling, isSubscriptionActive } from "../repositories/billing.ts";
 import { createServerSupabaseReadClient, createServiceSupabaseClient, hasSupabaseReadEnv, hasSupabaseWriteEnv } from "../supabase/client.ts";
 
 export type ApiAuthResult =
@@ -133,6 +136,23 @@ export async function authorizeApiRequest(request: Request, requiredScope: strin
   clearFailedApiAuthAttempts(authRateLimitKey);
   if (!record.scopes.includes(requiredScope) && !record.scopes.includes("admin:*")) {
     return { ok: false, status: 403, error: "Insufficient API key permissions" };
+  }
+
+  // Entitlement gate: only when billing enforcement is opted in for this
+  // environment. Local/dev deployments without BILLING_ENFORCED stay open.
+  if (billingEnforced()) {
+    const billing = await getCachedOrgBilling(record.orgId);
+    if (!isSubscriptionActive(billing)) {
+      return { ok: false, status: 403, error: "Subscription is inactive; renew the plan to restore API access" };
+    }
+    const entitlements = getPlan(billing.plan).entitlements;
+    const planLimit = checkRequestRateLimit(record.orgId, "plan:api", {
+      maxRequests: entitlements.apiRequestsPerMinute,
+      windowMs: 60_000
+    });
+    if (!planLimit.ok) {
+      return { ok: false, status: 429, error: "Plan API rate limit exceeded" };
+    }
   }
 
   await touchLastUsedAt(record.id, record.orgId);
