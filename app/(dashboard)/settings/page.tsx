@@ -1,3 +1,7 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Settings" };
+
 export const dynamic = "force-dynamic";
 
 import { Screen } from "@/components/ui/screen";

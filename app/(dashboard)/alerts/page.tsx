@@ -1,3 +1,7 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Signal Alerts" };
+
 import { AlertsWorkstation } from "@/components/ui/alerts-workstation";
 import { alerts } from "@/lib/data";
 import { getMessages } from "@/lib/i18n/messages";

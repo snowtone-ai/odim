@@ -1,3 +1,7 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Huginn" };
+
 import { Screen } from "@/components/ui/screen";
 import { HuginnConsole } from "@/components/ui/huginn-console";
 import { submitHuginnQuestion } from "@/app/actions/huginn";

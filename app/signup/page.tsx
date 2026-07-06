@@ -1,3 +1,7 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Create Organization" };
+
 import { SignupForm } from "@/components/ui/signup-form";
 import { getLocale } from "@/lib/i18n/locale";
 import { selfServeSignupEnabled } from "@/lib/onboarding/signup";

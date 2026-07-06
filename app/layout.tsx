@@ -21,9 +21,31 @@ const plexMono = IBM_Plex_Mono({
   variable: "--font-plex-mono"
 });
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+const DESCRIPTION =
+  "Reality Intelligence OS — Substrate layer detection before narrative confirmation";
+
 export const metadata: Metadata = {
-  title: "Odim — Substrate Intelligence",
-  description: "Reality Intelligence OS — Substrate layer detection before narrative confirmation"
+  metadataBase: new URL(APP_URL),
+  title: {
+    default: "Odim — Substrate Intelligence",
+    template: "%s — Odim"
+  },
+  description: DESCRIPTION,
+  openGraph: {
+    title: "Odim — Substrate Intelligence",
+    description: DESCRIPTION,
+    siteName: "Odim",
+    type: "website",
+    url: "/",
+    images: ["/odim-logo.png"]
+  },
+  twitter: {
+    card: "summary",
+    title: "Odim — Substrate Intelligence",
+    description: DESCRIPTION,
+    images: ["/odim-logo.png"]
+  }
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

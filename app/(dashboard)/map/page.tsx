@@ -1,3 +1,7 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Reality Map" };
+
 import { RealityMap } from "@/components/ui/reality-map";
 import { DailyDiffPanel } from "@/components/ui/daily-diff";
 
