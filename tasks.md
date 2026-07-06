@@ -40,7 +40,7 @@ Ordered by launch impact per token. One LP task group per session.
   - Entitlement gate in `authorizeApiRequest`: only when `BILLING_ENFORCED=true` — blocks canceled subscriptions/expired trials (403) and applies per-plan API rate ceilings (429). Local mode stays free/open.
   - Settings shows a Plan & Billing panel (en/ja) with env-gated upgrade buttons.
 - Verification: `tests/billing.test.mjs` 7/7 (signature verify, event mapping, fail-closed routes, activity gate, middleware exemption, migration registration); full suite 111/111; typecheck/lint/build/verify green.
-- Review Notes: Tier 2 (billing class) fresh-context review required before merge.
+- Review Notes: Tier 2 fresh-context Opus review — PASS, no blockers. Applied recommendations: (1) compensating `releaseBillingEvent` delete when the post-record upsert fails, so Stripe retries can re-apply instead of being dropped by the idempotency guard; (2) checkout redirect base prefers `NEXT_PUBLIC_APP_URL` over request origin (reverse-proxy safety). Accepted-as-designed: entitlement cache invalidation is instance-local (≤60s TTL staleness across serverless instances); `isSubscriptionActive` relies on Stripe lifecycle events rather than `current_period_end` as a secondary guard (candidate for LP follow-up).
 
 ### LP-004 — Self-serve org onboarding — BACKLOG
 - Risk: HIGH (auth class). Org creation flow, member invites, API key issuance UI in Settings, first-run guidance.

@@ -27,8 +27,11 @@ export async function POST(request: Request) {
       return Response.json({ error: "Billing is not enabled in this environment" }, { status: 503 });
     }
 
-    // Redirect targets are always same-origin; request bodies must not steer them.
-    const origin = new URL(request.url).origin;
+    // Redirect targets are never taken from the request body. Prefer the
+    // configured public app URL; request origin can be an internal host behind
+    // a reverse proxy.
+    const configured = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, "");
+    const origin = configured || new URL(request.url).origin;
     const session = await createCheckoutSession({
       orgId,
       plan,

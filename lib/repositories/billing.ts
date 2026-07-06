@@ -119,6 +119,17 @@ export async function recordBillingEvent(input: { stripeEventId: string; eventTy
 }
 
 /**
+ * Compensating delete for a recorded billing event whose state update failed.
+ * Lets Stripe's retry re-process the event instead of hitting the idempotency
+ * guard and silently dropping the update.
+ */
+export async function releaseBillingEvent(stripeEventId: string): Promise<void> {
+  if (!hasSupabaseWriteEnv()) return;
+  const { error } = await createServiceSupabaseClient().from("billing_events").delete().eq("stripe_event_id", stripeEventId);
+  if (error) throw new Error(`billing event release failed: ${error.message}`);
+}
+
+/**
  * Cached entitlement resolution for the per-request auth gate. A short TTL
  * keeps webhook-driven plan changes visible within a minute without adding a
  * Supabase read to every API request.

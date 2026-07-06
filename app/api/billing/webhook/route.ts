@@ -3,6 +3,7 @@ import { billingEnabled, verifyStripeWebhookSignature } from "../../../../lib/bi
 import {
   isBillingStatus,
   recordBillingEvent,
+  releaseBillingEvent,
   resetBillingEntitlementCache,
   upsertOrgBilling,
   type BillingStatus
@@ -109,7 +110,16 @@ export async function POST(request: Request) {
       return Response.json({ received: true, ignored: true });
     }
 
-    await upsertOrgBilling(update);
+    try {
+      await upsertOrgBilling(update);
+    } catch (error) {
+      // Undo the idempotency record so Stripe's retry can re-apply the update;
+      // if the release also fails, the event stays recorded and the loss is logged.
+      await releaseBillingEvent(eventId).catch((releaseError) => {
+        console.error("billing webhook could not release event after failed upsert", eventId, releaseError);
+      });
+      throw error;
+    }
     resetBillingEntitlementCache();
     return Response.json({ received: true });
   } catch (error) {
