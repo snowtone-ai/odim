@@ -18,6 +18,10 @@ import { WebhookSettings } from "@/components/ui/webhook-settings";
 import { WatchtowerWorkflows } from "@/components/ui/watchtower-workflows";
 import { AuditExportControls } from "@/components/ui/audit-export-controls";
 import { BillingPanel } from "@/components/ui/billing-panel";
+import { ApiKeyManager } from "@/components/ui/api-key-manager";
+import { OrgMembersPanel } from "@/components/ui/org-members-panel";
+import { ALLOWED_API_KEY_SCOPES, DEFAULT_API_KEY_SCOPES } from "@/lib/auth/api-keys";
+import { listInvites } from "@/lib/repositories/onboarding";
 import { sourceBackedPlan } from "@/lib/data";
 import { billingEnabled } from "@/lib/billing/stripe";
 import { getOrgBilling } from "@/lib/repositories/billing";
@@ -59,7 +63,7 @@ export default async function SettingsPage() {
   const locale = await getLocale();
   const messages = getMessages(locale);
   const screen = messages.screens.settings;
-  const [settings, seeds, watchtower, billing] = await Promise.all([
+  const [settings, seeds, watchtower, billing, invites] = await Promise.all([
     getAdminSettings({ orgId: defaultSettingsOrgId }).catch((err: Error) => {
       console.error("[settings] getAdminSettings failed:", err.message);
       return null;
@@ -69,7 +73,8 @@ export default async function SettingsPage() {
     getOrgBilling(defaultSettingsOrgId).catch((err: Error) => {
       console.error("[settings] getOrgBilling failed:", err.message);
       return null;
-    })
+    }),
+    listInvites({ orgId: defaultSettingsOrgId }).catch(() => [] as Awaited<ReturnType<typeof listInvites>>)
   ]);
 
   if (!settings) {
@@ -99,7 +104,57 @@ export default async function SettingsPage() {
   );
   const attribution = computeSourceAttribution(sourceBackedPlan.rawSignals, sourceBackedPlan.alerts);
 
+  const onboardingSteps = [
+    { label: screen.gettingStarted.stepApiKey, done: settings.apiKeys.length > 0 },
+    { label: screen.gettingStarted.stepInvite, done: settings.members.length > 1 || invites.length > 0 },
+    { label: screen.gettingStarted.stepAlertRule, done: settings.alertRules.length > 0 },
+    { label: screen.gettingStarted.stepHuginn, done: false, href: "/huginn" }
+  ];
+
   const sections: SettingsSection[] = [
+    {
+      id: "gettingStarted",
+      title: screen.panels.gettingStarted,
+      description: screen.copy.gettingStarted,
+      icon: SETTINGS_ICONS.customKnowledge,
+      content: (
+        <div className="grid gap-2.5">
+          {onboardingSteps.map((step) => (
+            <div
+              className="flex items-center justify-between gap-3 pb-2.5 text-[13px]"
+              style={{ borderBottom: "1px solid var(--line-faint)" }}
+              key={step.label}
+            >
+              <span className="flex items-center gap-2.5" style={{ color: "var(--text-primary)" }}>
+                <span
+                  className="mono inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px]"
+                  style={{
+                    border: `1px solid ${step.done ? "var(--rune)" : "var(--line-soft)"}`,
+                    color: step.done ? "var(--rune)" : "var(--text-tertiary)"
+                  }}
+                >
+                  {step.done ? "✓" : ""}
+                </span>
+                {step.label}
+              </span>
+              {step.done ? (
+                <span className="mono shrink-0 text-[10px] uppercase tracking-[0.1em]" style={{ color: "var(--rune)" }}>
+                  {screen.gettingStarted.done}
+                </span>
+              ) : step.href ? (
+                <a
+                  href={step.href}
+                  className="mono shrink-0 text-[10px] uppercase tracking-[0.1em]"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  {screen.gettingStarted.open} →
+                </a>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      )
+    },
     {
       id: "alertRules",
       title: screen.panels.alertRules,
@@ -157,28 +212,19 @@ export default async function SettingsPage() {
       description: screen.copy.apiKeys,
       icon: SETTINGS_ICONS.apiKeys,
       content: (
-        <>
-          <div className="mono text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
-            {locale === "ja" ? "ハッシュ済みキー / ワンタイム発行" : "hashed keys / one-time token issue"}
-          </div>
-          <div className="mt-4 grid gap-2.5">
-            {settings.apiKeys.map((key) => (
-              <div
-                className="pb-3"
-                style={{ borderBottom: "1px solid var(--line-faint)" }}
-                key={key.id}
-              >
-                <div className="flex items-center justify-between text-[13px]">
-                  <span style={{ color: "var(--text-primary)" }} className="truncate">{key.name}</span>
-                  <span className="mono shrink-0" style={{ color: "var(--rune)" }}>{key.prefix}…</span>
-                </div>
-                <div className="mono mt-1 text-[10px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
-                  {key.scopes.join(" · ")}
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
+        <ApiKeyManager
+          orgId={defaultSettingsOrgId}
+          initialKeys={settings.apiKeys.map((key) => ({
+            id: key.id,
+            name: key.name,
+            prefix: key.prefix,
+            scopes: key.scopes,
+            createdAt: key.createdAt
+          }))}
+          allowedScopes={[...ALLOWED_API_KEY_SCOPES]}
+          defaultScopes={[...DEFAULT_API_KEY_SCOPES]}
+          labels={screen.apiKeyManager}
+        />
       )
     },
     {
@@ -187,27 +233,21 @@ export default async function SettingsPage() {
       description: screen.copy.permissions,
       icon: SETTINGS_ICONS.permissions,
       content: (
-        <>
-          <div className="mono text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
-            {orgLabel}
-          </div>
-          <div className="mt-4 grid gap-2.5">
-            {settings.members.map((member) => (
-              <div
-                className="flex items-center justify-between pb-3"
-                style={{ borderBottom: "1px solid var(--line-faint)" }}
-                key={member.id}
-              >
-                <span className="truncate text-[13px]" style={{ color: "var(--text-primary)" }}>
-                  {member.displayName}
-                </span>
-                <span className="mono shrink-0 text-[11px]" style={{ color: "var(--text-secondary)" }}>
-                  {member.role}
-                </span>
-              </div>
-            ))}
-          </div>
-        </>
+        <OrgMembersPanel
+          orgId={defaultSettingsOrgId}
+          members={settings.members.map((member) => ({
+            id: member.id,
+            displayName: member.displayName,
+            role: member.role
+          }))}
+          initialInvites={invites.map((invite) => ({
+            id: invite.id,
+            email: invite.email,
+            role: invite.role,
+            expiresAt: invite.expiresAt
+          }))}
+          labels={{ ...screen.membersPanel, orgLine: orgLabel }}
+        />
       )
     },
     {

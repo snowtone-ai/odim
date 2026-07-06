@@ -165,6 +165,7 @@ export const messages = {
       settings: {
         title: "Settings",
         panels: {
+          gettingStarted: "Getting Started",
           alertRules: "Alert Rules",
           watchtower: "Watchtower Workflows",
           billing: "Plan & Billing",
@@ -175,11 +176,12 @@ export const messages = {
           auditLog: "Audit Trail"
         },
         copy: {
+          gettingStarted: "First-run checklist for a new workspace.",
           alertRules: "Watchlist, layer, and confidence thresholds backed by deterministic alert evidence.",
           watchtower: "Approval-gated agentic workflows with source coverage, trace completeness, and external dispatch controls.",
           billing: "Subscription plan, entitlements, and Stripe-backed upgrades.",
           apiKeys: "External AI agent access uses org-scoped API routes, extendable to MCP.",
-          permissions: "Org roles: analyst / admin.",
+          permissions: "Org roles: analyst / admin. Invite teammates by email.",
           ontology: "Advanced object, link, and action type inspection.",
           customKnowledge: "Source-backed facts and separated opinions that directly inform Huginn's analysis.",
           ingestion: "Scheduled scrape runs, backfill jobs, and source watermark tracking.",
@@ -200,6 +202,41 @@ export const messages = {
         language: {
           panel: "Language",
           description: "Interface language for all screens."
+        },
+        gettingStarted: {
+          stepApiKey: "Issue an API key for programmatic and agent access",
+          stepInvite: "Invite your team",
+          stepAlertRule: "Configure an alert rule",
+          stepHuginn: "Run your first Huginn query",
+          done: "done",
+          open: "open"
+        },
+        apiKeyManager: {
+          heading: "hashed keys / one-time token issue",
+          name: "Key name",
+          namePlaceholder: "e.g. Trading Desk Agent",
+          scopes: "Scopes",
+          issue: "Issue Key",
+          revoke: "Revoke",
+          tokenNotice: "Copy this key now — it is shown only once.",
+          copy: "Copy",
+          copied: "Copied",
+          failed: "Key request failed",
+          empty: "No active API keys."
+        },
+        membersPanel: {
+          invite: "Invite",
+          emailPlaceholder: "teammate@company.com",
+          roleAnalyst: "Analyst",
+          roleAdmin: "Admin",
+          pending: "Pending invites",
+          revoke: "Revoke",
+          linkNotice: "Share this invite link — it is shown only once.",
+          copy: "Copy",
+          copied: "Copied",
+          failed: "Invite request failed",
+          noPending: "No pending invites.",
+          expires: "expires"
         },
         billing: {
           currentPlan: "Current plan",
@@ -440,6 +477,7 @@ export const messages = {
       settings: {
         title: "設定",
         panels: {
+          gettingStarted: "はじめに",
           alertRules: "アラートルール",
           watchtower: "Watchtower ワークフロー",
           billing: "プランと課金",
@@ -450,11 +488,12 @@ export const messages = {
           auditLog: "監査ログ"
         },
         copy: {
+          gettingStarted: "新しいワークスペースの初回セットアップチェックリストです。",
           alertRules: "ウォッチリスト・レイヤー・信頼度のしきい値に基づくルール設定です。",
           watchtower: "出典カバレッジ、推論トレース、人間承認を必須にするエージェント型ワークフローです。",
           billing: "サブスクリプションプラン・エンタイトルメント・Stripeによるアップグレードです。",
           apiKeys: "外部AIエージェントのアクセスはAPIファーストで設計されており、MCPへの拡張にも対応しています。",
-          permissions: "組織ロール：アナリスト / 管理者",
+          permissions: "組織ロール：アナリスト / 管理者。メールでチームを招待できます。",
           ontology: "オブジェクト・リンク・アクションタイプの高度な検査機能です。",
           customKnowledge: "HuginnのAI分析に活用する出典付きファクトと意見シードを管理します。",
           ingestion: "スケジュール済みスクレイプ・補完ジョブ・ウォーターマークの監視です。",
@@ -475,6 +514,41 @@ export const messages = {
         language: {
           panel: "言語設定",
           description: "全画面の表示言語を切り替えます。"
+        },
+        gettingStarted: {
+          stepApiKey: "APIキーを発行してプログラム・エージェントアクセスを有効化",
+          stepInvite: "チームを招待",
+          stepAlertRule: "アラートルールを設定",
+          stepHuginn: "最初のHuginnクエリを実行",
+          done: "完了",
+          open: "開く"
+        },
+        apiKeyManager: {
+          heading: "ハッシュ済みキー / ワンタイム発行",
+          name: "キー名",
+          namePlaceholder: "例: トレーディングデスク エージェント",
+          scopes: "スコープ",
+          issue: "キーを発行",
+          revoke: "失効",
+          tokenNotice: "このキーは一度しか表示されません。今すぐコピーしてください。",
+          copy: "コピー",
+          copied: "コピー済み",
+          failed: "キー操作に失敗しました",
+          empty: "有効なAPIキーがありません。"
+        },
+        membersPanel: {
+          invite: "招待",
+          emailPlaceholder: "teammate@company.com",
+          roleAnalyst: "アナリスト",
+          roleAdmin: "管理者",
+          pending: "保留中の招待",
+          revoke: "取消",
+          linkNotice: "この招待リンクは一度しか表示されません。共有してください。",
+          copy: "コピー",
+          copied: "コピー済み",
+          failed: "招待に失敗しました",
+          noPending: "保留中の招待はありません。",
+          expires: "期限"
         },
         billing: {
           currentPlan: "現在のプラン",

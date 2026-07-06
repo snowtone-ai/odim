@@ -80,6 +80,7 @@ export type OrgBillingUpsert = {
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
   currentPeriodEnd?: string;
+  trialEndsAt?: string;
 };
 
 export async function upsertOrgBilling(input: OrgBillingUpsert): Promise<void> {
@@ -94,6 +95,7 @@ export async function upsertOrgBilling(input: OrgBillingUpsert): Promise<void> {
   if (input.stripeCustomerId) row.stripe_customer_id = input.stripeCustomerId;
   if (input.stripeSubscriptionId) row.stripe_subscription_id = input.stripeSubscriptionId;
   if (input.currentPeriodEnd) row.current_period_end = input.currentPeriodEnd;
+  if (input.trialEndsAt) row.trial_ends_at = input.trialEndsAt;
   const { error } = await createServiceSupabaseClient().from("org_billing").upsert(row, { onConflict: "org_id" });
   if (error) throw new Error(`org billing upsert failed: ${error.message}`);
 }

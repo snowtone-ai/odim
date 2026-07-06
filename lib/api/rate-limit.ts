@@ -34,3 +34,18 @@ export function checkRequestRateLimit(
 export function resetRequestRateLimit() {
   buckets.clear();
 }
+
+/**
+ * Client key for rate-limiting unauthenticated endpoints. Prefers the
+ * platform-set x-real-ip; otherwise uses the rightmost x-forwarded-for entry,
+ * which was appended by the closest proxy and is hardest for a client to spoof.
+ */
+export function clientIpFromRequest(request: Request) {
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
+  const forwarded = (request.headers.get("x-forwarded-for") ?? "")
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  return forwarded.at(-1) || "unknown";
+}

@@ -12,7 +12,7 @@ Next.js 16 App Router + Supabase + Gemini AI. Ingests public signals (SEC, FERC,
 
 ## Architecture
 - **UI:** `app/(dashboard)/` — 5 pages: map, entity, alerts, huginn, settings; Shell/CommandPalette live in `app/(dashboard)/layout.tsx`; `app/page.tsx` is the public landing page; `components/ui/`
-- **Routing:** Next.js App Router; `middleware.ts` applies security headers plus SSO session enforcement (`/`, `/login`, `/api/health`, and the signature-verified `/api/billing/webhook` stay public); `app/api/` includes `v1/`, health, billing (checkout/webhook), export, audit-export, push-subscribe, auth callback, and existing handlers.
+- **Routing:** Next.js App Router; `middleware.ts` applies security headers plus SSO session enforcement (`/`, `/login`, `/signup`, `/invite`, `/api/health`, the signature-verified `/api/billing/webhook`, env-gated `/api/orgs`, and token-verified `/api/org-invites/accept` stay public); `app/api/` includes `v1/`, health, billing (checkout/webhook), orgs (signup), org-invites (+accept), export, audit-export, push-subscribe, auth callback, and existing handlers.
 - **Domain:** `lib/huginn/` (cascade, grading, bias, precompute); `lib/graphrag/` (Evidence GraphRAG); `lib/watchtower/` (playbooks, runs, approvals); `lib/munin/` (memory, dream, write-gate, seed); `lib/ai/ensemble.ts` for multi-provider generation.
 - **Data:** `lib/repositories/admin.ts`, `reality.ts`, `evidence-graph.ts`, `watchtower.ts`, and `billing.ts` — Supabase or fallback fixtures; `lib/billing/` holds the plan catalog and env-gated Stripe client; `lib/pipeline/` adds scoring, freshness, diff, calibration, attribution, anomaly, sentiment, sector-rotation, and backtest.
 - **External:** Gemini/OpenAI/Claude provider hooks; Supabase (`lib/supabase/client.ts`); scrapers (`scrapers/`) now include SEC expansion, FRED, Federal Register, EDINET, Companies House, USAspending, OpenSanctions, FEMA, SAM.gov, NRC, and ISO queue coverage.
@@ -38,7 +38,8 @@ Next.js 16 App Router + Supabase + Gemini AI. Ingests public signals (SEC, FERC,
 | Huginn UI | `components/ui/huginn-console.tsx` | `app/(dashboard)/huginn/page.tsx` |
 | Settings | `app/(dashboard)/settings/page.tsx` | `components/ui/seed-memory-manager.tsx` |
 | Billing & entitlements | `lib/billing/plans.ts` + `lib/repositories/billing.ts` | `tests/billing.test.mjs` |
-| DB schema | `supabase/migrations/0001-0012` | `supabase/tests/rls-cross-org-smoke.sql` |
+| Org onboarding & invites | `lib/onboarding/invites.ts` + `lib/repositories/onboarding.ts` | `tests/org-onboarding.test.mjs` |
+| DB schema | `supabase/migrations/0001-0013` | `supabase/tests/rls-cross-org-smoke.sql` |
 
 ## Critical Flows
 | Flow | Entry | Core Path | Risk |

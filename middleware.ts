@@ -9,6 +9,10 @@ export async function middleware(request: NextRequest) {
     !request.nextUrl.pathname.startsWith("/api/health/") &&
     // Stripe signs webhook deliveries; signature verification replaces SSO here.
     request.nextUrl.pathname !== "/api/billing/webhook" &&
+    // Self-serve onboarding runs before any session exists: signup is env-gated
+    // (SELF_SERVE_SIGNUP) and invite acceptance is token-verified.
+    request.nextUrl.pathname !== "/api/orgs" &&
+    request.nextUrl.pathname !== "/api/org-invites/accept" &&
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/_next")
   ) {

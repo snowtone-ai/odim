@@ -99,3 +99,7 @@
 ## D-025: Gate Watchtower automation with human approvals and durable traces
 - Decision: Implement Watchtower as predefined source-backed playbooks with run, step, approval, risk, and source-ref records; external dispatch remains blocked until all requested human approvals pass.
 - Reason: Agentic workflows can create operational risk. Approval gates, RLS-backed persistence, reruns, and trace metrics align automation with reliability, security, and reviewability requirements.
+
+## D-026: Self-serve onboarding is env-gated with hashed single-use invite tokens
+- Decision: Public org signup requires `SELF_SERVE_SIGNUP=true` (fail-closed 503 otherwise); member invites store only peppered HMAC token hashes, are claimed atomically exactly once, and sessions issued by signup/accept use a distinct `selfserve` provider tag. Seat ceilings bind only when `BILLING_ENFORCED=true`.
+- Reason: Commercial onboarding must not widen the enterprise SSO/API-key attack surface by default; token-as-credential endpoints stay SSO-exempt but rate-limited (spoof-resistant client key + global buckets) and indistinguishable-on-failure.
