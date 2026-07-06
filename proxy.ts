@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { readSsoSessionCookie, ssoEnabled } from "@/lib/auth/sso";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   if (
     ssoEnabled() &&
     !request.nextUrl.pathname.startsWith("/api/auth/callback") &&
