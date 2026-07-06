@@ -4,6 +4,11 @@
   "private": true,
   "packageManager": "pnpm@10.33.0",
   "type": "module",
+  "pnpm": {
+    "overrides": {
+      "postcss@<8.5.10": ">=8.5.10"
+    }
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
