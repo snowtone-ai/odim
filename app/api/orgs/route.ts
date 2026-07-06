@@ -1,21 +1,20 @@
-import { checkRequestRateLimit } from "../../../lib/api/rate-limit.ts";
+import { checkRequestRateLimit, clientIpFromRequest } from "../../../lib/api/rate-limit.ts";
 import { issueSsoSession, ssoCookieName, ssoEnabled } from "../../../lib/auth/sso.ts";
 import { normalizeInviteEmail } from "../../../lib/onboarding/invites.ts";
 import { normalizeDisplayName, normalizeOrgName, selfServeSignupEnabled } from "../../../lib/onboarding/signup.ts";
 import { createOrgWithAdmin } from "../../../lib/repositories/onboarding.ts";
 
-function clientIp(request: Request) {
-  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  return forwarded || request.headers.get("x-real-ip")?.trim() || "unknown";
-}
-
 export async function POST(request: Request) {
   try {
-    const rateLimit = checkRequestRateLimit(clientIp(request), "org-signup", { maxRequests: 5, windowMs: 3_600_000 });
-    if (!rateLimit.ok) {
+    // Per-client plus global ceilings: spoofed client IPs cannot scale abuse
+    // past the instance-wide bucket.
+    const rateLimit = checkRequestRateLimit(clientIpFromRequest(request), "org-signup", { maxRequests: 5, windowMs: 3_600_000 });
+    const globalLimit = checkRequestRateLimit("global", "org-signup-global", { maxRequests: 30, windowMs: 3_600_000 });
+    if (!rateLimit.ok || !globalLimit.ok) {
+      const retryAfter = Math.max(rateLimit.retryAfter, globalLimit.retryAfter);
       return Response.json(
         { error: "Too many signup attempts" },
-        { status: 429, headers: { "Retry-After": String(rateLimit.retryAfter) } }
+        { status: 429, headers: { "Retry-After": String(retryAfter) } }
       );
     }
     if (!selfServeSignupEnabled()) {
@@ -53,6 +52,8 @@ export async function POST(request: Request) {
       { status: 201, headers }
     );
   } catch (err) {
-    return Response.json({ error: err instanceof Error ? err.message : "Internal server error" }, { status: 500 });
+    // Public endpoint: never echo internal error details to unauthenticated clients.
+    console.error("[orgs] signup failed:", err instanceof Error ? err.message : err);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

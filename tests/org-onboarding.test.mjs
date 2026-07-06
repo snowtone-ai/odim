@@ -11,7 +11,7 @@ import {
 } from "../lib/onboarding/invites.ts";
 import { normalizeDisplayName, normalizeOrgName, selfServeSignupEnabled } from "../lib/onboarding/signup.ts";
 import { createOrgWithAdmin, resetOnboardingLocalStore } from "../lib/repositories/onboarding.ts";
-import { resetRequestRateLimit } from "../lib/api/rate-limit.ts";
+import { clientIpFromRequest, resetRequestRateLimit } from "../lib/api/rate-limit.ts";
 import { POST as signupPost } from "../app/api/orgs/route.ts";
 import { DELETE as invitesDelete, GET as invitesGet, POST as invitesPost } from "../app/api/org-invites/route.ts";
 import { POST as acceptPost } from "../app/api/org-invites/accept/route.ts";
@@ -122,6 +122,17 @@ test("signup route fails closed when disabled and validates input when enabled",
     assert.equal(body.admin.email, "founder@acme.com");
     assert.ok(body.trialEndsAt > new Date().toISOString(), "trial end must be in the future");
   });
+});
+
+test("client ip resolution resists spoofed forwarded-for headers", () => {
+  const req = (headers) => new Request("http://localhost/api/orgs", { headers });
+  assert.equal(clientIpFromRequest(req({ "x-real-ip": "9.9.9.9", "x-forwarded-for": "1.1.1.1" })), "9.9.9.9");
+  assert.equal(
+    clientIpFromRequest(req({ "x-forwarded-for": "6.6.6.6, 2.2.2.2" })),
+    "2.2.2.2",
+    "the rightmost proxy-appended entry wins over the client-controlled left entries"
+  );
+  assert.equal(clientIpFromRequest(req({})), "unknown");
 });
 
 test("signup route rate-limits repeated attempts per client", async () => {

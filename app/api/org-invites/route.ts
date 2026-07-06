@@ -37,7 +37,12 @@ export async function POST(request: Request) {
     const role = body.role ?? "analyst";
     if (!isOrgInviteRole(role)) return Response.json({ error: "role must be analyst or admin" }, { status: 400 });
 
-    const result = await createInvite(auth.context, { email, role, invitedBy: body.invitedBy });
+    const result = await createInvite(auth.context, {
+      email,
+      role,
+      // Audit metadata only; capped so arbitrary payloads cannot inflate rows.
+      invitedBy: typeof body.invitedBy === "string" ? body.invitedBy.slice(0, 80) : undefined
+    });
     if (!result.ok) {
       return Response.json({ error: "Seat limit reached for the current plan" }, { status: 403 });
     }
