@@ -16,7 +16,7 @@ test("health endpoint returns ok status with non-sensitive checks only", async (
   assert.equal(typeof body.checks.aiProviderConfigured, "boolean");
   // Must never leak secrets, URLs, or key material.
   const raw = JSON.stringify(body);
-  assert.doesNotMatch(raw, /key|token|secret|password|postgres|https?:\/\//i);
+  assert.doesNotMatch(raw, /key|token|secret|password|postgres|https?:\/\/|eyJ[A-Za-z0-9_-]+/i);
 });
 
 test("health endpoint is exempt from SSO middleware gating", () => {

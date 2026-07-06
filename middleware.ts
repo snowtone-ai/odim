@@ -5,7 +5,8 @@ export async function middleware(request: NextRequest) {
   if (
     ssoEnabled() &&
     !request.nextUrl.pathname.startsWith("/api/auth/callback") &&
-    !request.nextUrl.pathname.startsWith("/api/health") &&
+    request.nextUrl.pathname !== "/api/health" &&
+    !request.nextUrl.pathname.startsWith("/api/health/") &&
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/_next")
   ) {
