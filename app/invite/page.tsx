@@ -1,3 +1,7 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Accept Invite" };
+
 import { InviteAcceptForm } from "@/components/ui/invite-accept-form";
 import { getLocale } from "@/lib/i18n/locale";
 

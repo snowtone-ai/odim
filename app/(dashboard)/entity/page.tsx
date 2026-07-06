@@ -1,3 +1,7 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Entity Intelligence" };
+
 import { EntityWorkstation } from "@/components/ui/entity-workstation";
 import { Screen } from "@/components/ui/screen";
 import { entities, ontologyLinks, timelineEvents, layerActivity, watchlistBriefs } from "@/lib/data";

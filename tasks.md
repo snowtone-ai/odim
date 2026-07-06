@@ -70,14 +70,31 @@ Ordered by launch impact per token. One LP task group per session.
 - Review Notes: Tier 1 fresh-context Sonnet review — PASS-with-recommendations, no blockers. Applied: (1) Sentry envelope exception messages now scrubbed for token shapes and connection-string credentials; (2) added auth-failure test for `/api/observability`; (3) added TimeoutError (DOMException) delivery-failure test; (4) documented shallow redaction bound on `redactLogFields`; (5) corrected metrics bound comment to MAX_TRACKED_ROUTES + 1. Accepted-as-designed: local `app.error` logs keep raw messages (trusted sink); per-instance counters (D-027).
 - Operator-gate follow-through (delegated 2026-07-06): migration 0013 apply attempted — blocked, Supabase tenant `xyvioekqwmbgrwlinzxe` not found for both staging/production URLs (see docs/issues.md); `SELF_SERVE_SIGNUP` decision recorded in D-028 (no deployed environment exists yet).
 
-### LP-006 — Public API docs surface — BACKLOG
-- Publish `docs/api-reference.md` as a public `/docs` route from the landing page.
+### LP-006 — Public API docs surface — DONE (this session)
+- Owner: main agent
+- Risk: LOW (public static content; no auth/schema/billing changes; middleware untouched).
+- Write Scope: `lib/docs/markdown.ts`, `components/ui/public-shell.tsx`, `app/docs/page.tsx`, `app/page.tsx` (footer link), `tests/launch-surfaces.test.mjs`
+- Acceptance: `/docs` publicly renders `docs/api-reference.md` (build-time read of repo-controlled content) via a minimal trusted-content markdown parser — headings, nested lists, fenced/inline code — rendered as React elements only (no `dangerouslySetInnerHTML`); linked from the landing footer; shares `PublicShell` chrome with legal pages.
+- Verification: markdown parser unit tests incl. malformed input (unclosed fence, blank-only, odd indentation); docs-page source guard against raw HTML injection; real `api-reference.md` parses into substantive blocks.
 
-### LP-007 — Legal readiness pages — BACKLOG
-- Terms, privacy, and security posture pages linked from landing footer (content approval is a human gate).
+### LP-007 — Legal readiness pages — DONE (this session)
+- Owner: main agent
+- Risk: LOW-MEDIUM (public content; no code-path risk; content itself is operator-gated).
+- Write Scope: `app/terms/page.tsx`, `app/privacy/page.tsx`, `app/security/page.tsx`, `components/ui/public-shell.tsx`, `app/page.tsx` (footer links), `tests/launch-surfaces.test.mjs`
+- Acceptance: Terms of Service (incl. no-investment-advice/no-reliance clauses, API acceptable use, liability cap), Privacy Policy (data categories, processors: Supabase/Stripe/AI providers/error tracking, retention, APPI/GDPR rights), and Security posture page (RLS tenant isolation, hashed keys, CSP, fail-closed defaults, disclosure policy) — all linked from the landing footer, no placeholders.
+- Verification: tests assert pages exist with metadata, `Last updated` dates, no TODO/lorem/placeholder, and footer links present.
+- Human gate (outstanding): operator approval of legal text before first public deploy — especially governing law/jurisdiction (drafted: Japan / Tokyo District Court), the absence of a published contact address (support-channel phrasing used), and processor disclosures matching the deployed configuration.
 
-### LP-008 — Landing SEO/meta polish — BACKLOG
-- OG metadata, sitemap.xml, robots.txt, per-page titles.
+### LP-008 — Landing SEO/meta polish — DONE (this session)
+- Owner: main agent
+- Risk: LOW.
+- Write Scope: `app/layout.tsx`, `app/sitemap.ts`, `app/robots.ts`, per-page `metadata` exports on 13 pages (5 dashboard + custom + login/signup/invite + docs/terms/privacy/security), `tests/launch-surfaces.test.mjs`
+- Acceptance: root layout gains `metadataBase` (from `NEXT_PUBLIC_APP_URL`), title template `%s — Odim`, OG + twitter cards using `/odim-logo.png`; `sitemap.xml` lists public routes only; `robots.txt` disallows `/api/`, all dashboard prefixes, and token-carrying `/invite`; every page exports a title.
+- Verification: `sitemap()`/`robots()` called directly in tests (same-origin absolute URLs, gated-path exclusion, sitemap pointer); layout source asserts OG/twitter/template.
+
+#### LP-006/007/008 combined session record (branch `feat/lp-006-008-public-surfaces`)
+- Verification: full suite 143/143 (launch-surfaces 14 tests: +9 new, +1 review follow-up); typecheck/lint/build/verify green; `gitleaks git --log-opts="main..HEAD"` clean (2 repo-wide findings are pre-existing synthetic fixture tokens in `tests/observability.test.mjs`, commit f7b3159 — candidate for `.gitleaksignore`).
+- Review Notes: Tier 1 fresh-context Sonnet review (300+ line diff) — PASS-with-recommendations, no blockers. Applied: (1) malformed-markdown termination tests; (2) fence language regex widened to `[\w+-]*`; (3) prose section keys switched to index. Accepted-as-designed: `/login`/`/signup` remain in sitemap (public acquisition surfaces).
 
 ## Completed Ledger: AI Native Upgrade 1+2
 

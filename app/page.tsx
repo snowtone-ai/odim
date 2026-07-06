@@ -190,6 +190,18 @@ export default function LandingPage() {
         style={{ borderTop: "1px solid var(--line-faint)" }}
       >
         <CtaButtons />
+        <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Footer">
+          {[
+            ["API Docs", "/docs"],
+            ["Terms", "/terms"],
+            ["Privacy", "/privacy"],
+            ["Security", "/security"]
+          ].map(([label, href]) => (
+            <Link key={href} href={href} className="text-[13px]" style={{ color: "var(--text-tertiary)" }}>
+              {label}
+            </Link>
+          ))}
+        </nav>
         <p className="mono text-[11px]" style={{ color: "var(--text-quaternary)" }}>
           Odim is not a price prediction product. Narrative data is never treated as truth.
         </p>
