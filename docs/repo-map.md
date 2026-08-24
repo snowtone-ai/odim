@@ -4,11 +4,16 @@
 Next.js 16 App Router + Supabase + Gemini AI. Ingests public signals (SEC, FERC, permits, ports...), maps to ontology, answers analyst queries via multi-layer AI cascade (Huginn) with persistent memory (Munin), graph-native evidence paths, and approval-gated Watchtower workflows.
 
 ## Read First
-1. `docs/state.md` — current execution state, active tasks, blockers
-2. `docs/decisions.md` — architectural decisions (D-001-D-025)
-3. `lib/huginn/query.ts` — main AI query orchestrator
-4. `lib/pipeline/ingest.ts` — signal ingestion pipeline
-5. `lib/auth/request.ts` — auth flow, every API route calls this
+1. `CLAUDE.md` — canonical shared project rules
+2. `docs/state.md` — current execution state and active task
+3. `docs/issues.md` — current blockers only
+4. `docs/repo-map.md` Summary — this navigation map
+5. `docs/decisions.md` — relevant architectural decisions (D-001-D-028)
+
+After the startup pointers, read only the relevant implementation entry point:
+- `lib/huginn/query.ts` — main AI query orchestrator
+- `lib/pipeline/ingest.ts` — signal ingestion pipeline
+- `lib/auth/request.ts` — auth flow, every API route calls this
 
 ## Architecture
 - **UI:** `app/(dashboard)/` — 5 pages: map, entity, alerts, huginn, settings; Shell/CommandPalette live in `app/(dashboard)/layout.tsx`; `app/page.tsx` is the public landing page; public content pages `app/docs` (renders `docs/api-reference.md` via `lib/docs/markdown.ts`), `app/{terms,privacy,security}` share `components/ui/public-shell.tsx`; `app/sitemap.ts` + `app/robots.ts` for SEO; `components/ui/`
@@ -16,7 +21,8 @@ Next.js 16 App Router + Supabase + Gemini AI. Ingests public signals (SEC, FERC,
 - **Domain:** `lib/huginn/` (cascade, grading, bias, precompute); `lib/graphrag/` (Evidence GraphRAG); `lib/watchtower/` (playbooks, runs, approvals); `lib/munin/` (memory, dream, write-gate, seed); `lib/ai/ensemble.ts` for multi-provider generation.
 - **Data:** `lib/repositories/admin.ts`, `reality.ts`, `evidence-graph.ts`, `watchtower.ts`, and `billing.ts` — Supabase or fallback fixtures; `lib/billing/` holds the plan catalog and env-gated Stripe client; `lib/pipeline/` adds scoring, freshness, diff, calibration, attribution, anomaly, sentiment, sector-rotation, and backtest.
 - **External:** Gemini/OpenAI/Claude provider hooks; Supabase (`lib/supabase/client.ts`); scrapers (`scrapers/`) now include SEC expansion, FRED, Federal Register, EDINET, Companies House, USAspending, OpenSanctions, FEMA, SAM.gov, NRC, and ISO queue coverage.
-- **Config:** `config/sources.json`; `lib/env/runtime.ts`; `lib/env/validate.ts`; `.env.example`; `docs/api-reference.md`
+- **Operating layer:** `CLAUDE.md` is shared guidance; `AGENTS.md` is the Codex adapter; `.claude/settings.json` contains only project MCP allowances; `.codex/config.toml` is intentionally empty; `.gitleaksignore` documents the known synthetic test fingerprint; `scripts/verify.mjs` is the standard deterministic check; `scripts/release-audit.mjs` performs the 91-check readiness audit; `.github/workflows/ci.yml` runs the standard verify.
+- **Config:** `config/sources.json`; `lib/env/runtime.ts`; `lib/env/validate.ts`; `.env.example`; `docs/api-reference.md`; `styles/tokens.css` is the existing UI token source (no optional `DESIGN.md` adopted yet).
 - **Tests:** `tests/` — auth, route handlers, pipeline, huginn, GraphRAG, Watchtower, bias, security, RLS, i18n, mobile
 
 ## Key Areas

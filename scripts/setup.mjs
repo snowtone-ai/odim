@@ -1,7 +1,16 @@
 import { existsSync } from "node:fs";
 import { execSync } from "node:child_process";
 
-const required = ["package.json", ".env.example", "scripts/verify.mjs"];
+const required = [
+  "package.json",
+  ".env.example",
+  "scripts/verify.mjs",
+  "CLAUDE.md",
+  "AGENTS.md",
+  ".codex/config.toml",
+  ".github/workflows/ci.yml",
+  "docs/issues.md"
+];
 for (const file of required) {
   if (!existsSync(file)) throw new Error(`Missing required file: ${file}`);
 }

@@ -1,0 +1,2 @@
+# Synthetic API-key-shaped value used by the redaction test; it is not a credential.
+f7b31593e81812029da4ffb5a316203d51c8c86a:tests/observability.test.mjs:generic-api-key:57

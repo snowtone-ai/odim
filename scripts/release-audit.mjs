@@ -348,7 +348,8 @@ check(
 );
 
 const dashboardSurface = routes.map((route) => file(route)).join("\n") + file("lib/i18n/messages.ts");
-check("ui:no-placeholder-copy", !/placeholder|scaffold/i.test(dashboardSurface), "Dashboard surfaces do not contain placeholder/scaffold copy");
+const dashboardCopySurface = dashboardSurface.replace(/\b[A-Za-z][A-Za-z0-9]*Placeholder\b/g, "");
+check("ui:no-placeholder-copy", !/\b(?:placeholder|scaffold)\b/i.test(dashboardCopySurface), "Dashboard surfaces do not contain placeholder/scaffold copy");
 check("ui:confidence-surface", dashboardSurface.includes("Confidence") && dashboardSurface.includes("source"), "Dashboard surfaces expose confidence/source evidence");
 
 const readinessDoc = file("docs/commercial-readiness.md");

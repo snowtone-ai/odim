@@ -1,5 +1,14 @@
 # tasks.md
 
+## Active Task: PMZ-001 — Align the project operating layer with pm-zero v12.1
+
+- Owner: main agent
+- Depends On: `pm-zero/pm-zero-knowledge-v12.1.md` (2026-08-21)
+- Write Scope: `CLAUDE.md`, `AGENTS.md`, `.claude/settings.json`, `.codex/config.toml`, `.gitleaksignore`, `scripts/verify.mjs`, `scripts/setup.mjs`, `scripts/release-audit.mjs`, `.github/workflows/ci.yml`, `.github/workflows/daily-scrape.yml`, `docs/issues.md`, `docs/state.md`, `docs/repo-map.md`, `HANDOFF-JA.md`
+- Acceptance: canonical shared rules live in `CLAUDE.md`; `AGENTS.md` contains Codex-only mechanics; project Codex config has no security settings; `docs/issues.md` contains current blockers only; `pnpm verify` runs structural checks plus lint/typecheck/test/build; CI uses that standard check; UI-only optional `DESIGN.md` is not added without a concrete design-token adoption need; release audit ignores only the known synthetic redaction-test fingerprint.
+- Verification: `node scripts/setup.mjs`, `pnpm verify`, `pnpm release:audit`, `git diff --check`, and `gitleaks git --no-banner` passed. `pnpm browser:smoke` was attempted but the local Supabase endpoint returned fetch failures/HTTP 500 for the Watchtower API; no product/UI behavior was changed, so browser verification remains an external-environment follow-up.
+- Evidence: DONE — standard verify passed (143/143 tests); release audit passed (91 checks); gitleaks passed after the explicit synthetic-test allowlist.
+
 ## Active Program: Launch Readiness (LP)
 
 Goal: close the gap between "code-complete platform" and "marketable commercial product".
