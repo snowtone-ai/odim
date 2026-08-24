@@ -1,13 +1,13 @@
 # state.md
 
 ## Current
-- Branch: feat/lp-006-008-public-surfaces (LP-005 merged to main via PR #7)
-- Active task: LP-006/007/008 public surfaces (API docs, legal pages, SEO/meta) — implemented, reviewed, recommendations applied
+- Branch: chore/apply-pm-zero-knowledge
+- Active task: PMZ-001 — align the project operating layer with pm-zero v12.1
 - Current executor: main agent
 - Write lock: none
 - Coordinator: main agent
-- Latest verification pointer: LP-006/007/008 — public `/docs` (renders `docs/api-reference.md` via trusted markdown parser, no raw HTML), `/terms` `/privacy` `/security` legal pages with shared `PublicShell`, landing footer links, OG/twitter metadata + title template in root layout, `sitemap.xml` (public routes only), `robots.txt` (disallows `/api/`, dashboard prefixes, `/invite`), per-page titles on 13 pages; launch-surfaces tests extended; typecheck/lint/build/verify green
-- Verification mode: Tier 1 class (300+ line diff) — fresh-context Sonnet review PASS-with-recommendations, all applied (see tasks.md LP-006/007/008 Review Notes)
+- Latest verification pointer: PMZ-001 complete; setup, standard verify, release audit, diff check, and gitleaks passed. Browser smoke was attempted but the local Supabase endpoint returned fetch failures/HTTP 500 for `/api/watchtower/runs`; no product/UI behavior changed.
+- Verification mode: standard deterministic verification; browser smoke is an external-environment follow-up because this task changed only the operating layer
 - Human gates outstanding: none.
 - Legal pages (`/terms`, `/privacy`, `/security`): substantive content complete (Japan/Tokyo governing law, APPI/GDPR, processor list, support-channel contact). Formal legal review deferred — practice product.
 - Supabase: project `xyvioekqwmbgrwlinzxe` restored by operator; migrations 0001–0014 applied 2026-07-06.
