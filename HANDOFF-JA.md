@@ -15,6 +15,7 @@
 - `pnpm browser:smoke`: passed（主要6 route、主要API、desktop focus、390px overflow）
 - Chrome performance: landing LCP 178ms / CLS 0.00、Map LCP 395ms / CLS 0.00
 - `gitleaks git --no-banner --redact`: passed
+- Production: migration 0015 applied、main `9fa822a` deployed、主要6 routeと `/api/health` は200、Map console errorなし
 
 ## Human Actions Needed
 

@@ -7,10 +7,10 @@
 - Write lock: none
 - Coordinator: main agent
 - Latest verification pointer: `pnpm verify` passed with 252/252 tests and production build; `pnpm release:audit` passed 91/91; `pnpm browser:smoke` passed all six main routes, API checks, desktop dialog focus, and 390px overflow checks. Chrome traces recorded landing LCP 178ms and Map LCP 395ms with CLS 0.00.
-- Release state: PUX-001 is ready for production with migration `0015_huginn_muninn_v3.sql`; deployment and smoke verification are the final release operation.
+- Release state: PUX-001 released to `https://odim.vercel.app` from main commit `9fa822a` on 2026-08-28; all six main routes and `/api/health` returned 200 in production smoke.
 - Human gates outstanding: none.
 - Legal pages (`/terms`, `/privacy`, `/security`): substantive content complete (Japan/Tokyo governing law, APPI/GDPR, processor list, support-channel contact). Formal legal review deferred — practice product.
-- Supabase: project `xyvioekqwmbgrwlinzxe` restored by operator; migrations 0001–0014 applied 2026-07-06; migration 0015 is the PUX-001 production release migration.
+- Supabase: project `xyvioekqwmbgrwlinzxe` restored by operator; migrations 0001–0014 applied 2026-07-06; migration 0015 applied to production on 2026-08-28.
 - Settings page fix (2026-07-06): migration `0014_service_role_grants.sql` grants service_role/authenticated on org_billing/billing_events/org_invites (0012/0013 omitted them → "permission denied for table org_billing"); `scripts/seed-default-org.mjs` seeds the DEFAULT_ORG_ID org so `getAdminSettings` resolves it. Applied to production; `/settings` returns 200 clean. verify/typecheck/lint/test (143/143) green.
 
 ## Completed after v3.0
