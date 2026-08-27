@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 
 const requiredFiles = [
@@ -17,6 +18,8 @@ const requiredFiles = [
   "scripts/issue-bootstrap-api-key.mjs",
   "scripts/run-daily-dream.mjs",
   "scripts/run-staging-rls-smoke.mjs",
+  ".codex/config.toml",
+  ".github/workflows/ci.yml",
   ".env.example",
   ".gitignore",
   "package.json",
@@ -166,4 +169,18 @@ for (const layer of ["energy", "cash", "land", "compute", "water", "raw_material
 }
 if (!configuredLayers.has("narrative")) throw new Error("config/sources.json missing narrative layer");
 
-console.log("verify: structural checks passed");
+const packageManager = process.platform === "win32" ? process.env.ComSpec || "cmd.exe" : "pnpm";
+const packageManagerPrefix = process.platform === "win32" ? ["/d", "/c", "pnpm"] : [];
+const checks = [
+  ["lint", ["lint"]],
+  ["typecheck", ["typecheck"]],
+  ["test", ["test"]],
+  ["build", ["build"]]
+];
+
+for (const [name, args] of checks) {
+  console.log(`verify: running ${name}`);
+  execFileSync(packageManager, [...packageManagerPrefix, ...args], { stdio: "inherit", env: process.env });
+}
+
+console.log("verify: structural checks, lint, typecheck, test, and build passed");

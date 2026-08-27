@@ -1,10 +1,11 @@
+import Link from "next/link";
 import type { Metadata } from "next";
-
-export const metadata: Metadata = { title: "Create Organization" };
-
+import { PublicAuthShell } from "@/components/ui/public-shell";
 import { SignupForm } from "@/components/ui/signup-form";
 import { getLocale } from "@/lib/i18n/locale";
 import { selfServeSignupEnabled } from "@/lib/onboarding/signup";
+
+export const metadata: Metadata = { title: "Create Organization" };
 
 export const dynamic = "force-dynamic";
 
@@ -14,20 +15,35 @@ export default async function SignupPage() {
   const enabled = selfServeSignupEnabled();
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-6">
-      <div
-        className="w-full max-w-md rounded-[var(--radius-md)] p-6"
-        style={{ background: "var(--surface-primary)", border: "1px solid var(--line-faint)" }}
-      >
-        <h1 className="text-lg" style={{ color: "var(--text-primary)" }}>
+    <PublicAuthShell
+      eyebrow={ja ? "登録 / ワークスペース" : "ONBOARDING / WORKSPACE"}
+      title={ja ? "証拠を追えるチームの作業場を作る。" : "Create a workspace for decisions you can verify."}
+      description={
+        ja
+          ? "公開記録を組織の視点で追跡し、ソースから判断までの経路をチームで共有できます。"
+          : "Track public records through your organization's lens and keep the path from source to decision visible to the team."
+      }
+      footer={
+        <p className="text-[12px]" style={{ color: "color-mix(in srgb, var(--text) 58%, transparent)" }}>
+          <Link href="/login" className="transition-colors duration-[var(--motion-micro)] hover:text-[var(--signal)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)]" style={{ color: "var(--signal)" }}>
+            {ja ? "エンタープライズSSOでサインイン" : "Sign in with enterprise SSO"} <span aria-hidden="true">→</span>
+          </Link>
+        </p>
+      }
+    >
+      <div>
+        <p className="mono text-[11px] tracking-[0.14em]" style={{ color: "var(--evidence)" }}>
+          {ja ? "14日間 / クレジットカード不要" : "14 DAYS / NO CREDIT CARD"}
+        </p>
+        <h2 className="mt-4 text-lg font-medium" style={{ color: "var(--text)" }}>
           {ja ? "ワークスペースを作成" : "Create your workspace"}
-        </h1>
-        <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
+        </h2>
+        <p className="mt-2 text-[14px] leading-6" style={{ color: "color-mix(in srgb, var(--text) 66%, transparent)" }}>
           {ja
-            ? "14日間のトライアルで組織を作成します。クレジットカードは不要です。"
+            ? "トライアルで組織を作成します。クレジットカードは不要です。"
             : "Start a 14-day trial workspace. No credit card required."}
         </p>
-        <div className="mt-5">
+        <div className="mt-7">
           {enabled ? (
             <SignupForm
               labels={{
@@ -48,19 +64,14 @@ export default async function SignupPage() {
               }}
             />
           ) : (
-            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+            <p className="border-l pl-4 text-[14px] leading-6" style={{ borderColor: "var(--critical)", color: "color-mix(in srgb, var(--text) 66%, transparent)" }}>
               {ja
                 ? "セルフサーブ登録はこの環境では無効です。管理者にお問い合わせいただくか、エンタープライズサインインをご利用ください。"
                 : "Self-serve signup is not enabled in this environment. Contact your administrator or use enterprise sign-in."}
             </p>
           )}
         </div>
-        <p className="mt-5 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
-          <a href="/login" style={{ color: "var(--text-secondary)" }}>
-            {ja ? "エンタープライズSSOでサインイン →" : "Sign in with enterprise SSO →"}
-          </a>
-        </p>
       </div>
-    </main>
+    </PublicAuthShell>
   );
 }

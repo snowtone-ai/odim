@@ -10,6 +10,14 @@ export type MemoryClass = "fact" | "procedure" | "seed" | "opinion";
 
 export type MemoryStatus = "active" | "archived" | "retired";
 
+/**
+ * Review is intentionally separate from lifecycle status.  A row can be
+ * active because it is an existing v2 row while still carrying the legacy
+ * `not_required` review state; newly derived rows must be approved before
+ * retrieval.
+ */
+export type MemoryReviewStatus = "not_required" | "pending_review" | "approved" | "rejected";
+
 export type AgentScope = "core" | "archival" | "recall";
 
 export type WriteGateAction = "WRITTEN_TO_MEMORY" | "WRITTEN_TO_OPINIONS" | "REJECTED_FROM_MEMORY";
@@ -25,6 +33,14 @@ export type WriteGateCandidate = {
   novelty?: number;
   reliability?: number;
   certainty?: number;
+  sourceRefs?: import("../pipeline/types.ts").SourceRef[];
+  sourceHash?: string;
+  observedAt?: string;
+  ingestedAt?: string;
+  supersedes?: string[];
+  parentMemoryIds?: string[];
+  reviewStatus?: MemoryReviewStatus;
+  runId?: string;
 };
 
 export type WriteGateResult = {
@@ -35,4 +51,5 @@ export type WriteGateResult = {
   memoryClass: MemoryClass;
   sourceType: SourceType;
   reason: string;
+  reviewStatus?: MemoryReviewStatus;
 };

@@ -1,95 +1,115 @@
 :root {
-  /* ── Core ink palette ── */
-  --ink-950: #050709;
-  --ink-900: #090b0f;
-  --ink-850: #0c0f15;
-  --ink-800: #10131a;
-  --ink-750: #161a22;
-  --ink-700: #1c212b;
-  --ink-650: #242a36;
-  --ink-600: #2e3542;
+  /* Core product identity — the only named brand colors. */
+  --field: #0a1016;
+  --surface: #131d26;
+  --text: #e8eff2;
+  --signal: #4c90f0;
+  --evidence: #5cc6d2;
+  --critical: #e2745b;
 
-  /* ── Border / line hierarchy ── */
-  --line-faint: rgba(255, 255, 255, 0.05);
-  --line-soft:  rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.13);
-  --line-vivid:  rgba(255, 255, 255, 0.20);
+  /* Neutral strata are derived from the Field, Surface, and Text system. */
+  --field-muted: color-mix(in srgb, var(--surface) 52%, var(--field));
+  --surface-inset: color-mix(in srgb, var(--surface) 74%, var(--field));
+  --surface-raised: color-mix(in srgb, var(--surface) 91%, var(--text));
+  --surface-hover: color-mix(in srgb, var(--surface) 94%, var(--text));
 
-  /* ── Text hierarchy (WCAG AA compliant contrast on ink-800/#10131a) ── */
-  --text-primary:    #dde1ea;   /* contrast ≈ 10:1  */
-  --text-secondary:  #8d97ab;   /* contrast ≈ 4.6:1 */
-  --text-tertiary:   #5c6780;   /* contrast ≈ 3.1:1 — captions/meta only */
-  --text-quaternary: #404c61;   /* contrast ≈ 2.1:1 — decorative dividers only, never standalone text */
+  /* Text and divider hierarchy. Body-capable muted text stays AA on Field. */
+  --text-primary: var(--text);
+  --text-secondary: color-mix(in srgb, var(--text) 70%, var(--field));
+  --text-tertiary: color-mix(in srgb, var(--text) 62%, var(--field));
+  --text-quaternary: color-mix(in srgb, var(--text) 54%, var(--field));
+  --line-faint: color-mix(in srgb, var(--text) 9%, transparent);
+  --line-soft: color-mix(in srgb, var(--text) 15%, transparent);
+  --line-strong: color-mix(in srgb, var(--text) 24%, transparent);
+  --line-vivid: color-mix(in srgb, var(--text) 36%, transparent);
 
-  /* ── Accent: Rune gold ── */
-  --rune:        #c9a961;
-  --rune-bright: #dfc376;
-  --rune-dim:    #9a7f48;
-  --rune-wash:   rgba(201, 169, 97, 0.06);
-  --rune-glow:   rgba(201, 169, 97, 0.14);
+  /* State fills are derivatives, not additional branding. */
+  --signal-wash: color-mix(in srgb, var(--signal) 12%, transparent);
+  --signal-strong: color-mix(in srgb, var(--signal) 84%, var(--text));
+  --evidence-wash: color-mix(in srgb, var(--evidence) 12%, transparent);
+  --critical-wash: color-mix(in srgb, var(--critical) 12%, transparent);
+  --positive: #70b789;
+  --warning: #d4a15e;
+  --negative: var(--critical);
+  --neutral: var(--text-secondary);
 
-  /* ── Substrate layer colors ── */
-  --layer-energy:       #e0904a;
-  --layer-cash:         #6fa86f;
-  --layer-land:         #a78b5f;
-  --layer-compute:      #5e8fb5;
-  --layer-compute-wash: color-mix(in srgb, var(--layer-compute) 16%, transparent);
-  --layer-water:        #4f9da6;
-  --layer-material:     #9b6fa0;
-  --layer-logistics:    #8a93a3;
+  /* Surface roles: canvas, section, inset/list row, and overlay. */
+  --surface-primary: color-mix(in srgb, var(--surface) 88%, var(--field));
+  --surface-secondary: var(--surface);
+  --surface-tertiary: var(--surface-inset);
 
-  /* ── Semantic ── */
-  --positive: #5fa878;
-  --negative:  #c75d5d;
-  --critical:  #d9694a;
-  --neutral:   #5c6780;
+  /* Overlays only. Regular sections intentionally carry no elevation. */
+  --shadow-sm: none;
+  --shadow-md: 0 12px 30px rgb(0 0 0 / 28%);
+  --shadow-lg: 0 20px 48px rgb(0 0 0 / 36%);
+  --shadow-glow: none;
+  --shadow-inset: none;
 
-  /* ── Surface layers (panel / overlay backgrounds) ── */
-  --surface-primary:   rgba(9, 11, 15, 0.97);   /* tooltip / popup overlay — near-opaque */
-  --surface-secondary: #10131a;                  /* card surface (= --ink-800) */
-  --surface-tertiary:  #161a22;                  /* nested card / sidebar row (= --ink-750) */
-
-  /* ── Glass ── */
-  --glass-bg:        rgba(12, 15, 21, 0.76);
-  --glass-border:    rgba(255, 255, 255, 0.10);
-  --glass-highlight: rgba(255, 255, 255, 0.028);
-
-  /* ── Shadows ── */
-  --shadow-sm:   0 1px 2px rgba(0,0,0,0.35), 0 1px 4px rgba(0,0,0,0.18);
-  --shadow-md:   0 2px 5px rgba(0,0,0,0.3),  0 5px 14px rgba(0,0,0,0.22);
-  --shadow-lg:   0 4px 8px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.28), 0 18px 52px rgba(0,0,0,0.14);
-  --shadow-glow: 0 0 20px rgba(201,169,97,0.08);
-  --shadow-inset: inset 0 1px 0 var(--glass-highlight);
-
-  /* ── Radius ── */
-  --radius-xs: 3px;
-  --radius-sm: 5px;
+  /* Compact operational geometry. */
+  --radius-xs: 0px;
+  --radius-sm: 4px;
   --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
 
-  /* ── Motion ── */
-  --ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
-  --ease-spring:    cubic-bezier(0.22, 1.2, 0.36, 1);
-  --ease-soft:      cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-odim:      cubic-bezier(0.16, 1, 0.3, 1);
-  --dur-micro: 100ms;
-  --dur-fast:  180ms;
-  --dur-base:  320ms;
-  --dur-slow:  500ms;
-  --dur-page:  600ms;
+  /* Motion preserves continuity without spring or decorative bounce. */
+  --motion-micro: 120ms;
+  --motion-state: 180ms;
+  --motion-surface: 280ms;
+  --ease-primary: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
 
-  /* ── Rune active states ── */
-  --rune-active-bg:   rgba(201, 169, 97, 0.10);
-  --rune-active-fade: rgba(201, 169, 97, 0.04);
-  --rune-active-glow: rgba(201, 169, 97, 0.10);
+  /* Navigation dimensions. */
+  --sidebar-w: 64px;
+  --sidebar-w-expanded: 208px;
 
-  /* ── Surface sheen ── */
-  --sidebar-sheen: rgba(255, 255, 255, 0.012);
-  --logo-sheen:    rgba(255, 255, 255, 0.04);
+  /*
+   * Compatibility aliases: route migrations retain these names temporarily.
+   * They resolve into the operational system; they never reintroduce the
+   * former gold, glow, glass, or spring treatment.
+   */
+  --ink-950: var(--field);
+  --ink-900: var(--field-muted);
+  --ink-850: color-mix(in srgb, var(--surface) 66%, var(--field));
+  --ink-800: var(--surface);
+  --ink-750: var(--surface-inset);
+  --ink-700: color-mix(in srgb, var(--surface) 88%, var(--text));
+  --ink-650: color-mix(in srgb, var(--surface) 80%, var(--text));
+  --ink-600: color-mix(in srgb, var(--surface) 70%, var(--text));
 
-  /* ── Sidebar ── */
-  --sidebar-w: 60px;
-  --sidebar-w-expanded: 200px;
+  --rune: var(--signal);
+  --rune-bright: var(--signal-strong);
+  --rune-dim: color-mix(in srgb, var(--signal) 68%, var(--text));
+  --rune-wash: var(--signal-wash);
+  --rune-glow: transparent;
+  --rune-active-bg: var(--signal-wash);
+  --rune-active-fade: color-mix(in srgb, var(--signal) 5%, transparent);
+  --rune-active-glow: transparent;
+
+  --glass-bg: var(--surface);
+  --glass-border: var(--line-soft);
+  --glass-highlight: transparent;
+  --sidebar-sheen: transparent;
+  --logo-sheen: transparent;
+
+  --ease-out-expo: var(--ease-primary);
+  --ease-out-quart: var(--ease-primary);
+  --ease-spring: var(--ease-primary);
+  --ease-soft: var(--ease-primary);
+  --ease-odim: var(--ease-primary);
+  --dur-micro: var(--motion-micro);
+  --dur-fast: var(--motion-state);
+  --dur-base: var(--motion-surface);
+  --dur-slow: var(--motion-surface);
+  --dur-page: var(--motion-state);
+
+  /* Category distinctions are textual/iconographic, so their legacy colors stay neutral. */
+  --layer-energy: var(--text-secondary);
+  --layer-cash: var(--text-secondary);
+  --layer-land: var(--text-secondary);
+  --layer-compute: var(--text-secondary);
+  --layer-compute-wash: color-mix(in srgb, var(--text) 8%, transparent);
+  --layer-water: var(--text-secondary);
+  --layer-material: var(--text-secondary);
+  --layer-logistics: var(--text-secondary);
 }

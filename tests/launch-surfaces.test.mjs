@@ -35,6 +35,16 @@ test("root route is a public landing page, not a dashboard redirect", () => {
   assert.doesNotMatch(page, /placeholder|scaffold/i);
 });
 
+test("public headers use the generated Odim mark beside the wordmark", () => {
+  const page = readFileSync("app/page.tsx", "utf8");
+  const shell = readFileSync("components/ui/public-shell.tsx", "utf8");
+  for (const source of [page, shell]) {
+    assert.match(source, /import \{ OdimLogo \} from "@\/components\/ui\/odim-logo"/);
+    assert.match(source, /<OdimLogo size=\{28\}/);
+    assert.doesNotMatch(source, /place-items-center border text-\[13px\][\s\S]*>\s*O\s*<\/span>/);
+  }
+});
+
 test("dashboard shell is scoped to the (dashboard) layout, not the root layout", () => {
   const rootLayout = readFileSync("app/layout.tsx", "utf8");
   const dashboardLayout = readFileSync("app/(dashboard)/layout.tsx", "utf8");

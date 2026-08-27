@@ -1,10 +1,7 @@
 import { writeGate } from "../munin/write-gate.ts";
 import type { SourceRef } from "../pipeline/types.ts";
 import type { SourceType } from "../munin/types.ts";
-import { deterministicUuid } from "../pipeline/idempotency.ts";
-import { toMuninMemoryRow, type MuninMemory } from "../munin/memory.ts";
-import { isProductionRuntime } from "../env/runtime.ts";
-import { createServiceSupabaseClient, hasSupabaseWriteEnv } from "../supabase/client.ts";
+import { buildMemoryProposal, persistMemoryProposal } from "../munin/proposals.ts";
 
 export type GapfillResult = {
   id: string;
@@ -15,13 +12,10 @@ export type GapfillResult = {
   content: string;
   confidence: number;
   sourceRefs: SourceRef[];
+  /** Additive v3 metadata; the result remains usable as transient evidence. */
+  reviewStatus?: "pending_review";
+  proposalId?: string;
 };
-
-function shouldFallbackFromSupabaseError(message: string) {
-  if (isProductionRuntime()) return false;
-  if (process.env.REPOSITORY_SUPABASE_STRICT === "true") return false;
-  return /schema cache|does not exist|Could not find the table|relation .* does not exist|column .* does not exist/i.test(message);
-}
 
 function hostFor(value: string) {
   try {
@@ -43,8 +37,10 @@ export async function realityGapfillSearch(input: {
   orgId: string;
   question: string;
   allowedDomains: string[];
+  signal?: AbortSignal;
 }): Promise<GapfillResult[]> {
   if (process.env.GAPFILL_ENABLED !== "true" && (process.env.AI_PROVIDER ?? "mock") !== "mock") return [];
+  if (input.signal?.aborted) return [];
   const fixtureUrl = "https://elibrary.ferc.gov/eLibrary/search";
   const fixture: GapfillResult = {
     id: "gapfill:ferc:fixture",
@@ -64,7 +60,9 @@ export async function realityGapfillSearch(input: {
     ]
   };
   const results = [fixture].filter((result) => isAllowedGapfillUrl(result.url, input.allowedDomains));
+  const persistedResults: GapfillResult[] = [];
   for (const result of results) {
+    if (input.signal?.aborted) return persistedResults;
     const gated = writeGate({
       orgId: input.orgId,
       content: result.content,
@@ -72,37 +70,26 @@ export async function realityGapfillSearch(input: {
       memoryClass: "fact",
       novelty: 0.8,
       reliability: 0.95,
-      certainty: result.confidence
+      certainty: result.confidence,
+      reviewStatus: "pending_review"
     });
     if (gated.action !== "WRITTEN_TO_MEMORY") throw new Error("reality gapfill result failed writeGate memory route");
-    if (hasSupabaseWriteEnv()) {
-      const now = new Date().toISOString();
-      const memory: MuninMemory = {
-        id: deterministicUuid("munin_gapfill_memory", { orgId: input.orgId, resultId: result.id, content: result.content }),
-        orgId: input.orgId,
-        agentScope: "archival",
-        memoryClass: "fact",
-        sourceType: result.sourceType,
-        content: result.content,
-        salienceScore: gated.salienceScore,
-        importance: result.confidence,
-        decayScore: 1,
-        isSeed: false,
-        status: gated.status ?? "active",
-        linkedMemoryIds: [],
-        sourceRefs: result.sourceRefs,
-        validFrom: now,
-        validTo: null,
-        createdAt: now,
-        lastAccessedAt: now
-      };
-      const { error } = await createServiceSupabaseClient()
-        .from("munin_memory")
-        .upsert(toMuninMemoryRow(memory), { onConflict: "id" });
-      if (error) {
-        if (!shouldFallbackFromSupabaseError(error.message)) throw new Error(`reality gapfill persistence failed: ${error.message}`);
-      }
-    }
+    const proposal = buildMemoryProposal({
+      orgId: input.orgId,
+      content: result.content,
+      sourceType: result.sourceType,
+      memoryClass: "fact",
+      agentScope: "archival",
+      novelty: 0.8,
+      reliability: 0.95,
+      certainty: result.confidence,
+      sourceRefs: result.sourceRefs,
+      observedAt: result.sourceRefs.find((source) => source.observedAt)?.observedAt,
+      origin: "huginn_reality_gapfill"
+    });
+    if (proposal.reviewStatus !== "pending_review") throw new Error("reality gapfill must remain pending review");
+    const persisted = await persistMemoryProposal(proposal, { signal: input.signal });
+    persistedResults.push({ ...result, reviewStatus: "pending_review", proposalId: persisted.id });
   }
-  return results;
+  return persistedResults;
 }

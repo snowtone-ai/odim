@@ -1,6 +1,7 @@
 import { checkRequestRateLimit } from "../../../lib/api/rate-limit.ts";
 import { authorizeApiRequest } from "../../../lib/auth/request.ts";
 import { answerHuginnQuestion } from "../../../lib/huginn/query.ts";
+import { createMuninTemporalMemoryReader } from "../../../lib/munin/reader.ts";
 
 const uuidV4Pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -16,8 +17,14 @@ export async function POST(request: Request) {
       );
     }
     const body = (await request.json().catch(() => ({}))) as { question?: string; orgId?: string; userId?: string };
-    if (!body.question) {
+    if (typeof body.question !== "string" || !body.question.trim()) {
       return Response.json({ error: "question is required" }, { status: 400 });
+    }
+    if (body.orgId !== undefined && typeof body.orgId !== "string") {
+      return Response.json({ error: "orgId must be a string" }, { status: 400 });
+    }
+    if (body.userId !== undefined && typeof body.userId !== "string") {
+      return Response.json({ error: "userId must be a string" }, { status: 400 });
     }
     if (body.question.length > 2000) {
       return Response.json({ error: "question must be 2000 characters or fewer" }, { status: 400 });
@@ -40,14 +47,20 @@ export async function POST(request: Request) {
     const result = await answerHuginnQuestion({
       orgId,
       question: body.question,
-      userId: body.userId
+      // API callers cannot impersonate another principal through the DTO.
+      // Disabled/local mode keeps the legacy body field for deterministic
+      // development fixtures only.
+      userId: auth.mode === "disabled" ? body.userId ?? auth.context.userId : auth.context.userId,
+      temporalMemoryReader: createMuninTemporalMemoryReader()
     });
 
     return Response.json(result);
   } catch (err) {
-    return Response.json(
-      { error: err instanceof Error ? err.message : "Internal server error" },
-      { status: 500 }
-    );
+    // Keep provider/database details out of the client response. Exception
+    // messages may contain prompts, tokens, or other request data.
+    console.error("[huginn] request failed", {
+      errorType: err instanceof Error ? err.name : typeof err
+    });
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

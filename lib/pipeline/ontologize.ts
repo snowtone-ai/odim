@@ -153,6 +153,54 @@ function ontologizeSecSignal(signal: NormalizedSignal) {
   return { objects, links };
 }
 
+function ontologizeSecFormDSignal(signal: NormalizedSignal) {
+  const issuerName = text(signal.payload.issuerName) ?? text(signal.payload.companyName) ?? "Unknown Form D issuer";
+  const cik = text(signal.payload.cik) ?? "unknown-cik";
+  const accessionNumber = text(signal.payload.accessionNumber) ?? signal.externalId;
+  const issuer = objectDraft({
+    objectType: "decision_maker",
+    key: `sec-form-d:${cik}:${issuerName}`,
+    attributes: {
+      name: issuerName,
+      type: text(signal.payload.entityType) ?? "unknown",
+      reality_score: 0
+    },
+    sourceRefs: signal.sourceRefs
+  });
+  const candidate = objectDraft({
+    objectType: "capital_raise_candidate",
+    key: `sec-form-d:${accessionNumber}`,
+    attributes: {
+      amount_sold_usd: numberValue(signal.payload.amountSoldUsd) ?? null,
+      classification: "capital_raise_candidate",
+      entity_type: text(signal.payload.entityType) ?? null,
+      evidence_scope: text(signal.payload.evidenceScope) ?? "single_sec_form_d_filing",
+      filing_date: text(signal.payload.filingDate) ?? signal.observedAt.slice(0, 10),
+      first_sale_date: text(signal.payload.firstSaleDate) ?? null,
+      industry: text(signal.payload.industry) ?? null,
+      issuer_address: signal.payload.issuerAddress ?? null,
+      offering_amount_usd: numberValue(signal.payload.offeringAmountUsd) ?? null,
+      physical_investment_status: text(signal.payload.physicalInvestmentStatus) ?? "not_proven",
+      remaining_amount_usd: numberValue(signal.payload.remainingAmountUsd) ?? null,
+      source_url: signal.sourceRefs[0]?.url ?? null,
+      status: signal.payload.isAmendment === true ? "amended" : "filed"
+    },
+    sourceRefs: signal.sourceRefs
+  });
+  return {
+    objects: [issuer, candidate],
+    links: [
+      linkDraft({
+        fromObjectId: issuer.id,
+        toObjectId: candidate.id,
+        linkType: "filed_as",
+        confidence: signal.confidence,
+        sourceRefs: signal.sourceRefs
+      })
+    ]
+  };
+}
+
 function ontologizeFercSignal(signal: NormalizedSignal) {
   const applicant = text(signal.payload.applicantRaw) ?? text(signal.payload.applicant) ?? "Unknown FERC applicant";
   const docketNumber = text(signal.payload.docketNumber) ?? signal.externalId;
@@ -974,6 +1022,7 @@ function ontologizeFaaSignal(signal: NormalizedSignal) {
 
 export function ontologizeSignal(signal: NormalizedSignal) {
   if (signal.source === "sec-edgar") return ontologizeSecSignal(signal);
+  if (signal.source === "sec-form-d") return ontologizeSecFormDSignal(signal);
   if (signal.source === "ferc-elibrary") return ontologizeFercSignal(signal);
   if (signal.source === "county-building-permits") return ontologizeBuildingPermitSignal(signal);
   if (signal.source === "public-cloud-regions") return ontologizeCloudRegionSignal(signal);

@@ -15,6 +15,8 @@ import { fetchNarrativeSignals, parseNarrativeRecords } from "../scrapers/narrat
 import { fetchPatentSignals } from "../scrapers/patent.ts";
 import { parsePortStatisticRecords } from "../scrapers/port-statistics.ts";
 import { fetchSecEdgarSignals, parseSecSubmissions } from "../scrapers/sec-edgar.ts";
+import { fetchSecFormDSignals, parseSecFormDIndex, parseSecFormDXml } from "../scrapers/sec-form-d.ts";
+import { collectLiveSignals } from "../scrapers/run.ts";
 import { parsePucRecords } from "../scrapers/state-puc.ts";
 import { parseUsgsMineralRecords } from "../scrapers/usgs-minerals.ts";
 import { parseWaterDistrictRecords } from "../scrapers/water-districts.ts";
@@ -89,6 +91,115 @@ test("SEC EDGAR backfill follows historical submission files", async () => {
   assert.equal(signals.length, 2);
   assert.equal(signals[1].externalId, "0001326801-20-000001");
   assert.equal(signals[1].payload.companyName, "Meta Platforms, Inc.");
+});
+
+test("SEC Form D parses a primary XML filing as an unconfirmed capital raise candidate", () => {
+  const signal = parseSecFormDXml(
+    "<edgarSubmission><primaryIssuer><cik>0001999999</cik><entityName>Example Raise LLC</entityName><entityType>Limited Liability Company</entityType><issuerAddress><street1>100 Example Way</street1><city>Austin</city><stateOrCountry>TX</stateOrCountry><zipCode>78701</zipCode></issuerAddress></primaryIssuer><relatedPersonsList><relatedPersonInfo><relatedPersonName><firstName>Ada</firstName><lastName>Lovelace</lastName></relatedPersonName><relatedPersonAddress><city>Austin</city><stateOrCountry>TX</stateOrCountry></relatedPersonAddress></relatedPersonInfo></relatedPersonsList><offeringData><industryGroup><industryGroupType>Other Technology</industryGroupType></industryGroup><dateOfFirstSale><value>2026-05-20</value></dateOfFirstSale><offeringSalesAmounts><totalOfferingAmount>25000000</totalOfferingAmount><totalAmountSold>7500000</totalAmountSold><totalRemaining>17500000</totalRemaining></offeringSalesAmounts></offeringData></edgarSubmission>",
+    {
+      accessionNumber: "0001999999-26-000001",
+      cik: "0001999999",
+      filingDate: "2026-05-21",
+      sourceUrl: "https://www.sec.gov/Archives/edgar/data/1999999/000199999926000001/primary_doc.xml"
+    }
+  );
+  const plan = buildIngestionPlan([signal]);
+
+  assert.equal(signal.layer, "cash");
+  assert.equal(signal.payload.classification, "capital_raise_candidate");
+  assert.equal(signal.payload.physicalInvestmentStatus, "not_proven");
+  assert.equal(signal.payload.evidenceScope, "single_sec_form_d_filing");
+  assert.equal(signal.payload.offeringAmountUsd, 25000000);
+  assert.equal(signal.payload.amountSoldUsd, 7500000);
+  assert.equal(signal.payload.remainingAmountUsd, 17500000);
+  assert.equal(signal.payload.industry, "Other Technology");
+  assert.equal(signal.payload.firstSaleDate, "2026-05-20");
+  assert.equal(signal.payload.entityType, "Limited Liability Company");
+  assert.deepEqual(signal.payload.issuerAddress, {
+    city: "Austin",
+    stateOrCountry: "TX",
+    street1: "100 Example Way",
+    zipCode: "78701"
+  });
+  assert.equal(signal.payload.relatedPeople[0].name, "Ada Lovelace");
+  assert.deepEqual(signal.payload.relatedPeople[0].address, { city: "Austin", stateOrCountry: "TX" });
+  assert.equal(signal.sourceRefs[0].externalId, "0001999999-26-000001");
+  assert.ok(plan.ontologyObjects.some((object) => object.objectType === "capital_raise_candidate"));
+  assert.ok(!plan.ontologyLinks.some((link) => link.linkType === "commits_capital_to"));
+});
+
+test("SEC Form D excludes unrelated forms and degrades amendments or missing values to low priority", () => {
+  const index = [
+    "D            Example Raise LLC                  0001999999     2026-05-21  edgar/data/1999999/000199999926000001/primary_doc.xml",
+    "D/A          Example Raise LLC                  0001999999     2026-05-21  edgar/data/1999999/000199999926000002/primary_doc.xml",
+    "8-K          Example Raise LLC                  0001999999     2026-05-21  edgar/data/1999999/000199999926000003/report.htm"
+  ].join("\n");
+  const filings = parseSecFormDIndex(index);
+  const incompleteAmendment = parseSecFormDXml(
+    "<edgarSubmission><primaryIssuer><entityName>Example Raise LLC</entityName></primaryIssuer><offeringData><industryGroup><industryGroupType>Other</industryGroupType></industryGroup></offeringData>",
+    {
+      accessionNumber: "0001999999-26-000002",
+      cik: "0001999999",
+      filingDate: "2026-05-21",
+      form: "D/A",
+      sourceUrl: "https://www.sec.gov/Archives/edgar/data/1999999/000199999926000002/primary_doc.xml"
+    }
+  );
+
+  assert.deepEqual(filings.map((filing) => filing.form), ["D", "D/A"]);
+  assert.equal(incompleteAmendment.payload.priority, "low");
+  assert.equal(incompleteAmendment.payload.offeringAmountUsd, undefined);
+  assert.deepEqual(incompleteAmendment.payload.relatedPeople, []);
+});
+
+test("SEC Form D live fetch follows daily indexes, sends an identifying User-Agent, and requests primary XML", async () => {
+  const requested = [];
+  const index = "D            Example Raise LLC                  0001999999     2026-05-21  edgar/data/1999999/000199999926000001/0001999999-26-000001.txt\n";
+  const submission = "<SEC-DOCUMENT><DOCUMENT>\n<TYPE>D\n<FILENAME>primary_doc.xml\n<TEXT><XML></XML></TEXT></DOCUMENT></SEC-DOCUMENT>";
+  const primaryXml = "<edgarSubmission><primaryIssuer><cik>0001999999</cik><entityName>Example Raise LLC</entityName></primaryIssuer><offeringData><offeringSalesAmounts><totalOfferingAmount>25000000</totalOfferingAmount></offeringSalesAmounts></offeringData></edgarSubmission>";
+  const signals = await fetchSecFormDSignals({
+    archivesBaseUrl: "https://sec.example/Archives/",
+    dailyIndexBaseUrl: "https://sec.example/daily-index",
+    fetchImpl: async (url, init) => {
+      requested.push({ headers: init?.headers, url: String(url) });
+      if (String(url).endsWith("form.20260521.idx")) return new Response(index);
+      if (String(url).endsWith("0001999999-26-000001.txt")) return new Response(submission);
+      if (String(url).endsWith("primary_doc.xml")) return new Response(primaryXml, { headers: { "content-type": "application/xml" } });
+      return new Response("not found", { status: 404 });
+    },
+    indexLookbackDays: 1,
+    limit: 1,
+    now: "2026-05-21T12:00:00.000Z",
+    userAgent: "Odim test contact@example.com"
+  });
+
+  assert.deepEqual(requested.map((request) => request.url), [
+    "https://sec.example/daily-index/2026/QTR2/form.20260521.idx",
+    "https://sec.example/Archives/edgar/data/1999999/000199999926000001/0001999999-26-000001.txt",
+    "https://sec.example/Archives/edgar/data/1999999/000199999926000001/primary_doc.xml"
+  ]);
+  assert.ok(requested.every((request) => request.headers["user-agent"] === "Odim test contact@example.com"));
+  assert.equal(signals.length, 1);
+  assert.equal(signals[0].sourceRefs[0].url, requested[2].url);
+  await assert.rejects(() => fetchSecFormDSignals({ indexLookbackDays: 1, now: "2026-05-21" }), /SEC_EDGAR_USER_AGENT/);
+});
+
+test("dry-run source report includes the deterministic SEC Form D fixture", async () => {
+  const dryRun = await collectLiveSignals({
+    dryRun: true,
+    failOnSourceError: false,
+    maxPages: 1,
+    minSignals: 1,
+    mode: "dry-run",
+    noWrite: true,
+    pageSize: 1,
+    sourceIds: [],
+    sourceLimit: 50,
+    warnOnSourceFailure: true
+  });
+
+  assert.ok(dryRun.signals.some((signal) => signal.source === "sec-form-d"));
+  assert.ok(dryRun.sourceReport.some((source) => source.id === "sec-form-d" && source.count > 0));
 });
 
 test("FERC and building permit records parse into Reality Layer signals", () => {

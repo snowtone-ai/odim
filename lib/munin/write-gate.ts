@@ -41,7 +41,8 @@ export function writeGate(candidate: WriteGateCandidate, env: NodeJS.ProcessEnv 
       salienceScore,
       memoryClass: candidate.memoryClass,
       sourceType: candidate.sourceType,
-      reason: "web_narrative is structurally blocked from munin_memory"
+      reason: "web_narrative is structurally blocked from munin_memory",
+      reviewStatus: "rejected"
     };
   }
 
@@ -52,7 +53,8 @@ export function writeGate(candidate: WriteGateCandidate, env: NodeJS.ProcessEnv 
       salienceScore,
       memoryClass: candidate.memoryClass,
       sourceType: candidate.sourceType,
-      reason: "opinion is physically separated from default Huginn evidence"
+      reason: "opinion is physically separated from default Huginn evidence",
+      reviewStatus: candidate.reviewStatus ?? (candidate.isSeed ? "approved" : "pending_review")
     };
   }
 
@@ -65,6 +67,7 @@ export function writeGate(candidate: WriteGateCandidate, env: NodeJS.ProcessEnv 
     salienceScore,
     memoryClass: candidate.memoryClass,
     sourceType: candidate.sourceType,
-    reason: status === "active" ? "salience met write-gate threshold" : "salience below threshold; retained as archived MVCC memory"
+    reason: status === "active" ? "salience met write-gate threshold" : "salience below threshold; retained as archived MVCC memory",
+    reviewStatus: candidate.reviewStatus ?? (candidate.isSeed ? "approved" : "pending_review")
   };
 }

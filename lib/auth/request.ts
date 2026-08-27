@@ -156,5 +156,10 @@ export async function authorizeApiRequest(request: Request, requiredScope: strin
   }
 
   await touchLastUsedAt(record.id, record.orgId);
-  return { ok: true, context: { orgId: record.orgId }, mode: "api-key", scopes: record.scopes };
+  return {
+    ok: true,
+    context: { orgId: record.orgId, userId: record.createdBy },
+    mode: "api-key",
+    scopes: record.scopes
+  };
 }

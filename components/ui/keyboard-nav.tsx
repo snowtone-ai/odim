@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { trapDialogFocus } from "@/components/ui/modal-focus";
 
 const GO_SHORTCUTS: Record<string, string> = {
   m: "/map",
@@ -22,6 +23,9 @@ export function KeyboardNav() {
   const router = useRouter();
   const [pending, setPending] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousActiveRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -60,6 +64,20 @@ export function KeyboardNav() {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [pending, router]);
 
+  useEffect(() => {
+    if (!showHelp) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    previousActiveRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (!dialog.open) dialog.showModal();
+    const frame = window.requestAnimationFrame(() => closeButtonRef.current?.focus());
+    return () => {
+      window.cancelAnimationFrame(frame);
+      if (dialog.open) dialog.close();
+      previousActiveRef.current?.focus();
+    };
+  }, [showHelp]);
+
   if (!showHelp) return null;
 
   const shortcuts: Array<{ keys: string[]; desc: string }> = [
@@ -78,33 +96,42 @@ export function KeyboardNav() {
   ];
 
   return (
-    <div
-      className="fixed inset-0 z-[70] flex items-center justify-center px-4"
-      style={{ background: "rgba(0,0,0,0.60)", backdropFilter: "blur(4px)" }}
-      onClick={() => setShowHelp(false)}
+    <dialog
+      ref={dialogRef}
+      aria-label="Keyboard shortcuts"
+      className="fixed inset-0 z-[70] m-0 h-dvh max-h-none w-screen max-w-none border-0 bg-transparent p-0"
+      style={{ background: "rgba(5,7,9,0.86)" }}
+      onKeyDown={trapDialogFocus}
+      onCancel={(event) => { event.preventDefault(); setShowHelp(false); }}
     >
+      <div className="flex h-full items-center justify-center px-4" onClick={() => setShowHelp(false)}>
       <div
-        className="w-full max-w-sm overflow-hidden rounded-[var(--radius-lg)] p-5"
-        style={{ background: "var(--ink-850)", border: "1px solid var(--line-soft)", boxShadow: "var(--shadow-lg)" }}
+        data-testid="keyboard-help"
+        className="w-full max-w-sm overflow-hidden border p-5"
+        style={{ background: "var(--surface, var(--ink-850, #131d26))", borderColor: "var(--line-soft, rgba(255,255,255,.12))", boxShadow: "0 18px 48px rgba(0,0,0,.38)" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mono mb-4 flex items-center justify-between text-[11px] uppercase tracking-[0.12em]" style={{ color: "var(--rune)" }}>
+        <div className="mono mb-4 flex items-center justify-between text-[11px] uppercase tracking-[0.12em]" style={{ color: "var(--signal, #4c90f0)" }}>
           <span>Keyboard Shortcuts</span>
-          <kbd
-            className="rounded-[4px] px-1.5 py-0.5 text-[10px] normal-case tracking-normal"
-            style={{ background: "var(--ink-700)", color: "var(--text-quaternary)", border: "1px solid var(--line-faint)" }}
-          >?</kbd>
+          <button
+            ref={closeButtonRef}
+            type="button"
+            aria-label="Close keyboard shortcuts"
+            className="odim-icon-control h-11 w-11 text-[18px] normal-case tracking-normal"
+            style={{ background: "var(--field, var(--ink-700, #1c212b))", color: "var(--text-secondary, #8d97ab)", border: "1px solid var(--line-faint, rgba(255,255,255,.06))" }}
+            onClick={() => setShowHelp(false)}
+          >×</button>
         </div>
         <div className="grid gap-1.5">
           {shortcuts.map((s) => (
             <div key={s.desc} className="flex items-center justify-between py-1">
-              <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{s.desc}</span>
+              <span className="text-[12px]" style={{ color: "var(--text, var(--text-primary, #e8eff2))" }}>{s.desc}</span>
               <span className="flex items-center gap-1">
                 {s.keys.map((k) => (
                   <kbd
                     key={k}
-                    className="mono inline-flex min-w-[22px] items-center justify-center rounded-[4px] px-1.5 py-0.5 text-[10px]"
-                    style={{ background: "var(--ink-700)", color: "var(--text-tertiary)", border: "1px solid var(--line-faint)" }}
+                    className="mono inline-flex min-h-11 min-w-[22px] items-center justify-center rounded-[4px] px-1.5 py-0.5 text-[11px]"
+                    style={{ background: "var(--field, var(--ink-700, #1c212b))", color: "var(--text-secondary, #8d97ab)", border: "1px solid var(--line-faint, rgba(255,255,255,.06))" }}
                   >{k}</kbd>
                 ))}
               </span>
@@ -112,6 +139,7 @@ export function KeyboardNav() {
           ))}
         </div>
       </div>
-    </div>
+      </div>
+    </dialog>
   );
 }

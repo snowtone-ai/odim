@@ -7,14 +7,21 @@ export function AnomalyBadge({
   severity: "anomaly" | "critical";
   zScore: number;
 }>) {
-  const color = severity === "critical" ? "var(--critical)" : "#eab308";
+  const isCritical = severity === "critical";
+  const color = isCritical ? "var(--critical)" : "var(--warning)";
+  const wash = isCritical
+    ? "var(--critical-wash)"
+    : "color-mix(in srgb, var(--warning) 12%, transparent)";
+  const border = isCritical
+    ? "color-mix(in srgb, var(--critical) 25%, transparent)"
+    : "color-mix(in srgb, var(--warning) 25%, transparent)";
   return (
     <span
-      className="mono inline-flex items-center rounded px-1.5 py-0.5 text-[9px] uppercase tracking-[0.1em]"
+      className="mono inline-flex items-center rounded px-1.5 py-0.5 text-[11px] uppercase tracking-[0.1em]"
       style={{
         color,
-        background: severity === "critical" ? "rgba(220,38,38,0.1)" : "rgba(234,179,8,0.1)",
-        border: `1px solid ${severity === "critical" ? "rgba(220,38,38,0.25)" : "rgba(234,179,8,0.25)"}`
+        background: wash,
+        border: `1px solid ${border}`
       }}
     >
       z {zScore > 0 ? "+" : ""}

@@ -8,8 +8,8 @@ type SparklineProps = Readonly<{
 }>;
 
 /**
- * Pure SVG sparkline — no axes, filled area below polyline.
- * Trend detection: compares last value to first; green=up, red=down, neutral=flat.
+ * Pure SVG sparkline — no axes, with a restrained area below the polyline.
+ * Trend detection: compares last value to first; status colors remain semantic.
  */
 export function Sparkline({
   data,
@@ -50,10 +50,10 @@ export function Sparkline({
   const diff = last - first;
   const autoColor =
     diff > 0.5
-      ? "var(--positive, #22c55e)"
+      ? "var(--positive)"
       : diff < -0.5
-      ? "var(--critical, #dc2626)"
-      : "var(--text-tertiary, #6b7280)";
+      ? "var(--critical)"
+      : "var(--text-tertiary)";
 
   const lineColor = color ?? autoColor;
 
@@ -74,21 +74,10 @@ export function Sparkline({
       aria-hidden="true"
       style={{ display: "block", overflow: "visible" }}
     >
-      <defs>
-        <linearGradient
-          id={`spark-fill-${lineColor.replace(/[^a-zA-Z0-9]/g, "")}`}
-          x1="0"
-          x2="0"
-          y1="0"
-          y2="1"
-        >
-          <stop offset="0%" stopColor={lineColor} stopOpacity={0.25} />
-          <stop offset="100%" stopColor={lineColor} stopOpacity={0} />
-        </linearGradient>
-      </defs>
       <path
         d={areaPath}
-        fill={`url(#spark-fill-${lineColor.replace(/[^a-zA-Z0-9]/g, "")})`}
+        fill={lineColor}
+        fillOpacity={0.08}
       />
       <polyline
         points={polylineStr}

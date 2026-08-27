@@ -1,4 +1,5 @@
 import { generateStructuredAssessment, type StructuredAssessmentResponse } from "../ai/provider.ts";
+import type { AiRuntime, RequestBudget, RuntimeProviderName } from "../ai/runtime/index.ts";
 import type { RetrievedMemory } from "../munin/memory.ts";
 
 export type SelfAssessmentPlan = StructuredAssessmentResponse;
@@ -23,12 +24,22 @@ export async function assessQuery(input: {
   orgId?: string;
   coreMemory?: RetrievedMemory[];
   generateFn?: typeof generateStructuredAssessment;
+  runtime?: AiRuntime;
+  provider?: RuntimeProviderName;
+  signal?: AbortSignal;
+  deadlineAt?: number;
+  budget?: RequestBudget;
 }): Promise<SelfAssessmentPlan> {
   const coreMemory = (input.coreMemory ?? []).map((memory) => `- ${memory.content}`).join("\n");
-  const generated = await (input.generateFn ?? generateStructuredAssessment)({
-    question: input.question,
-    coreMemory,
-    orgId: input.orgId
-  });
+  const request = { question: input.question, coreMemory, orgId: input.orgId };
+  const generated = input.generateFn
+    ? await input.generateFn(request)
+    : await generateStructuredAssessment(request, {
+        runtime: input.runtime,
+        provider: input.provider,
+        signal: input.signal,
+        deadlineAt: input.deadlineAt,
+        budget: input.budget
+      });
   return clampPlan(generated);
 }

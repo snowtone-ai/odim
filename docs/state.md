@@ -1,16 +1,16 @@
 # state.md
 
 ## Current
-- Branch: feat/lp-006-008-public-surfaces (LP-005 merged to main via PR #7)
-- Active task: LP-006/007/008 public surfaces (API docs, legal pages, SEO/meta) — implemented, reviewed, recommendations applied
-- Current executor: main agent
+- Branch: feat/product-experience-upgrade
+- Active task: none — PUX-001 complete
+- Current executor: none
 - Write lock: none
 - Coordinator: main agent
-- Latest verification pointer: LP-006/007/008 — public `/docs` (renders `docs/api-reference.md` via trusted markdown parser, no raw HTML), `/terms` `/privacy` `/security` legal pages with shared `PublicShell`, landing footer links, OG/twitter metadata + title template in root layout, `sitemap.xml` (public routes only), `robots.txt` (disallows `/api/`, dashboard prefixes, `/invite`), per-page titles on 13 pages; launch-surfaces tests extended; typecheck/lint/build/verify green
-- Verification mode: Tier 1 class (300+ line diff) — fresh-context Sonnet review PASS-with-recommendations, all applied (see tasks.md LP-006/007/008 Review Notes)
+- Latest verification pointer: `pnpm verify` passed with 252/252 tests and production build; `pnpm release:audit` passed 91/91; `pnpm browser:smoke` passed all six main routes, API checks, desktop dialog focus, and 390px overflow checks. Chrome traces recorded landing LCP 178ms and Map LCP 395ms with CLS 0.00.
+- Release state: PUX-001 is ready for production with migration `0015_huginn_muninn_v3.sql`; deployment and smoke verification are the final release operation.
 - Human gates outstanding: none.
 - Legal pages (`/terms`, `/privacy`, `/security`): substantive content complete (Japan/Tokyo governing law, APPI/GDPR, processor list, support-channel contact). Formal legal review deferred — practice product.
-- Supabase: project `xyvioekqwmbgrwlinzxe` restored by operator; migrations 0001–0014 applied 2026-07-06.
+- Supabase: project `xyvioekqwmbgrwlinzxe` restored by operator; migrations 0001–0014 applied 2026-07-06; migration 0015 is the PUX-001 production release migration.
 - Settings page fix (2026-07-06): migration `0014_service_role_grants.sql` grants service_role/authenticated on org_billing/billing_events/org_invites (0012/0013 omitted them → "permission denied for table org_billing"); `scripts/seed-default-org.mjs` seeds the DEFAULT_ORG_ID org so `getAdminSettings` resolves it. Applied to production; `/settings` returns 200 clean. verify/typecheck/lint/test (143/143) green.
 
 ## Completed after v3.0

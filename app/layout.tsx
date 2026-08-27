@@ -6,7 +6,10 @@ import { getLocale } from "@/lib/i18n/locale";
 const spectral = Spectral({
   subsets: ["latin"],
   weight: ["600"],
-  variable: "--font-spectral"
+  variable: "--font-spectral",
+  // This editorial face is only used by the public statement; do not
+  // preload it on dashboard routes.
+  preload: false
 });
 
 const plexSans = IBM_Plex_Sans({
@@ -32,19 +35,24 @@ export const metadata: Metadata = {
     template: "%s — Odim"
   },
   description: DESCRIPTION,
+  icons: {
+    icon: "/brand/odim-mark.png",
+    shortcut: "/brand/odim-mark.png",
+    apple: "/brand/odim-mark.png"
+  },
   openGraph: {
     title: "Odim — Substrate Intelligence",
     description: DESCRIPTION,
     siteName: "Odim",
     type: "website",
     url: "/",
-    images: ["/odim-logo.png"]
+    images: ["/brand/odim-mark.png"]
   },
   twitter: {
     card: "summary",
     title: "Odim — Substrate Intelligence",
     description: DESCRIPTION,
-    images: ["/odim-logo.png"]
+    images: ["/brand/odim-mark.png"]
   }
 };
 

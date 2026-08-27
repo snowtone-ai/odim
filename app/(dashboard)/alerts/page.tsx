@@ -13,15 +13,30 @@ export const dynamic = "force-dynamic";
 
 const defaultAlertsOrgId = process.env.DEFAULT_ORG_ID || "11111111-1111-4111-8111-111111111111";
 
-// Mobile-first layout: grid-cols-1 xl:grid-cols-[420px_1fr]
 export default async function AlertsPage() {
   const locale = await getLocale();
   const messages = getMessages(locale);
   const watchtower = await listWatchtowerRuns({ orgId: defaultAlertsOrgId });
+  const alertMessages = {
+    ...messages.screens.alerts,
+    notifications: locale === "ja"
+      ? {
+          title: "重要なアラートのブラウザ通知を許可しますか？",
+          enable: "通知を有効化",
+          dismiss: "今はしない",
+          busy: "処理中…"
+        }
+      : {
+          title: "Allow browser notifications for critical alerts?",
+          enable: "Enable notifications",
+          dismiss: "Not now",
+          busy: "Working…"
+        }
+  };
   return (
     <AlertsWorkstation
       alerts={alerts}
-      messages={messages.screens.alerts}
+      messages={alertMessages}
       watchtower={{
         runs: watchtower.runs,
         playbooks: listWatchtowerPlaybooks(),

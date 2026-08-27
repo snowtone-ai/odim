@@ -23,6 +23,12 @@ type SignupSuccess = {
   trialEndsAt?: string;
 };
 
+const fieldStyle = {
+  background: "var(--field)",
+  border: "1px solid color-mix(in srgb, var(--text) 22%, transparent)",
+  color: "var(--text)"
+};
+
 export function SignupForm({ labels }: Readonly<{ labels: SignupFormLabels }>) {
   const [orgName, setOrgName] = useState("");
   const [email, setEmail] = useState("");
@@ -54,26 +60,29 @@ export function SignupForm({ labels }: Readonly<{ labels: SignupFormLabels }>) {
 
   if (success) {
     return (
-      <div>
-        <h2 className="text-base" style={{ color: "var(--text-primary)" }}>{labels.successTitle}</h2>
-        <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
+      <div className="border-l pl-4" style={{ borderColor: "var(--evidence)" }} aria-live="polite">
+        <p className="mono text-[11px] tracking-[0.14em]" style={{ color: "var(--evidence)" }}>
+          WORKSPACE READY
+        </p>
+        <h2 className="mt-4 text-base font-medium" style={{ color: "var(--text)" }}>{labels.successTitle}</h2>
+        <p className="mt-2 text-[14px] leading-6" style={{ color: "color-mix(in srgb, var(--text) 68%, transparent)" }}>
           {labels.successBody}
           {success.trialEndsAt ? ` (trial → ${success.trialEndsAt.slice(0, 10)})` : ""}
         </p>
-        <div className="mt-5 flex flex-wrap gap-3">
+        <div className="mt-6 flex flex-wrap gap-x-5 gap-y-3">
           <a
             href="/settings"
-            className="rounded-[var(--radius-md)] px-4 py-2 text-sm font-medium"
-            style={{ background: "var(--rune)", color: "var(--ink-950)" }}
+            className="inline-flex min-h-11 items-center border px-3 py-2 text-[13px] font-medium transition-[background-color,border-color,transform] duration-[var(--motion-micro)] hover:border-[var(--signal)] hover:bg-[color-mix(in_srgb,var(--signal)_14%,transparent)] active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)]"
+            style={{ borderColor: "var(--signal)", background: "var(--signal)", color: "var(--field)" }}
           >
             {labels.nextSettings}
           </a>
           <a
             href="/map"
-            className="rounded-[var(--radius-md)] px-4 py-2 text-sm"
-            style={{ border: "1px solid var(--line-soft)", color: "var(--text-secondary)" }}
+            className="inline-flex min-h-11 items-center px-1 py-2 text-[13px] transition-colors duration-[var(--motion-micro)] hover:text-[var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)]"
+            style={{ color: "color-mix(in srgb, var(--text) 72%, transparent)" }}
           >
-            {labels.nextMap}
+            {labels.nextMap} <span className="ml-2" aria-hidden="true">→</span>
           </a>
         </div>
       </div>
@@ -81,8 +90,8 @@ export function SignupForm({ labels }: Readonly<{ labels: SignupFormLabels }>) {
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-3">
-      <label className="grid gap-1 text-[12px]" style={{ color: "var(--text-secondary)" }}>
+    <form onSubmit={submit} className="grid gap-5" aria-busy={pending}>
+      <label className="grid gap-2 text-[12px]" style={{ color: "color-mix(in srgb, var(--text) 70%, transparent)" }}>
         {labels.orgName}
         <input
           value={orgName}
@@ -91,11 +100,11 @@ export function SignupForm({ labels }: Readonly<{ labels: SignupFormLabels }>) {
           required
           minLength={2}
           maxLength={80}
-          className="rounded px-3 py-2 text-[13px]"
-          style={{ background: "var(--ink-900, rgba(0,0,0,0.25))", border: "1px solid var(--line-soft)", color: "var(--text-primary)" }}
+          className="min-h-11 rounded-[4px] px-3 py-2.5 text-[13px] outline-none transition-[border-color,background-color] duration-[var(--motion-micro)] placeholder:text-[color:color-mix(in_srgb,var(--text)_40%,transparent)] focus:border-[var(--signal)] focus:bg-[color-mix(in_srgb,var(--signal)_5%,var(--field))]"
+          style={fieldStyle}
         />
       </label>
-      <label className="grid gap-1 text-[12px]" style={{ color: "var(--text-secondary)" }}>
+      <label className="grid gap-2 text-[12px]" style={{ color: "color-mix(in srgb, var(--text) 70%, transparent)" }}>
         {labels.email}
         <input
           value={email}
@@ -103,32 +112,32 @@ export function SignupForm({ labels }: Readonly<{ labels: SignupFormLabels }>) {
           placeholder={labels.emailPlaceholder}
           type="email"
           required
-          className="rounded px-3 py-2 text-[13px]"
-          style={{ background: "var(--ink-900, rgba(0,0,0,0.25))", border: "1px solid var(--line-soft)", color: "var(--text-primary)" }}
+          className="min-h-11 rounded-[4px] px-3 py-2.5 text-[13px] outline-none transition-[border-color,background-color] duration-[var(--motion-micro)] placeholder:text-[color:color-mix(in_srgb,var(--text)_40%,transparent)] focus:border-[var(--signal)] focus:bg-[color-mix(in_srgb,var(--signal)_5%,var(--field))]"
+          style={fieldStyle}
         />
       </label>
-      <label className="grid gap-1 text-[12px]" style={{ color: "var(--text-secondary)" }}>
+      <label className="grid gap-2 text-[12px]" style={{ color: "color-mix(in srgb, var(--text) 70%, transparent)" }}>
         {labels.displayName}
         <input
           value={displayName}
           onChange={(event) => setDisplayName(event.target.value)}
           placeholder={labels.displayNamePlaceholder}
           maxLength={80}
-          className="rounded px-3 py-2 text-[13px]"
-          style={{ background: "var(--ink-900, rgba(0,0,0,0.25))", border: "1px solid var(--line-soft)", color: "var(--text-primary)" }}
+          className="min-h-11 rounded-[4px] px-3 py-2.5 text-[13px] outline-none transition-[border-color,background-color] duration-[var(--motion-micro)] placeholder:text-[color:color-mix(in_srgb,var(--text)_40%,transparent)] focus:border-[var(--signal)] focus:bg-[color-mix(in_srgb,var(--signal)_5%,var(--field))]"
+          style={fieldStyle}
         />
       </label>
-      <div className="mt-1 flex items-center gap-3">
+      <div className="mt-1 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
         <button
           type="submit"
           disabled={pending}
-          className="rounded-[var(--radius-md)] px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
-          style={{ background: "var(--rune)", color: "var(--ink-950)" }}
+          className="inline-flex min-h-11 items-center border px-4 py-2 text-[13px] font-medium transition-[background-color,border-color,transform,opacity] duration-[var(--motion-micro)] hover:border-[var(--signal)] hover:bg-[color-mix(in_srgb,var(--signal)_88%,var(--text))] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)]"
+          style={{ borderColor: "var(--signal)", background: "var(--signal)", color: "var(--field)" }}
         >
           {pending ? "…" : labels.submit}
         </button>
         {error ? (
-          <span className="text-[12px]" style={{ color: "var(--critical)" }}>
+          <span className="text-[12px] leading-5" style={{ color: "var(--critical)" }} role="alert" aria-live="polite">
             {labels.failed}: {error}
           </span>
         ) : null}

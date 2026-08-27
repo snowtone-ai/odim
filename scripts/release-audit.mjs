@@ -157,9 +157,13 @@ check(
 );
 check(
   "v2:sleep-time-compute-persistence",
-  file("lib/huginn/precompute.ts").includes("pre_computed_answers") &&
-    file("lib/huginn/precompute.ts").includes("createServiceSupabaseClient") &&
-    file("lib/huginn/cascade.ts").includes("await findPrecomputedAnswer"),
+  file("lib/huginn/precompute.ts").includes('createServiceSupabaseClient()') &&
+    file("lib/huginn/precompute.ts").includes('.from("pre_computed_answers")') &&
+    file("lib/huginn/precompute.ts").includes(".upsert(toRow(next)") &&
+    file("lib/huginn/precompute.ts").includes(".select(") &&
+    file("lib/huginn/precompute.ts").includes("const { data, error } = await request") &&
+    file("lib/huginn/precompute.ts").includes("const persisted = await findInSupabase") &&
+    /const \[precomputedResult, memoriesResult\] = await Promise\.allSettled\(\[\s*findPrecomputedAnswer\(/s.test(file("lib/huginn/cascade.ts")),
   "Sleep-time Compute reads/writes the Supabase pre_computed_answers table when configured"
 );
 check(
@@ -212,11 +216,14 @@ check(
 );
 check(
   "v2:gapfill-narrative-persistence",
-  gapfill.includes("upsert(toMuninMemoryRow") &&
+  gapfill.includes("buildMemoryProposal") &&
+    gapfill.includes("persistMemoryProposal") &&
+    !gapfill.includes("toMuninMemoryRow") &&
+    !gapfill.includes('.from("munin_memory")') &&
     narrativeCapture.includes(".from(\"raw_signals\")") &&
     narrativeCapture.includes("source_type: input.result.sourceType") &&
     narrativeCapture.includes("is_proprietary: true"),
-  "Reality gapfill persists source-backed memory and narrative capture persists tenant-scoped raw signals"
+  "Reality gapfill persists proposal-only candidates and narrative capture persists tenant-scoped raw signals"
 );
 check(
   "v2:bias-test-framework",
@@ -259,12 +266,79 @@ check("i18n:en-ja", i18n.includes("en:") && i18n.includes("ja:") && i18n.include
 
 const shell = file("components/ui/shell.tsx");
 const alertsPage = file("app/(dashboard)/alerts/page.tsx");
-check("mobile:shell", shell.includes("overflow-x-auto") && shell.includes("md:ml-[calc(var(--sidebar-w)+20px)]"), "Mobile shell with desktop sidebar fallback");
-check("mobile:alerts", alertsPage.includes("grid-cols-1") && alertsPage.includes("xl:grid-cols-[420px_1fr]"), "Signal Alerts mobile layout");
+const alertsWorkstation = file("components/ui/alerts-workstation.tsx");
+check(
+  "mobile:shell",
+  shell.includes('data-testid="desktop-rail"') &&
+    shell.includes("md:flex") &&
+    shell.includes('data-testid="mobile-bottom-nav"') &&
+    shell.includes("fixed inset-x-0 bottom-0") &&
+    shell.includes("pb-[78px]") &&
+    shell.includes("md:max-[1199px]:ml-[68px]") &&
+    shell.includes("min-[1200px]:ml-[220px]") &&
+    shell.includes("const mobileNav = [desktopNav[2]"),
+  "Mobile shell with desktop rail and fixed bottom navigation"
+);
+check(
+  "mobile:alerts",
+    alertsWorkstation.includes("grid grid-cols-1 gap-0 lg:grid-cols-[minmax(300px,0.42fr)_minmax(0,1fr)]") &&
+    alertsWorkstation.includes("mobileDetailOpen") &&
+    alertsWorkstation.includes("hidden lg:block") &&
+    alertsWorkstation.includes('mobileDetailOpen ? "block" : "hidden lg:block"') &&
+    alertsWorkstation.includes("alert-queue-heading") &&
+    alertsWorkstation.includes("case-file-heading"),
+  "Signal Alerts mobile layout: queue-first responsive workbench"
+);
 
 const provider = file("lib/ai/provider.ts");
+const runtimeProviders = file("lib/ai/runtime/providers.ts");
+const runtimeErrors = file("lib/ai/runtime/errors.ts");
 const rateLimit = file("lib/ai/rate-limit.ts");
-check("ai:retry", provider.includes("AI_RETRY_ATTEMPTS") && provider.includes("429"), "AI retry handles Gemini rate limiting");
+const { createAiRuntime, TtlSingleflightCache } = await import("../lib/ai/runtime/index.ts");
+
+async function exerciseGeminiRetry() {
+  const snapshot = {
+    AI_API_KEY: process.env.AI_API_KEY,
+    AI_RETRY_ATTEMPTS: process.env.AI_RETRY_ATTEMPTS
+  };
+  const previousFetch = globalThis.fetch;
+  let calls = 0;
+  process.env.AI_API_KEY = "release-audit-key";
+  process.env.AI_RETRY_ATTEMPTS = "2";
+  globalThis.fetch = async () => {
+    calls += 1;
+    if (calls === 1) return new Response("rate limited", { status: 429 });
+    return new Response(JSON.stringify({
+      candidates: [{ finishReason: "STOP", content: { parts: [{ text: "release audit retry" }] } }]
+    }), { status: 200, headers: { "content-type": "application/json" } });
+  };
+  try {
+    const runtime = createAiRuntime({ cache: new TtlSingleflightCache() });
+    const result = await runtime.generate(
+      { orgId: "release-audit-retry", question: "retry smoke", context: "release audit" },
+      "gemini",
+      { cacheTtlMs: 0 }
+    );
+    return calls === 2 && result.answer === "release audit retry";
+  } catch {
+    return false;
+  } finally {
+    if (snapshot.AI_API_KEY === undefined) delete process.env.AI_API_KEY;
+    else process.env.AI_API_KEY = snapshot.AI_API_KEY;
+    if (snapshot.AI_RETRY_ATTEMPTS === undefined) delete process.env.AI_RETRY_ATTEMPTS;
+    else process.env.AI_RETRY_ATTEMPTS = snapshot.AI_RETRY_ATTEMPTS;
+    globalThis.fetch = previousFetch;
+  }
+}
+
+check(
+  "ai:retry",
+  runtimeProviders.includes("AI_RETRY_ATTEMPTS") &&
+    runtimeProviders.includes("withRetries") &&
+    runtimeErrors.includes("status === 429") &&
+    await exerciseGeminiRetry(),
+  "Current AI runtime retries Gemini 429 responses according to AI_RETRY_ATTEMPTS"
+);
 check(
   "ai:free-tier-limits",
   provider.includes("assertAiRateLimitAvailableForRequest") &&
@@ -293,6 +367,7 @@ const apiKeys = file("lib/auth/api-keys.ts");
 const requestAuth = file("lib/auth/request.ts");
 const adminRepo = file("lib/repositories/admin.ts");
 const realityRepo = file("lib/repositories/reality.ts");
+const temporalReader = file("lib/munin/reader.ts");
 const runtimeEnv = file("lib/env/runtime.ts");
 const settingsRoute = file("app/api/settings/route.ts");
 check(
@@ -342,13 +417,23 @@ check(
   "supabase:production-no-fallback",
   runtimeEnv.includes("isProductionRuntime") &&
     realityRepo.includes("isProductionRuntime()") &&
+    realityRepo.includes("assertSupabaseReadEnv();") &&
+    (realityRepo.match(/assertSupabaseReadEnv\(\);/g) ?? []).length >= 6 &&
     adminRepo.includes("isProductionRuntime()") &&
-    huginnQuery.includes("isProductionRuntime()"),
-  "Production Supabase schema/read/write errors do not fall back to demo data"
+    adminRepo.includes("assertSupabaseReadEnv();") &&
+    adminRepo.includes("assertSupabaseWriteEnv();") &&
+    temporalReader.includes("isMuninReaderStrictRuntime") &&
+    temporalReader.includes("fail-closed") &&
+    temporalReader.includes("if (!shouldFallbackFromSupabaseError(errorText(error)))") &&
+    huginnQuery.includes("isMuninReaderStrictRuntime()") &&
+    huginnQuery.includes("retrieval_unavailable") &&
+    huginnQuery.includes("safeAbstainResponse"),
+  "Production Supabase schema/read/write errors fail closed across temporal reader, Huginn query, and repositories"
 );
 
 const dashboardSurface = routes.map((route) => file(route)).join("\n") + file("lib/i18n/messages.ts");
-check("ui:no-placeholder-copy", !/placeholder|scaffold/i.test(dashboardSurface), "Dashboard surfaces do not contain placeholder/scaffold copy");
+const dashboardCopySurface = dashboardSurface.replace(/\b[A-Za-z][A-Za-z0-9]*Placeholder\b/g, "");
+check("ui:no-placeholder-copy", !/\b(?:placeholder|scaffold)\b/i.test(dashboardCopySurface), "Dashboard surfaces do not contain placeholder/scaffold copy");
 check("ui:confidence-surface", dashboardSurface.includes("Confidence") && dashboardSurface.includes("source"), "Dashboard surfaces expose confidence/source evidence");
 
 const readinessDoc = file("docs/commercial-readiness.md");

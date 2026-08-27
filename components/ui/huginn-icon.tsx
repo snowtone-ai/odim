@@ -1,16 +1,15 @@
 import Image from "next/image";
 
-// Intrinsic ratio: 1011 × 674 (≈ 1.5 : 1)
-const RATIO = 1011 / 674;
-
 export function HuginnIcon({ size = 24, className }: Readonly<{ size?: number; className?: string }>) {
   return (
     <Image
-      src="/huginn-icon.png"
-      alt="Huginn"
-      width={Math.round(size * RATIO)}
+      src="/brand/huginn-mark.png"
+      alt=""
+      width={size}
       height={size}
+      sizes={`${size}px`}
       className={className}
+      style={{ width: size, height: size, aspectRatio: "1 / 1", objectFit: "contain" }}
     />
   );
 }

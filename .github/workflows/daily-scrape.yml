@@ -19,7 +19,6 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test
       - run: pnpm verify
       - run: pnpm scrape:dry-run
       - run: pnpm scrape

@@ -1,66 +1,58 @@
 import Link from "next/link";
 import { OdimLogo } from "@/components/ui/odim-logo";
 
-const principles = [
+const layers = ["Energy", "Capital", "Minerals", "Compute", "Water", "Materials", "Logistics"];
+
+const sources = [
+  "SEC EDGAR",
+  "FERC",
+  "FRED",
+  "Federal Register",
+  "EDINET",
+  "Companies House",
+  "USAspending",
+  "OpenSanctions",
+  "FEMA",
+  "SAM.gov",
+  "NRC",
+  "ISO queues"
+];
+
+const evidenceSteps = [
   {
-    title: "Reality over Narrative",
-    body: "Odim reads capital fixation in the physical world — filings, permits, interconnection queues, procurement — and treats narrative as a divergence trigger, never as truth."
+    label: "Source",
+    detail: "A filing, permit, queue entry, or procurement record changes."
   },
   {
-    title: "Detection, not forecasting",
-    body: "No price predictions. Odim detects committed capital before official announcements and connects it through the Capital Fixation Ontology."
+    label: "Entity",
+    detail: "The record resolves to a company, project, location, or counterparty."
   },
   {
-    title: "Every inference is auditable",
-    body: "Each signal, alert, and AI answer carries source references, confidence, and a full Audit Trail. Organization memory is isolated per tenant."
+    label: "Signal",
+    detail: "Related records become one confidence-scored change to review."
+  },
+  {
+    label: "Action",
+    detail: "Inspect the evidence path, save the case, or ask Huginn a grounded question."
   }
 ];
 
-const layers = ["Energy", "Capital", "Minerals", "Compute", "Water", "Materials", "Logistics"];
-
-const audiences = [
-  "Hedge funds and quant funds",
-  "Corporate strategy, M&A, and procurement",
-  "Government and economic security agencies",
-  "PE and infrastructure funds"
-];
-
-const sources = [
-  "SEC EDGAR", "FERC", "FRED", "Federal Register", "EDINET", "Companies House",
-  "USAspending", "OpenSanctions", "FEMA", "SAM.gov", "NRC", "ISO Queues"
-];
-
-function CtaButtons() {
+function ActionLinks() {
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
       <Link
         href="/map"
-        className="rounded-[var(--radius-md)] px-5 py-2.5 text-sm font-medium transition-opacity hover:opacity-90"
-        style={{ background: "var(--rune)", color: "var(--ink-950)" }}
+        className="inline-flex min-h-11 items-center border px-4 py-2 text-[13px] font-medium transition-[background-color,border-color,transform] duration-[var(--motion-micro)] hover:border-[var(--signal)] hover:bg-[color-mix(in_srgb,var(--signal)_14%,transparent)] active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)]"
+        style={{ borderColor: "var(--signal)", background: "var(--signal)", color: "var(--field)" }}
       >
-        Open Console
+        Open the console
       </Link>
       <Link
         href="/signup"
-        className="rounded-[var(--radius-md)] px-5 py-2.5 text-sm font-medium transition-colors hover:text-[var(--text-primary)]"
-        style={{
-          border: "1px solid var(--line-soft)",
-          color: "var(--text-secondary)",
-          background: "transparent"
-        }}
+        className="inline-flex min-h-11 items-center px-1 py-2 text-[13px] transition-colors duration-[var(--motion-micro)] hover:text-[var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)]"
+        style={{ color: "color-mix(in srgb, var(--text) 72%, transparent)" }}
       >
-        Start Free Trial
-      </Link>
-      <Link
-        href="/login"
-        className="rounded-[var(--radius-md)] px-5 py-2.5 text-sm font-medium transition-colors hover:text-[var(--text-primary)]"
-        style={{
-          border: "1px solid var(--line-soft)",
-          color: "var(--text-secondary)",
-          background: "transparent"
-        }}
-      >
-        Enterprise Sign-In
+        Create a workspace <span className="ml-2" aria-hidden="true">→</span>
       </Link>
     </div>
   );
@@ -68,144 +60,136 @@ function CtaButtons() {
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen" style={{ background: "var(--ink-950)" }}>
-      {/* Top bar */}
-      <header
-        className="flex items-center justify-between px-6 py-4 md:px-12"
-        style={{ borderBottom: "1px solid var(--line-faint)" }}
-      >
-        <div className="flex items-center gap-3">
-          <OdimLogo size={26} />
-          <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-            Odim
-          </span>
-          <span className="mono text-[11px] uppercase tracking-[0.12em]" style={{ color: "var(--text-quaternary)" }}>
-            Reality Intelligence OS
-          </span>
-        </div>
-        <Link href="/login" className="text-sm" style={{ color: "var(--text-secondary)" }}>
-          Sign in
-        </Link>
-      </header>
-
-      {/* Hero */}
-      <section className="mx-auto max-w-4xl px-6 pb-16 pt-20 md:px-12">
-        <p className="mono text-[12px] uppercase tracking-[0.16em]" style={{ color: "var(--rune)" }}>
-          Substrate Intelligence
-        </p>
-        <h1
-          className="mt-4 text-4xl leading-tight md:text-5xl"
-          style={{ color: "var(--text-primary)", fontFamily: "var(--font-spectral)" }}
+    <main className="min-h-screen bg-[var(--field)] text-[var(--text)]">
+      <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
+        <header
+          className="flex items-center justify-between border-b py-4 sm:py-5"
+          style={{ borderColor: "color-mix(in srgb, var(--text) 14%, transparent)" }}
         >
-          Detect real decisions before official announcements.
-        </h1>
-        <p className="mt-5 max-w-2xl text-base leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-          Odim reads capital fixation across the physical economy — energy interconnections,
-          permits, filings, procurement — and connects committed capital into source-backed,
-          confidence-scored intelligence, before the narrative layer catches up.
-        </p>
-        <div className="mt-8">
-          <CtaButtons />
-        </div>
-      </section>
-
-      {/* Reality layers strip */}
-      <section
-        className="mx-auto max-w-4xl px-6 md:px-12"
-        aria-label="Reality layer coverage"
-      >
-        <div
-          className="flex flex-wrap gap-x-6 gap-y-2 rounded-[var(--radius-md)] px-5 py-4"
-          style={{ border: "1px solid var(--line-faint)", background: "var(--ink-900)" }}
-        >
-          {layers.map((layer) => (
-            <span
-              key={layer}
-              className="mono text-[11px] uppercase tracking-[0.12em]"
-              style={{ color: "var(--text-tertiary)" }}
-            >
-              {layer}
+          <Link href="/" className="group flex min-h-11 items-center gap-3 rounded-[4px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)]" aria-label="Odim home">
+            <OdimLogo size={28} className="shrink-0 transition-opacity duration-[var(--motion-micro)] group-hover:opacity-80" />
+            <span className="text-[14px] font-semibold tracking-[0.18em]" style={{ color: "var(--text)" }}>
+              ODIM
             </span>
-          ))}
-        </div>
-      </section>
+            <span className="hidden text-[11px] tracking-[0.16em] sm:inline" style={{ color: "color-mix(in srgb, var(--text) 50%, transparent)" }}>
+              REALITY INTELLIGENCE
+            </span>
+          </Link>
+          <nav className="flex items-center gap-4 sm:gap-6" aria-label="Landing navigation">
+            <Link href="/docs" prefetch={false} className="hidden min-h-11 py-3 text-[12px] transition-colors duration-[var(--motion-micro)] hover:text-[var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)] sm:block" style={{ color: "color-mix(in srgb, var(--text) 62%, transparent)" }}>
+              API Docs
+            </Link>
+            <Link href="/login" className="min-h-11 py-3 text-[12px] transition-colors duration-[var(--motion-micro)] hover:text-[var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)]" style={{ color: "color-mix(in srgb, var(--text) 72%, transparent)" }}>
+              Sign in
+            </Link>
+          </nav>
+        </header>
 
-      {/* Principles */}
-      <section className="mx-auto grid max-w-4xl gap-4 px-6 py-16 md:grid-cols-3 md:px-12">
-        {principles.map((item) => (
-          <div
-            key={item.title}
-            className="rounded-[var(--radius-md)] p-5"
-            style={{ border: "1px solid var(--line-faint)", background: "var(--ink-900)" }}
-          >
-            <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-              {item.title}
-            </h2>
-            <p className="mt-2 text-[13px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
-              {item.body}
+        <section className="grid gap-14 py-16 sm:py-20 lg:grid-cols-[minmax(0,1.08fr)_minmax(340px,0.92fr)] lg:gap-20 lg:py-28" aria-labelledby="landing-title">
+          <div className="self-center">
+            <p className="mono text-[11px] tracking-[0.17em]" style={{ color: "var(--evidence)" }}>
+              CAPITAL FIXATION / REALITY INTELLIGENCE
+            </p>
+            <h1 id="landing-title" className="mt-5 max-w-[680px] text-4xl font-semibold leading-[1.08] tracking-[-0.03em] sm:text-5xl" style={{ color: "var(--text)", fontFamily: "var(--font-spectral)" }}>
+              Find the commitments hiding in plain sight.
+            </h1>
+            <p className="mt-6 max-w-[610px] text-[16px] leading-7" style={{ color: "color-mix(in srgb, var(--text) 72%, transparent)" }}>
+              Odim connects public records across the physical economy so analysts can move from an early change to a source-verifiable investment view before the narrative catches up.
+            </p>
+            <div className="mt-8">
+              <ActionLinks />
+            </div>
+            <p className="mt-7 text-[12px]" style={{ color: "color-mix(in srgb, var(--text) 48%, transparent)" }}>
+              No price forecasts. No opaque score without a path back to its source.
             </p>
           </div>
-        ))}
-      </section>
 
-      {/* Audience + sources */}
-      <section className="mx-auto grid max-w-4xl gap-10 px-6 pb-16 md:grid-cols-2 md:px-12">
-        <div>
-          <h2 className="mono text-[12px] uppercase tracking-[0.16em]" style={{ color: "var(--text-quaternary)" }}>
-            Built for
-          </h2>
-          <ul className="mt-4 grid gap-2">
-            {audiences.map((audience) => (
-              <li key={audience} className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                {audience}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <h2 className="mono text-[12px] uppercase tracking-[0.16em]" style={{ color: "var(--text-quaternary)" }}>
-            Source-backed by design
-          </h2>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {sources.map((source) => (
-              <span
-                key={source}
-                className="mono rounded-[var(--radius-sm)] px-2 py-1 text-[11px]"
-                style={{ border: "1px solid var(--line-faint)", color: "var(--text-tertiary)" }}
-              >
-                {source}
-              </span>
-            ))}
+          <div className="lg:pt-3">
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <p className="mono text-[11px] tracking-[0.16em]" style={{ color: "color-mix(in srgb, var(--text) 54%, transparent)" }}>
+                THE EVIDENCE THREAD
+              </p>
+              <span className="mono text-[11px]" style={{ color: "var(--evidence)" }}>SOURCE → ACTION</span>
+            </div>
+            <ol className="relative border-l pl-6" style={{ borderColor: "color-mix(in srgb, var(--evidence) 42%, transparent)" }} aria-label="How Odim connects evidence">
+              {evidenceSteps.map((step, index) => (
+                <li key={step.label} className={`relative ${index === evidenceSteps.length - 1 ? "pb-0" : "pb-8"}`}>
+                  <span className="absolute -left-[31px] top-0 grid h-[11px] w-[11px] place-items-center border bg-[var(--field)]" style={{ borderColor: index === evidenceSteps.length - 1 ? "var(--signal)" : "var(--evidence)" }} aria-hidden="true">
+                    <span className="h-[3px] w-[3px]" style={{ background: index === evidenceSteps.length - 1 ? "var(--signal)" : "var(--evidence)" }} />
+                  </span>
+                  <p className="mono text-[11px] tracking-[0.14em]" style={{ color: index === evidenceSteps.length - 1 ? "var(--signal)" : "var(--evidence)" }}>
+                    {String(index + 1).padStart(2, "0")} / {step.label}
+                  </p>
+                  <p className="mt-2 max-w-[340px] text-[14px] leading-6" style={{ color: "color-mix(in srgb, var(--text) 72%, transparent)" }}>
+                    {step.detail}
+                  </p>
+                </li>
+              ))}
+            </ol>
           </div>
-          <p className="mt-4 text-[13px] leading-relaxed" style={{ color: "var(--text-quaternary)" }}>
-            Daily ingestion with idempotent fingerprints, freshness SLAs, and a versioned REST API
-            for programmatic access.
-          </p>
-        </div>
-      </section>
+        </section>
 
-      {/* Footer CTA */}
-      <footer
-        className="mx-auto flex max-w-4xl flex-col gap-6 px-6 py-12 md:px-12"
-        style={{ borderTop: "1px solid var(--line-faint)" }}
-      >
-        <CtaButtons />
-        <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Footer">
-          {[
-            ["API Docs", "/docs"],
-            ["Terms", "/terms"],
-            ["Privacy", "/privacy"],
-            ["Security", "/security"]
-          ].map(([label, href]) => (
-            <Link key={href} href={href} className="text-[13px]" style={{ color: "var(--text-tertiary)" }}>
-              {label}
-            </Link>
-          ))}
-        </nav>
-        <p className="mono text-[11px]" style={{ color: "var(--text-quaternary)" }}>
-          Odim is not a price prediction product. Narrative data is never treated as truth.
-        </p>
-      </footer>
+        <section className="grid gap-10 border-y py-10 sm:py-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20" aria-label="Source coverage">
+          <div>
+            <p className="mono text-[11px] tracking-[0.16em]" style={{ color: "color-mix(in srgb, var(--text) 54%, transparent)" }}>
+              OBSERVED LAYERS
+            </p>
+            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-3">
+              {layers.map((layer) => (
+                <span key={layer} className="text-[13px]" style={{ color: "color-mix(in srgb, var(--text) 74%, transparent)" }}>
+                  {layer}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="flex items-baseline justify-between gap-5">
+              <p className="mono text-[11px] tracking-[0.16em]" style={{ color: "color-mix(in srgb, var(--text) 54%, transparent)" }}>
+                SOURCE REGISTRY
+              </p>
+              <span className="mono text-[11px]" style={{ color: "var(--evidence)" }}>12 PRIMARY PATHS</span>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-x-4 gap-y-3" aria-label="Configured source paths">
+              {sources.map((source) => (
+                <span key={source} className="mono text-[11px]" style={{ color: "color-mix(in srgb, var(--text) 66%, transparent)" }}>
+                  {source}
+                </span>
+              ))}
+            </div>
+            <p className="mt-5 max-w-[620px] text-[12px] leading-6" style={{ color: "color-mix(in srgb, var(--text) 48%, transparent)" }}>
+              Coverage is transparent by source and freshness state. A configured feed is not presented as live until the ingestion path verifies it.
+            </p>
+          </div>
+        </section>
+
+        <section className="flex flex-col gap-6 py-12 sm:flex-row sm:items-end sm:justify-between sm:py-16" aria-label="Next step">
+          <div>
+            <p className="mono text-[11px] tracking-[0.16em]" style={{ color: "var(--evidence)" }}>START WITH A CHANGE</p>
+            <p className="mt-3 max-w-[540px] text-[20px] leading-8 tracking-[-0.01em]" style={{ color: "var(--text)" }}>
+              See the map, follow one thread, and decide whether the signal belongs in your view.
+            </p>
+          </div>
+          <ActionLinks />
+        </section>
+
+        <footer className="flex flex-col gap-5 border-t py-7 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: "color-mix(in srgb, var(--text) 14%, transparent)" }}>
+          <p className="mono text-[11px]" style={{ color: "color-mix(in srgb, var(--text) 48%, transparent)" }}>
+            Odim is not a price prediction product. Narrative data is never treated as truth.
+          </p>
+          <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Footer">
+            {[
+              ["API Docs", "/docs"],
+              ["Terms", "/terms"],
+              ["Privacy", "/privacy"],
+              ["Security", "/security"]
+            ].map(([label, href]) => (
+              <Link key={href} href={href} prefetch={false} className="min-h-11 py-3 text-[12px] transition-colors duration-[var(--motion-micro)] hover:text-[var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)]" style={{ color: "color-mix(in srgb, var(--text) 58%, transparent)" }}>
+                {label}
+              </Link>
+            ))}
+          </nav>
+        </footer>
+      </div>
     </main>
   );
 }

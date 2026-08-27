@@ -21,6 +21,7 @@ import { parseForm4Xml } from "../../scrapers/sec-edgar-form4.ts";
 import { parse8KSubmission } from "../../scrapers/sec-edgar-8k.ts";
 import { parse13DGDocument } from "../../scrapers/sec-edgar-13dg.ts";
 import { parse13FInformationTable } from "../../scrapers/sec-edgar-13f.ts";
+import { parseSecFormDXml } from "../../scrapers/sec-form-d.ts";
 import { parseOpenSanctionsMatches } from "../../scrapers/opensanctions.ts";
 import { parseFemaDeclarations } from "../../scrapers/fema.ts";
 import { parseSamOpportunities } from "../../scrapers/sam-gov.ts";
@@ -270,6 +271,18 @@ export function buildFixtureRawSignals(): RawSignal[] {
     shares: 1250000,
     observedAt: "2026-05-15T00:00:00.000Z"
   });
+  const secFormDSignals = [
+    parseSecFormDXml(
+      "<edgarSubmission><primaryIssuer><cik>0001999999</cik><entityName>Fixture Capital Raise LLC</entityName><entityType>Limited Liability Company</entityType><issuerAddress><street1>100 Example Way</street1><city>Austin</city><stateOrCountry>TX</stateOrCountry><zipCode>78701</zipCode></issuerAddress></primaryIssuer><relatedPersonsList><relatedPersonInfo><relatedPersonName><firstName>Ada</firstName><lastName>Lovelace</lastName></relatedPersonName></relatedPersonInfo></relatedPersonsList><offeringData><industryGroup><industryGroupType>Other Technology</industryGroupType></industryGroup><dateOfFirstSale><value>2026-05-20</value></dateOfFirstSale><offeringSalesAmounts><totalOfferingAmount>25000000</totalOfferingAmount><totalAmountSold>7500000</totalAmountSold><totalRemaining>17500000</totalRemaining></offeringSalesAmounts></offeringData></edgarSubmission>",
+      {
+        accessionNumber: "0001999999-26-000001",
+        cik: "0001999999",
+        companyName: "Fixture Capital Raise LLC",
+        filingDate: "2026-05-20",
+        sourceUrl: "https://www.sec.gov/Archives/edgar/data/1999999/000199999926000001/primary_doc.xml"
+      }
+    )
+  ];
   const openSanctionsSignals = parseOpenSanctionsMatches(
     [{ id: "os-fixture-1", caption: "Meta Platforms, Inc.", datasets: ["sanctions"] }],
     ["Meta Platforms, Inc.", "Palantir Technologies"]
@@ -309,6 +322,7 @@ export function buildFixtureRawSignals(): RawSignal[] {
     ...sec8kSignals,
     ...sec13dgSignals,
     ...sec13fSignals,
+    ...secFormDSignals,
     ...openSanctionsSignals,
     ...femaSignals,
     ...samSignals,

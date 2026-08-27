@@ -24,6 +24,12 @@ export type ManagedApiKey = {
   createdAt: string;
 };
 
+const fieldStyle = {
+  background: "var(--field)",
+  border: "1px solid var(--line-soft)",
+  color: "var(--text-primary)"
+} as const;
+
 export function ApiKeyManager({
   orgId,
   initialKeys,
@@ -100,109 +106,60 @@ export function ApiKeyManager({
   }
 
   return (
-    <div>
-      <div className="mono text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
-        {labels.heading}
-      </div>
+    <div className="min-w-0">
+      <div className="mono text-[11px] uppercase tracking-[0.14em]" style={{ color: "var(--text-tertiary)" }}>{labels.heading}</div>
+      <p className="mt-2 max-w-xl text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>Keys are scoped to this organization and the secret is shown once.</p>
 
       {issuedToken ? (
-        <div
-          className="mt-3 rounded p-3"
-          style={{ background: "rgba(201,169,97,0.08)", border: "1px solid rgba(201,169,97,0.3)" }}
-        >
-          <div className="mono text-[10px] uppercase tracking-[0.11em]" style={{ color: "var(--rune)" }}>
-            {labels.tokenNotice}
-          </div>
-          <div className="mt-2 flex items-center gap-2">
-            <code className="mono break-all text-[12px]" style={{ color: "var(--text-primary)" }}>{issuedToken}</code>
-            <button
-              type="button"
-              onClick={copyToken}
-              className="mono shrink-0 text-[10px] uppercase tracking-[0.1em] px-2 py-1 rounded"
-              style={{ border: "1px solid var(--line-soft)", color: "var(--text-secondary)" }}
-            >
+        <div className="mt-4 border-y border-l-2 px-3 py-3" aria-live="polite" style={{ background: "var(--evidence-wash)", borderColor: "var(--evidence)" }}>
+          <div className="mono text-[11px] uppercase tracking-[0.11em]" style={{ color: "var(--evidence)" }}>{labels.tokenNotice}</div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <code className="mono min-w-0 flex-1 break-all text-[12px]" style={{ color: "var(--text-primary)" }}>{issuedToken}</code>
+            <button type="button" onClick={copyToken} className="mono min-h-11 shrink-0 border px-3 text-[12px] uppercase tracking-[0.1em] transition-colors duration-[120ms] hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-[var(--signal)] motion-reduce:transition-none" style={{ borderColor: "var(--line-soft)", color: "var(--text-secondary)" }}>
               {copied ? labels.copied : labels.copy}
             </button>
           </div>
         </div>
       ) : null}
 
-      <div className="mt-4 grid gap-3">
-        <input
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder={labels.namePlaceholder}
-          aria-label={labels.name}
-          className="rounded px-3 py-2 text-[13px]"
-          style={{ background: "var(--ink-900, rgba(0,0,0,0.25))", border: "1px solid var(--line-soft)", color: "var(--text-primary)" }}
-        />
-        <div>
-          <div className="mono text-[10px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
-            {labels.scopes}
-          </div>
+      <div className="mt-5 border-y" style={{ borderColor: "var(--line-soft)" }}>
+        <div className="grid gap-3 border-b py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end" style={{ borderColor: "var(--line-faint)" }}>
+          <label className="grid gap-1.5 text-[11px]" style={{ color: "var(--text-secondary)" }}>
+            <span className="mono uppercase tracking-[0.1em]">{labels.name}</span>
+            <input value={name} onChange={(event) => setName(event.target.value)} placeholder={labels.namePlaceholder} aria-label={labels.name} className="min-h-11 w-full border px-3 text-[13px] outline-none focus-visible:border-[var(--signal)]" style={fieldStyle} />
+          </label>
+          <button type="button" onClick={issueKey} disabled={pending || !name.trim() || scopes.length === 0} className="mono min-h-11 border px-4 text-[12px] uppercase tracking-[0.1em] transition-colors duration-[120ms] hover:bg-[var(--signal-wash)] focus-visible:outline-2 focus-visible:outline-[var(--signal)] disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none" style={{ background: "var(--signal-wash)", borderColor: "var(--signal)", color: "var(--signal)" }}>
+            {pending ? "…" : labels.issue}
+          </button>
+        </div>
+        <div className="py-3">
+          <div className="mono text-[11px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>{labels.scopes}</div>
           <div className="mt-2 flex flex-wrap gap-2">
             {allowedScopes.map((scope) => {
-              const active = scopes.includes(scope);
+              const selected = scopes.includes(scope);
               return (
-                <button
-                  key={scope}
-                  type="button"
-                  onClick={() => toggleScope(scope)}
-                  aria-pressed={active}
-                  className="mono text-[10px] tracking-[0.06em] px-2 py-1 rounded transition-colors"
-                  style={{
-                    border: `1px solid ${active ? "rgba(201,169,97,0.4)" : "var(--line-soft)"}`,
-                    background: active ? "rgba(201,169,97,0.12)" : "transparent",
-                    color: active ? "var(--rune)" : "var(--text-tertiary)"
-                  }}
-                >
+                <button key={scope} type="button" onClick={() => toggleScope(scope)} aria-pressed={selected} className="mono min-h-11 border px-3 text-[12px] tracking-[0.06em] transition-colors duration-[120ms] hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-[var(--signal)] motion-reduce:transition-none" style={{ background: selected ? "var(--signal-wash)" : "transparent", borderColor: selected ? "var(--signal)" : "var(--line-soft)", color: selected ? "var(--signal)" : "var(--text-tertiary)" }}>
                   {scope}
                 </button>
               );
             })}
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={issueKey}
-            disabled={pending || !name.trim() || scopes.length === 0}
-            className="mono text-[10px] uppercase tracking-[0.1em] px-3 py-1.5 rounded transition-colors hover:brightness-110 disabled:opacity-50"
-            style={{ background: "rgba(201,169,97,0.1)", border: "1px solid rgba(201,169,97,0.25)", color: "var(--rune)" }}
-          >
-            {pending ? "…" : labels.issue}
-          </button>
-          {error ? (
-            <span className="mono text-[10px] uppercase tracking-[0.1em]" style={{ color: "var(--critical)" }}>
-              {labels.failed}: {error}
-            </span>
-          ) : null}
-        </div>
       </div>
 
-      <div className="mt-5 grid gap-2.5">
-        {keys.length === 0 ? (
-          <div className="mono text-[11px]" style={{ color: "var(--text-secondary)" }}>{labels.empty}</div>
-        ) : null}
+      {error ? <p className="mt-3 mono text-[12px] uppercase tracking-[0.1em]" aria-live="assertive" style={{ color: "var(--critical)" }}>{labels.failed}: {error}</p> : null}
+
+      <div className="mt-5 border-y" style={{ borderColor: "var(--line-soft)" }}>
+        {keys.length === 0 ? <div className="px-3 py-5 mono text-[12px]" style={{ color: "var(--text-secondary)" }}>{labels.empty}</div> : null}
         {keys.map((key) => (
-          <div className="pb-3" style={{ borderBottom: "1px solid var(--line-faint)" }} key={key.id}>
-            <div className="flex items-center justify-between gap-3 text-[13px]">
-              <span style={{ color: "var(--text-primary)" }} className="truncate">{key.name}</span>
-              <span className="flex shrink-0 items-center gap-3">
-                <span className="mono" style={{ color: "var(--rune)" }}>{key.prefix}…</span>
-                <button
-                  type="button"
-                  onClick={() => revokeKey(key.id)}
-                  className="mono text-[10px] uppercase tracking-[0.1em]"
-                  style={{ color: "var(--critical)" }}
-                >
-                  {labels.revoke}
-                </button>
-              </span>
+          <div className="grid gap-2 border-b px-3 py-3 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center" style={{ borderColor: "var(--line-faint)" }} key={key.id}>
+            <div className="min-w-0">
+              <div className="truncate text-[13px]" style={{ color: "var(--text-primary)" }}>{key.name}</div>
+              <div className="mono mt-1 truncate text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>{key.prefix}… · {key.scopes.join(" · ")}</div>
             </div>
-            <div className="mono mt-1 text-[10px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
-              {key.scopes.join(" · ")}
-            </div>
+            <button type="button" onClick={() => revokeKey(key.id)} className="mono min-h-11 justify-self-start px-2 text-[12px] uppercase tracking-[0.1em] text-[var(--critical)] underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-[var(--signal)] sm:justify-self-end">
+              {labels.revoke}
+            </button>
           </div>
         ))}
       </div>

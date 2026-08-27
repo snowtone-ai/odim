@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { chromium } from "playwright";
 
 const port = Number(process.env.BROWSER_SMOKE_PORT || "3010");
 const baseUrl = `http://127.0.0.1:${port}`;
@@ -87,6 +88,73 @@ function startServer() {
   return child;
 }
 
+async function assertBrowserLayoutAndDialogs() {
+  let browser;
+  try {
+    browser = await chromium.launch({ headless: true });
+  } catch (error) {
+    if (!(error instanceof Error) || !error.message.includes("Executable doesn't exist")) throw error;
+    browser = await chromium.launch({ channel: "chrome", headless: true });
+  }
+  try {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await page.goto(baseUrl + "/map", { waitUntil: "networkidle" });
+
+    const layout = await page.evaluate(() => {
+      const rail = document.querySelector('[data-testid="desktop-rail"]');
+      const frame = document.querySelector('[data-testid="dashboard-frame"]');
+      if (!(rail instanceof HTMLElement) || !(frame instanceof HTMLElement)) return null;
+      const railRect = rail.getBoundingClientRect();
+      const frameRect = frame.getBoundingClientRect();
+      return {
+        railRight: railRect.right,
+        frameLeft: frameRect.left,
+        frameMarginLeft: getComputedStyle(frame).marginLeft
+      };
+    });
+    if (!layout || Math.abs(layout.railRight - layout.frameLeft) > 1 || layout.frameMarginLeft !== "220px") {
+      throw new Error("Desktop frame overlaps its rail: " + JSON.stringify(layout));
+    }
+
+    const commandTrigger = page.getByTestId("command-trigger");
+    await commandTrigger.focus();
+    await commandTrigger.click();
+    await page.locator('dialog[open] [data-testid="command-palette"]').waitFor();
+    await page.keyboard.press("Shift+Tab");
+    const paletteContainsFocus = await page.evaluate(
+      () => document.activeElement?.closest("dialog")?.hasAttribute("open") === true
+    );
+    if (!paletteContainsFocus) throw new Error("Command palette focus escaped its modal dialog");
+    await page.keyboard.press("Escape");
+    await page.locator('[data-testid="command-palette"]').waitFor({ state: "detached" });
+    if (!(await commandTrigger.evaluate((element) => element === document.activeElement))) {
+      throw new Error("Command palette did not restore focus to its trigger");
+    }
+
+    await commandTrigger.focus();
+    await page.keyboard.press("?");
+    await page.locator('dialog[open] [data-testid="keyboard-help"]').waitFor();
+    for (let index = 0; index < 3; index += 1) await page.keyboard.press("Tab");
+    const helpContainsFocus = await page.evaluate(
+      () => document.activeElement?.closest("dialog")?.hasAttribute("open") === true
+    );
+    if (!helpContainsFocus) throw new Error("Keyboard help focus escaped its modal dialog");
+    await page.keyboard.press("Escape");
+    await page.locator('[data-testid="keyboard-help"]').waitFor({ state: "detached" });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(baseUrl + "/map", { waitUntil: "networkidle" });
+    const hasHorizontalOverflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth
+    );
+    if (hasHorizontalOverflow) throw new Error("Map route overflows horizontally at 390px");
+
+    console.log(JSON.stringify({ browser: "chromium", layout, focusDialogs: true, mobileOverflow: false }));
+  } finally {
+    await browser.close();
+  }
+}
+
 const child = startServer();
 let finished = false;
 
@@ -111,6 +179,7 @@ try {
     await assertStylesheets(route, html);
     console.log(JSON.stringify({ route, status: response.status, length: html.length }));
   }
+  await assertBrowserLayoutAndDialogs();
   for (const check of apiChecks) {
     const response = await fetchApiWithRetry(check);
     const payload = await response.json();

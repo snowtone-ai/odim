@@ -2,63 +2,137 @@
 @import "maplibre-gl/dist/maplibre-gl.css";
 @import "tailwindcss";
 
+:root {
+  color-scheme: dark;
+}
+
 * {
   box-sizing: border-box;
 }
 
 html,
 body {
-  margin: 0;
   min-height: 100%;
-  background: var(--ink-950);
+  margin: 0;
+  background: var(--field);
   color: var(--text-primary);
-  font-family: var(--font-plex-sans), sans-serif;
+  font-family: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+}
+
 ::selection {
-  background: rgba(201, 169, 97, 0.18);
+  background: color-mix(in srgb, var(--signal) 34%, transparent);
   color: var(--text-primary);
 }
 
 a {
   color: inherit;
   text-decoration: none;
+  transition: color var(--motion-micro) var(--ease-primary);
 }
 
 button,
 input,
-textarea {
+textarea,
+select {
   font: inherit;
 }
 
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+[role="tab"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+  transition:
+    background-color var(--motion-micro) var(--ease-primary),
+    border-color var(--motion-micro) var(--ease-primary),
+    color var(--motion-micro) var(--ease-primary),
+    opacity var(--motion-micro) var(--ease-primary),
+    transform var(--motion-micro) var(--ease-primary);
+}
+
+button:not(:disabled):active,
+[role="button"]:not([aria-disabled="true"]):active,
+[role="tab"]:not([aria-disabled="true"]):active {
+  transform: translateY(1px);
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
+:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
 .mono {
-  font-family: var(--font-plex-mono), monospace;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Scrollbar (Webkit) ── */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+/* Compact controls are opt-in so legacy dense components do not shift unexpectedly. */
+.odim-control {
+  min-height: 36px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: var(--surface-inset);
+  color: var(--text-primary);
 }
+
+.odim-control:hover:not(:disabled) {
+  border-color: var(--line-vivid);
+  background: var(--surface-hover);
+}
+
+.odim-control[aria-selected="true"],
+.odim-control[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--signal) 68%, var(--line-strong));
+  background: var(--signal-wash);
+  color: var(--text-primary);
+}
+
+.odim-icon-control {
+  display: inline-flex;
+  min-width: 36px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* Scrollbars keep the canvas quiet while remaining visible on hover. */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: var(--ink-650);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--line-strong);
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--ink-600);
+  background: var(--line-vivid);
 }
 
-/* ── Page entrance ── */
-@keyframes page-in {
+@keyframes odim-route-enter {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -66,15 +140,19 @@ textarea {
   }
 }
 
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slide-up {
+@keyframes odim-fade-in {
   from {
     opacity: 0;
-    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes odim-surface-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -82,42 +160,334 @@ textarea {
   }
 }
 
-@keyframes glow-pulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+@keyframes odim-evidence-active {
+  0%,
+  100% {
+    opacity: 0.64;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
-@keyframes bar-fill {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
-}
-
+.odim-route,
 .animate-page-in {
-  animation: page-in var(--dur-page) var(--ease-out-expo) both;
+  animation: odim-route-enter var(--motion-state) var(--ease-primary) both;
 }
 
 .animate-fade-in {
-  animation: fade-in var(--dur-base) var(--ease-soft) both;
+  animation: odim-fade-in var(--motion-state) var(--ease-primary) both;
 }
 
 .animate-slide-up {
-  animation: slide-up var(--dur-slow) var(--ease-out-expo) both;
+  animation: odim-surface-enter var(--motion-surface) var(--ease-primary) both;
 }
 
-/* Stagger children animation */
+/* Legacy screens used child-by-child entrances. Keep the hook inert during migration. */
+.stagger,
 .stagger > * {
-  animation: slide-up var(--dur-slow) var(--ease-out-expo) both;
+  animation: none;
 }
-.stagger > *:nth-child(1) { animation-delay: 0ms; }
-.stagger > *:nth-child(2) { animation-delay: 60ms; }
-.stagger > *:nth-child(3) { animation-delay: 120ms; }
-.stagger > *:nth-child(4) { animation-delay: 180ms; }
-.stagger > *:nth-child(5) { animation-delay: 240ms; }
-.stagger > *:nth-child(6) { animation-delay: 300ms; }
-.stagger > *:nth-child(7) { animation-delay: 360ms; }
-.stagger > *:nth-child(8) { animation-delay: 420ms; }
+
+/* A former translucent utility retained only to prevent route breakage. */
+.glass {
+  border: 1px solid var(--line-soft);
+  background: var(--surface);
+  box-shadow: none;
+}
+
+/* Evidence Thread: the operational path from source through action. */
+.odim-evidence-thread {
+  display: flex;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.odim-evidence-thread__item {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  align-items: center;
+}
+
+.odim-evidence-thread__marker {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line-vivid);
+  border-radius: 999px;
+  background: var(--field);
+}
+
+.odim-evidence-thread__item[data-state="verified"] .odim-evidence-thread__marker {
+  border-color: var(--evidence);
+  background: var(--evidence);
+}
+
+.odim-evidence-thread__item[data-state="active"] .odim-evidence-thread__marker {
+  border-color: var(--signal);
+  background: var(--signal);
+}
+
+.odim-evidence-thread__connector {
+  height: 1px;
+  min-width: 12px;
+  flex: 1 1 auto;
+  margin: 0 8px;
+  background: var(--line-soft);
+}
+
+.odim-evidence-thread__connector[data-state="verified"] {
+  background: var(--evidence);
+}
+
+.odim-evidence-thread__connector[data-state="active"] {
+  background: var(--signal);
+  animation: odim-evidence-active 1.8s var(--ease-primary) infinite;
+}
+
+.odim-evidence-thread__content {
+  min-width: 0;
+  margin-left: 8px;
+}
+
+.odim-evidence-thread__label {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.odim-evidence-thread__detail {
+  display: block;
+  overflow: hidden;
+  color: var(--text-tertiary);
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.odim-evidence-thread__item[data-state="active"] .odim-evidence-thread__label {
+  color: var(--text-primary);
+}
+
+.odim-evidence-thread__item[data-state="verified"] .odim-evidence-thread__label {
+  color: var(--evidence);
+}
+
+.odim-evidence-thread--vertical {
+  flex-direction: column;
+}
+
+.odim-evidence-thread--vertical .odim-evidence-thread__item {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr);
+  column-gap: 8px;
+  width: 100%;
+  flex: 0 0 auto;
+  align-items: flex-start;
+}
+
+.odim-evidence-thread--vertical .odim-evidence-thread__marker {
+  grid-column: 1;
+  grid-row: 1;
+  margin-top: 4px;
+}
+
+.odim-evidence-thread--vertical .odim-evidence-thread__content {
+  grid-column: 2;
+  grid-row: 1;
+  margin-left: 0;
+}
+
+.odim-evidence-thread--vertical .odim-evidence-thread__connector {
+  grid-column: 1;
+  grid-row: 2;
+  width: 1px;
+  min-width: 1px;
+  height: 16px;
+  flex: 0 0 auto;
+  margin: 4px 0 4px 4px;
+}
+
+/* Grounded answer prose uses the evidence color only for source-facing detail. */
+.huginn-prose p {
+  margin-bottom: 0.75em;
+}
+
+.huginn-prose p:last-child {
+  margin-bottom: 0;
+}
+
+.huginn-prose h1,
+.huginn-prose h2,
+.huginn-prose h3 {
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.huginn-prose h1 {
+  font-size: 1.25em;
+}
+
+.huginn-prose h2 {
+  font-size: 1.1em;
+}
+
+.huginn-prose h3 {
+  font-size: 1em;
+}
+
+.huginn-prose ul,
+.huginn-prose ol {
+  margin-bottom: 0.75em;
+  padding-left: 1.5em;
+}
+
+.huginn-prose li {
+  margin-bottom: 0.3em;
+}
+
+.huginn-prose li::marker {
+  color: var(--text-tertiary);
+}
+
+.huginn-prose code {
+  border-radius: var(--radius-sm);
+  background: var(--surface-inset);
+  color: var(--evidence);
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 0.88em;
+  padding: 0.15em 0.4em;
+}
+
+.huginn-prose pre {
+  margin: 0.75em 0;
+  overflow-x: auto;
+  border: 1px solid var(--line-faint);
+  border-radius: var(--radius-md);
+  background: var(--surface-inset);
+  padding: 1em;
+}
+
+.huginn-prose pre code {
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.85em;
+  padding: 0;
+}
+
+.huginn-prose blockquote {
+  margin: 0.75em 0;
+  border-left: 2px solid var(--evidence);
+  color: var(--text-secondary);
+  padding-left: 1em;
+}
+
+.huginn-prose table {
+  width: 100%;
+  margin: 0.75em 0;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.huginn-prose th,
+.huginn-prose td {
+  border: 1px solid var(--line-faint);
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+
+.huginn-prose th {
+  background: var(--surface-inset);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.huginn-prose strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.huginn-prose a {
+  color: var(--signal);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Keep basemap attribution visible without turning it into a floating panel. */
+.maplibregl-ctrl-attrib {
+  background: color-mix(in srgb, var(--field) 88%, transparent) !important;
+  color: var(--text-tertiary) !important;
+  font-size: 10px !important;
+}
+
+.maplibregl-ctrl-attrib a {
+  color: var(--text-secondary) !important;
+}
+
+.maplibregl-popup-content {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.maplibregl-popup-tip {
+  display: none !important;
+}
+
+.maplibregl-ctrl-group {
+  overflow: hidden;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: var(--surface-primary);
+  box-shadow: none;
+}
+
+.maplibregl-ctrl-group button {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  border-bottom-color: var(--line-soft);
+}
+
+.maplibregl-ctrl-group button:hover {
+  background-color: var(--surface-hover);
+}
+
+@media (max-width: 767px) {
+  .odim-control,
+  .odim-icon-control,
+  .maplibregl-ctrl-group button {
+    min-height: 44px;
+  }
+
+  .odim-icon-control,
+  .maplibregl-ctrl-group button {
+    min-width: 44px;
+  }
+
+  .maplibregl-ctrl-group button {
+    width: 44px;
+    height: 44px;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   *,
   *::before,
   *::after {
@@ -126,110 +496,4 @@ textarea {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
-}
-
-/* ── Glass panel ── */
-.glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(16px) saturate(1.4);
-  -webkit-backdrop-filter: blur(16px) saturate(1.4);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-inset), var(--shadow-sm);
-}
-
-/* ── Huginn prose (markdown rendering) ── */
-.huginn-prose p {
-  margin-bottom: 0.75em;
-}
-.huginn-prose p:last-child {
-  margin-bottom: 0;
-}
-.huginn-prose h1,
-.huginn-prose h2,
-.huginn-prose h3 {
-  font-weight: 600;
-  margin-top: 1.2em;
-  margin-bottom: 0.5em;
-  color: var(--text-primary);
-}
-.huginn-prose h1 { font-size: 1.25em; }
-.huginn-prose h2 { font-size: 1.1em; }
-.huginn-prose h3 { font-size: 1em; }
-.huginn-prose ul,
-.huginn-prose ol {
-  padding-left: 1.5em;
-  margin-bottom: 0.75em;
-}
-.huginn-prose li {
-  margin-bottom: 0.3em;
-}
-.huginn-prose li::marker {
-  color: var(--text-tertiary);
-}
-.huginn-prose code {
-  font-family: var(--font-plex-mono), monospace;
-  font-size: 0.88em;
-  padding: 0.15em 0.4em;
-  border-radius: var(--radius-xs);
-  background: var(--ink-750);
-  color: var(--rune-bright);
-}
-.huginn-prose pre {
-  margin: 0.75em 0;
-  padding: 1em;
-  border-radius: var(--radius-md);
-  background: var(--ink-900);
-  border: 1px solid var(--line-faint);
-  overflow-x: auto;
-}
-.huginn-prose pre code {
-  padding: 0;
-  background: transparent;
-  color: var(--text-primary);
-  font-size: 0.85em;
-}
-.huginn-prose blockquote {
-  padding-left: 1em;
-  border-left: 2px solid var(--rune-dim);
-  color: var(--text-secondary);
-  margin: 0.75em 0;
-}
-.huginn-prose table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 0.75em 0;
-  font-size: 0.9em;
-}
-.huginn-prose th,
-.huginn-prose td {
-  padding: 0.5em 0.75em;
-  border: 1px solid var(--line-faint);
-  text-align: left;
-}
-.huginn-prose th {
-  background: var(--ink-800);
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-.huginn-prose strong {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-.huginn-prose a {
-  color: var(--rune);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-/* ── MapLibre overrides ── */
-.maplibregl-ctrl-attrib {
-  display: none !important;
-}
-.maplibregl-popup-content {
-  background: transparent !important;
-  padding: 0 !important;
-  box-shadow: none !important;
-}
-.maplibregl-popup-tip {
-  display: none !important;
 }

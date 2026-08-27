@@ -43,8 +43,8 @@ export type SecEdgarOptions = {
 
 const trackedForms = new Set(["8-K", "S-1"]);
 const secConcurrencyLimit = 3;
-const SEC_BATCH_SIZE = 8;
-const SEC_BATCH_DELAY_MS = 1200;
+export const SEC_BATCH_SIZE = 8;
+export const SEC_BATCH_DELAY_MS = 1200;
 
 function normalizeCik(cik: string | number) {
   return String(cik).replace(/^0+/, "").padStart(10, "0");

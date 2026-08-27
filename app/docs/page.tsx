@@ -17,8 +17,8 @@ function Inline({ segments }: { segments: InlineSegment[] }) {
         segment.code ? (
           <code
             key={index}
-            className="mono rounded-[var(--radius-sm)] px-1.5 py-0.5 text-[12px]"
-            style={{ border: "1px solid var(--line-faint)", color: "var(--rune)" }}
+            className="mono rounded-[4px] px-1.5 py-0.5 text-[12px]"
+            style={{ border: "1px solid color-mix(in srgb, var(--text) 18%, transparent)", background: "color-mix(in srgb, var(--surface) 60%, transparent)", color: "var(--evidence)" }}
           >
             {segment.text}
           </code>
@@ -38,7 +38,7 @@ export default function ApiDocsPage() {
 
   return (
     <PublicShell title="API Reference">
-      <p className="mt-4 max-w-2xl text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+        <p className="mt-5 max-w-2xl text-[14px] leading-7" style={{ color: "color-mix(in srgb, var(--text) 72%, transparent)" }}>
         Programmatic access to entities, signals, alerts, source health, and Huginn queries.
         API keys are issued per organization from Settings and carry explicit read scopes.
       </p>
@@ -50,7 +50,7 @@ export default function ApiDocsPage() {
             <h2
               key={index}
               className={`font-semibold ${block.level === 2 ? "mt-10 text-base" : "mt-6 text-sm"}`}
-              style={{ color: "var(--text-primary)" }}
+              style={{ color: "var(--text)" }}
             >
               <Inline segments={block.segments} />
             </h2>
@@ -62,8 +62,8 @@ export default function ApiDocsPage() {
               {block.items.map((item, itemIndex) => (
                 <li
                   key={itemIndex}
-                  className="text-sm leading-relaxed"
-                  style={{ color: "var(--text-secondary)", marginLeft: `${item.indent * 16}px` }}
+                  className="text-[14px] leading-7"
+                  style={{ color: "color-mix(in srgb, var(--text) 72%, transparent)", marginLeft: `${item.indent * 16}px` }}
                 >
                   <Inline segments={item.segments} />
                 </li>
@@ -75,15 +75,15 @@ export default function ApiDocsPage() {
           return (
             <pre
               key={index}
-              className="mono mt-3 overflow-x-auto rounded-[var(--radius-md)] p-4 text-[12px] leading-relaxed"
-              style={{ border: "1px solid var(--line-faint)", background: "var(--ink-900)", color: "var(--text-secondary)" }}
+              className="mono mt-3 overflow-x-auto rounded-[4px] p-4 text-[12px] leading-relaxed"
+              style={{ border: "1px solid color-mix(in srgb, var(--text) 18%, transparent)", background: "var(--surface)", color: "color-mix(in srgb, var(--text) 72%, transparent)" }}
             >
               <code>{block.code}</code>
             </pre>
           );
         }
         return (
-          <p key={index} className="mt-3 text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+          <p key={index} className="mt-3 text-[14px] leading-7" style={{ color: "color-mix(in srgb, var(--text) 72%, transparent)" }}>
             <Inline segments={block.segments} />
           </p>
         );

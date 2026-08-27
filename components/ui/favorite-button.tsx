@@ -16,19 +16,19 @@ export function FavoriteButton({
 }>) {
   const { add, remove, has } = useFavorites();
   const active = has(id);
+  const actionLabel = active ? `Remove ${label} from watchlist` : `Add ${label} to watchlist`;
 
   return (
     <button
-      onClick={() => (active ? remove(id) : add({ id, category, label }))}
-      className={`grid place-items-center rounded-[var(--radius-sm)] p-1.5 transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] ${
-        active
-          ? "text-[var(--rune)] shadow-[0_0_8px_rgba(201,169,97,0.15)]"
-          : "text-[var(--text-quaternary)] hover:text-[var(--rune-dim)] hover:bg-[var(--ink-700)]"
-      }`}
       type="button"
-      title={active ? "Remove from watchlist" : "Add to watchlist"}
+      onClick={() => (active ? remove(id) : add({ id, category, label }))}
+      className="odim-icon-control h-11 w-11 shrink-0 transition-colors duration-[var(--motion-micro)]"
+      aria-label={actionLabel}
+      aria-pressed={active}
+      title={actionLabel}
+      style={{ color: active ? "var(--evidence)" : "var(--text-tertiary)" }}
     >
-      <Star size={size} fill={active ? "currentColor" : "none"} strokeWidth={1.5} />
+      <Star size={size} fill={active ? "currentColor" : "none"} strokeWidth={1.6} />
     </button>
   );
 }

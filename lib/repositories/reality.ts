@@ -22,6 +22,15 @@ function titleFromSource(value: unknown, fallback: string) {
   return typeof first?.title === "string" ? first.title : fallback;
 }
 
+function firstObservedAt(value: unknown, fallback?: unknown) {
+  if (Array.isArray(value)) {
+    const first = value[0] as JsonRecord | undefined;
+    if (typeof first?.observedAt === "string" && Number.isFinite(Date.parse(first.observedAt))) return first.observedAt;
+  }
+  if (typeof fallback === "string" && Number.isFinite(Date.parse(fallback))) return fallback;
+  return undefined;
+}
+
 function shouldFallbackFromSupabaseError(message: string) {
   if (isProductionRuntime()) return false;
   if (process.env.REPOSITORY_SUPABASE_STRICT === "true") return false;
@@ -49,12 +58,14 @@ export async function listAlerts(context: OrgContext = {}) {
     throw new Error(`alerts read failed: ${error.message}`);
   }
   return {
-    alerts: (data ?? []).map((row: JsonRecord) => ({
-      priority: String(row.priority),
-      title: String(row.title),
-      source: firstSourceId(row.source_refs ?? row.evidence),
-      confidence: confidence(row.confidence)
-    })),
+      alerts: (data ?? []).map((row: JsonRecord) => ({
+        id: String(row.id),
+        priority: String(row.priority),
+        title: String(row.title),
+        source: firstSourceId(row.source_refs ?? row.evidence),
+        confidence: confidence(row.confidence),
+        observedAt: firstObservedAt(row.source_refs ?? row.evidence, row.created_at)
+      })),
     source: "supabase" as const
   };
 }
@@ -79,7 +90,8 @@ export async function listSignals(context: OrgContext = {}) {
       source: String(row.source),
       title: titleFromSource(row.source_refs, String(row.external_id ?? row.id)),
       confidence: confidence(row.freshness, 1),
-      observedAt: String(row.observed_at)
+      observedAt: String(row.observed_at),
+      sourceRefs: Array.isArray(row.source_refs) ? row.source_refs : []
     })),
     source: "supabase" as const
   };
@@ -109,7 +121,8 @@ export async function listEntities(context: OrgContext = {}) {
         score: Number(attributes.reality_score ?? 60 + index),
         committed: "Source-backed",
         lead: Math.max(1, Math.round(Number(attributes.narrative_gap ?? 1) * 10)),
-        confidence: confidence(attributes.confidence, 0.62)
+        confidence: confidence(attributes.confidence, 0.62),
+        observedAt: firstObservedAt(row.source_refs, row.created_at)
       };
     }),
     source: "supabase" as const
@@ -138,6 +151,7 @@ export async function listAuditEvents(context: OrgContext = {}) {
       confidence: confidence(row.confidence),
       source: firstSourceId(row.source_refs),
       createdAt: String(row.created_at ?? ""),
+      observedAt: firstObservedAt(row.source_refs, row.created_at),
       objectId: row.object_id ? String(row.object_id) : "",
       detail: (row.detail ?? {}) as JsonRecord
     })),
@@ -170,6 +184,7 @@ export async function getEntityScoreHistory(entityId: string, days = 30, context
       recorded_at: new Date(now - (days - index - 1) * 86_400_000).toISOString()
     }));
   };
+  assertSupabaseReadEnv();
   if (!hasSupabaseReadEnv()) return fallbackHistory();
   const client = createServerSupabaseReadClient();
   const since = new Date(Date.now() - days * 86_400_000).toISOString();
@@ -191,6 +206,7 @@ export async function getEntityScoreHistory(entityId: string, days = 30, context
 }
 
 export async function listSourceHealth(_context: OrgContext = {}) {
+  assertSupabaseReadEnv();
   if (!hasSupabaseReadEnv()) {
     const grouped = new Map<string, { lastObservedAt: string; rawSignalCount: number }>();
     for (const signal of fallbackSignals) {

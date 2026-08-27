@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 
 type WatchtowerApproval = {
   id: string;
@@ -63,16 +63,26 @@ export type WatchtowerLabels = {
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  waiting_approval: "var(--rune)",
-  succeeded: "var(--positive, #22c55e)",
+  waiting_approval: "var(--signal)",
+  succeeded: "var(--evidence)",
+  approved: "var(--evidence)",
   rejected: "var(--critical)",
   failed: "var(--critical)",
-  running: "#60a5fa",
-  queued: "var(--text-tertiary)"
+  running: "var(--signal)",
+  queued: "var(--text-tertiary)",
+  pending: "var(--signal)"
 };
 
 function percent(value: number) {
-  return `${Math.round(value * 100)}%`;
+  return Math.round(Math.max(0, Math.min(1, value)) * 100) + "%";
+}
+
+function statusColor(status: string) {
+  return STATUS_COLOR[status] ?? "var(--text-tertiary)";
+}
+
+function statusLabel(status: string) {
+  return status.replaceAll("_", " ");
 }
 
 async function postAction(endpoint: string, body: Record<string, unknown>) {
@@ -84,6 +94,28 @@ async function postAction(endpoint: string, body: Record<string, unknown>) {
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(typeof payload.error === "string" ? payload.error : "Request failed");
   return payload as { run: WatchtowerRunView };
+}
+
+function WorkflowButton({
+  children,
+  className = "",
+  ...props
+}: Readonly<ButtonHTMLAttributes<HTMLButtonElement> & { children: ReactNode }>) {
+  return (
+    <button
+      {...props}
+      className={[
+        "inline-flex min-h-11 items-center justify-center border px-3 text-[11px] uppercase tracking-[0.08em]",
+        "transition-[background-color,border-color,color,transform] duration-[var(--motion-micro)]",
+        "hover:bg-[var(--signal-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)]",
+        "motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-50",
+        className
+      ].join(" ")}
+      style={{ borderColor: "var(--line-soft)", color: "var(--text-secondary)", ...props.style }}
+    >
+      {children}
+    </button>
+  );
 }
 
 export function WatchtowerWorkflows({
@@ -101,6 +133,7 @@ export function WatchtowerWorkflows({
   const [selectedRunId, setSelectedRunId] = useState(initialRuns[0]?.id ?? "");
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState("");
   const selectedRun = runs.find((run) => run.id === selectedRunId) ?? runs[0];
   const runCounts = useMemo(() => {
     const map = new Map<string, number>();
@@ -114,11 +147,13 @@ export function WatchtowerWorkflows({
   }
 
   async function handleStart(playbookId: string) {
-    setPending(`start:${playbookId}`);
+    setPending("start:" + playbookId);
     setError(null);
+    setFeedback("");
     try {
       const payload = await postAction("/api/watchtower/runs", { playbookId, actor: "dashboard" });
       upsertRun(payload.run);
+      setFeedback(labels.start + ": " + payload.run.playbookName);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Request failed");
     } finally {
@@ -128,8 +163,9 @@ export function WatchtowerWorkflows({
 
   async function handleApproval(approvalId: string, decision: "approve" | "reject") {
     if (!selectedRun) return;
-    setPending(`${decision}:${approvalId}`);
+    setPending(decision + ":" + approvalId);
     setError(null);
+    setFeedback("");
     try {
       const payload = await postAction("/api/watchtower/approvals", {
         runId: selectedRun.id,
@@ -138,6 +174,7 @@ export function WatchtowerWorkflows({
         actor: "dashboard"
       });
       upsertRun(payload.run);
+      setFeedback(decision === "approve" ? labels.approve : labels.reject);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Request failed");
     } finally {
@@ -147,11 +184,13 @@ export function WatchtowerWorkflows({
 
   async function handleRerun() {
     if (!selectedRun) return;
-    setPending(`rerun:${selectedRun.id}`);
+    setPending("rerun:" + selectedRun.id);
     setError(null);
+    setFeedback("");
     try {
       const payload = await postAction("/api/watchtower/rerun", { runId: selectedRun.id, actor: "dashboard" });
       upsertRun(payload.run);
+      setFeedback(labels.rerun);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Request failed");
     } finally {
@@ -160,212 +199,244 @@ export function WatchtowerWorkflows({
   }
 
   return (
-    <div className="grid gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <div className="mono text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
+    <div aria-busy={pending !== null} className="grid gap-5">
+      <header className="flex flex-wrap items-start justify-between gap-4 border-b pb-4" style={{ borderColor: "var(--line-soft)" }}>
+        <div className="min-w-0">
+          <p className="mono text-[12px] uppercase tracking-[0.1em]" style={{ color: "var(--text-primary)" }}>
             {labels.title}
-          </div>
+          </p>
           {selectedRun ? (
-            <div className="mt-1 text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+            <p className="mt-2 max-w-3xl text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
               {selectedRun.thesis}
-            </div>
-          ) : null}
+            </p>
+          ) : (
+            <p className="mt-2 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
+              No workflow run is selected.
+            </p>
+          )}
         </div>
         {selectedRun ? (
-          <button
-            type="button"
-            onClick={handleRerun}
-            disabled={pending !== null}
-            className="mono rounded-[var(--radius-sm)] px-3 py-1.5 text-[10px] uppercase tracking-[0.1em] transition-colors disabled:opacity-50"
-            style={{ background: "var(--ink-750)", border: "1px solid var(--line-faint)", color: "var(--text-secondary)" }}
-          >
-            {labels.rerun}
-          </button>
+          <WorkflowButton type="button" onClick={handleRerun} disabled={pending !== null}>
+            {pending === "rerun:" + selectedRun.id ? "Working…" : labels.rerun}
+          </WorkflowButton>
         ) : null}
+      </header>
+
+      <div role={error ? "alert" : undefined} aria-live="polite" className="min-h-5 text-[11px]">
+        {error ? <span style={{ color: "var(--critical)" }}>{error}</span> : <span style={{ color: "var(--evidence)" }}>{feedback}</span>}
       </div>
 
-      {error ? (
-        <div className="rounded-[var(--radius-sm)] px-3 py-2 text-[12px]" style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.2)", color: "var(--critical)" }}>
-          {error}
-        </div>
-      ) : null}
-
       {!compact ? (
-        <div>
-          <div className="mono mb-2 text-[9px] uppercase tracking-[0.12em]" style={{ color: "var(--text-tertiary)" }}>
-            {labels.playbooks}
+        <section aria-labelledby="watchtower-playbooks" className="border-b pb-5" style={{ borderColor: "var(--line-soft)" }}>
+          <div className="mb-2 flex items-baseline justify-between gap-3">
+            <h2 id="watchtower-playbooks" className="mono text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>
+              {labels.playbooks}
+            </h2>
+            <span className="mono text-[11px]" style={{ color: "var(--text-tertiary)" }}>{playbooks.length}</span>
           </div>
-          <div className="grid gap-2 md:grid-cols-3">
-            {playbooks.map((playbook) => (
-              <div
-                key={playbook.id}
-                className="rounded-[var(--radius-sm)] px-3 py-2.5"
-                style={{ background: "var(--ink-850)", border: "1px solid var(--line-faint)" }}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="truncate text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>
-                      {playbook.name}
+          {playbooks.length ? (
+            <ul className="divide-y" style={{ borderColor: "var(--line-soft)" }}>
+              {playbooks.map((playbook) => (
+                <li key={playbook.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <h3 className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>{playbook.name}</h3>
+                      <span className="mono text-[11px]" style={{ color: "var(--text-tertiary)" }}>
+                        {runCounts.get(playbook.id) ?? 0} runs · {playbook.cadenceHours}h · {percent(playbook.minConfidence)}
+                      </span>
                     </div>
-                    <div className="mt-1 line-clamp-2 text-[11px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
-                      {playbook.description}
-                    </div>
+                    <p className="mt-1 max-w-3xl text-[12px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>{playbook.description}</p>
                   </div>
-                  <span className="mono shrink-0 text-[10px]" style={{ color: "var(--rune)" }}>
-                    {runCounts.get(playbook.id) ?? 0}
-                  </span>
-                </div>
-                <div className="mt-2 flex items-center justify-between gap-2">
-                  <span className="mono text-[9px] uppercase tracking-[0.08em]" style={{ color: "var(--text-quaternary)" }}>
-                    {playbook.cadenceHours}h / {percent(playbook.minConfidence)}
-                  </span>
-                  <button
+                  <WorkflowButton
                     type="button"
                     onClick={() => handleStart(playbook.id)}
                     disabled={pending !== null}
-                    className="mono rounded-[var(--radius-xs)] px-2 py-1 text-[9px] uppercase tracking-[0.08em] disabled:opacity-50"
-                    style={{ background: "var(--rune-wash)", border: "1px solid rgba(201,169,97,0.18)", color: "var(--rune)" }}
+                    className="shrink-0"
+                    style={{ borderColor: "var(--signal)", color: "var(--signal)" }}
                   >
-                    {pending === `start:${playbook.id}` ? "..." : labels.start}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+                    {pending === "start:" + playbook.id ? "Working…" : labels.start}
+                  </WorkflowButton>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p role="status" className="border-y py-4 text-[12px]" style={{ borderColor: "var(--line-soft)", color: "var(--text-tertiary)" }}>
+              No playbooks are configured for this workspace.
+            </p>
+          )}
+        </section>
       ) : null}
 
-      <div className="grid gap-3 lg:grid-cols-[minmax(220px,320px)_1fr]">
-        <div>
-          <div className="mono mb-2 text-[9px] uppercase tracking-[0.12em]" style={{ color: "var(--text-tertiary)" }}>
-            {labels.runs}
+      <section aria-labelledby="watchtower-runs" className="grid gap-5 lg:grid-cols-[minmax(220px,0.34fr)_minmax(0,1fr)]">
+        <div className="min-w-0">
+          <div className="mb-2 flex items-baseline justify-between gap-3">
+            <h2 id="watchtower-runs" className="mono text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>
+              {labels.runs}
+            </h2>
+            <span className="mono text-[11px]" style={{ color: "var(--text-tertiary)" }}>{runs.length}</span>
           </div>
-          <div className="grid gap-1.5">
-            {runs.map((run) => {
-              const selected = selectedRun?.id === run.id;
-              return (
-                <button
-                  key={run.id}
-                  type="button"
-                  onClick={() => setSelectedRunId(run.id)}
-                  className="w-full rounded-[var(--radius-sm)] px-3 py-2 text-left transition-colors"
-                  style={{
-                    background: selected ? "rgba(201,169,97,0.07)" : "var(--ink-850)",
-                    border: `1px solid ${selected ? "rgba(201,169,97,0.22)" : "var(--line-faint)"}`
-                  }}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-[12px]" style={{ color: "var(--text-primary)" }}>
-                      {run.playbookName}
+          {runs.length ? (
+            <div className="divide-y border-y" style={{ borderColor: "var(--line-soft)" }}>
+              {runs.map((run) => {
+                const selected = selectedRun?.id === run.id;
+                return (
+                  <button
+                    key={run.id}
+                    type="button"
+                    onClick={() => setSelectedRunId(run.id)}
+                    aria-pressed={selected}
+                    className="block min-h-11 w-full px-3 py-3 text-left transition-[background-color,border-color,color] duration-[var(--motion-state)] hover:bg-[var(--surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--signal)] motion-reduce:transition-none"
+                    style={{ borderLeft: "3px solid " + (selected ? "var(--signal)" : "transparent"), background: selected ? "var(--signal-wash)" : "transparent" }}
+                  >
+                    <span className="flex items-center justify-between gap-2">
+                      <span className="truncate text-[12px]" style={{ color: "var(--text-primary)" }}>{run.playbookName}</span>
+                      <span className="mono shrink-0 text-[11px] uppercase tracking-[0.08em]" style={{ color: statusColor(run.status) }}>
+                        {statusLabel(run.status)}
+                      </span>
                     </span>
-                    <span className="mono shrink-0 text-[9px] uppercase tracking-[0.08em]" style={{ color: STATUS_COLOR[run.status] ?? "var(--text-tertiary)" }}>
-                      {run.status.replaceAll("_", " ")}
+                    <span className="mono mt-1 block truncate text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-quaternary)" }}>
+                      r{run.revision} · {run.updatedAt.slice(0, 10)}
                     </span>
-                  </div>
-                  <div className="mono mt-1 truncate text-[9px] uppercase tracking-[0.08em]" style={{ color: "var(--text-quaternary)" }}>
-                    r{run.revision} · {run.updatedAt.slice(0, 10)}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div role="status" className="border-y px-3 py-6 text-[12px]" style={{ borderColor: "var(--line-soft)", color: "var(--text-tertiary)" }}>
+              No Watchtower runs yet.
+            </div>
+          )}
         </div>
 
         {selectedRun ? (
-          <div className="rounded-[var(--radius-sm)] px-3 py-3" style={{ background: "var(--ink-850)", border: "1px solid var(--line-faint)" }}>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>
-                  {selectedRun.alertTitle ?? selectedRun.playbookName}
+          <article aria-labelledby="watchtower-run-heading" className="min-w-0 border-y" style={{ borderColor: "var(--line-soft)" }}>
+            <header className="border-b px-3 py-4 sm:px-4" style={{ borderColor: "var(--line-soft)" }}>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 id="watchtower-run-heading" className="text-[15px] font-medium" style={{ color: "var(--text-primary)" }}>
+                    {selectedRun.alertTitle ?? selectedRun.playbookName}
+                  </h3>
+                  <p className="mono mt-1 text-[11px] uppercase tracking-[0.08em]" style={{ color: statusColor(selectedRun.status) }}>
+                    {statusLabel(selectedRun.status)}
+                  </p>
                 </div>
-                <div className="mono mt-1 text-[9px] uppercase tracking-[0.1em]" style={{ color: STATUS_COLOR[selectedRun.status] ?? "var(--text-tertiary)" }}>
-                  {selectedRun.status.replaceAll("_", " ")}
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-1.5">
-                <div className="mono rounded-[3px] px-2 py-1 text-[8px] uppercase tracking-[0.08em]" style={{ background: "var(--ink-900)", color: "var(--text-tertiary)" }}>
-                  {labels.citations}<span className="ml-1 text-[10px]" style={{ color: "var(--rune)" }}>{percent(selectedRun.citationCoverage)}</span>
-                </div>
-                <div className="mono rounded-[3px] px-2 py-1 text-[8px] uppercase tracking-[0.08em]" style={{ background: "var(--ink-900)", color: "var(--text-tertiary)" }}>
-                  {labels.trace}<span className="ml-1 text-[10px]" style={{ color: "var(--rune)" }}>{percent(selectedRun.traceCompleteness)}</span>
-                </div>
-                <div className="mono rounded-[3px] px-2 py-1 text-[8px] uppercase tracking-[0.08em]" style={{ background: "var(--ink-900)", color: "var(--text-tertiary)" }}>
-                  {labels.cost}<span className="ml-1 text-[10px]" style={{ color: "var(--rune)" }}>{selectedRun.costEstimateTokens}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-3 grid gap-2">
-              {selectedRun.steps.map((step) => (
-                <div key={step.id} className="grid grid-cols-[92px_1fr_auto] gap-2 py-2 text-[11px]" style={{ borderTop: "1px solid var(--line-faint)" }}>
-                  <span className="mono uppercase tracking-[0.08em]" style={{ color: STATUS_COLOR[step.status] ?? "var(--text-tertiary)" }}>
-                    {step.status.replaceAll("_", " ")}
-                  </span>
-                  <span className="min-w-0" style={{ color: "var(--text-secondary)" }}>
-                    <span style={{ color: "var(--text-primary)" }}>{step.label}</span>
-                    <span className="ml-1.5 line-clamp-1">{step.summary}</span>
-                  </span>
-                  <span className="mono tabular-nums" style={{ color: "var(--rune)" }}>
-                    {percent(step.confidence)}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {selectedRun.riskFlags.length ? (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                <span className="mono text-[9px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>
-                  {labels.risks}
-                </span>
-                {selectedRun.riskFlags.map((risk) => (
-                  <span key={risk} className="mono rounded-[3px] px-1.5 py-0.5 text-[8px] uppercase tracking-[0.06em]" style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.16)", color: "var(--critical)" }}>
-                    {risk.replaceAll("_", " ")}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-
-            <div className="mt-4">
-              <div className="mono mb-2 text-[9px] uppercase tracking-[0.12em]" style={{ color: "var(--text-tertiary)" }}>
-                {labels.approvals}
-              </div>
-              <div className="grid gap-2">
-                {selectedRun.approvals.map((approval) => (
-                  <div key={approval.id} className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius-sm)] px-2.5 py-2" style={{ background: "var(--ink-900)", border: "1px solid var(--line-faint)" }}>
-                    <div>
-                      <div className="text-[12px]" style={{ color: "var(--text-primary)" }}>{approval.label}</div>
-                      <div className="mono mt-0.5 text-[9px] uppercase tracking-[0.08em]" style={{ color: STATUS_COLOR[approval.status] ?? "var(--text-tertiary)" }}>{approval.status}</div>
+                <dl className="grid grid-cols-3 divide-x" style={{ borderColor: "var(--line-soft)" }}>
+                  {[
+                    [labels.citations, percent(selectedRun.citationCoverage), "var(--evidence)"],
+                    [labels.trace, percent(selectedRun.traceCompleteness), "var(--signal)"],
+                    [labels.cost, String(selectedRun.costEstimateTokens), "var(--text-primary)"]
+                  ].map(([label, value, color]) => (
+                    <div key={label} className="min-w-[72px] px-2 first:pl-0 last:pr-0" style={{ borderColor: "var(--line-soft)" }}>
+                      <dt className="mono text-[11px] uppercase tracking-[0.06em]" style={{ color: "var(--text-tertiary)" }}>{label}</dt>
+                      <dd className="mt-1 text-[12px]" style={{ color }}>{value}</dd>
                     </div>
-                    {approval.status === "pending" ? (
-                      <div className="flex gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleApproval(approval.id, "approve")}
-                          disabled={pending !== null}
-                          className="mono rounded-[var(--radius-xs)] px-2 py-1 text-[9px] uppercase tracking-[0.08em] disabled:opacity-50"
-                          style={{ background: "rgba(34,197,94,0.10)", border: "1px solid rgba(34,197,94,0.18)", color: "var(--positive, #22c55e)" }}
-                        >
-                          {labels.approve}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleApproval(approval.id, "reject")}
-                          disabled={pending !== null}
-                          className="mono rounded-[var(--radius-xs)] px-2 py-1 text-[9px] uppercase tracking-[0.08em] disabled:opacity-50"
-                          style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.18)", color: "var(--critical)" }}
-                        >
-                          {labels.reject}
-                        </button>
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
+                  ))}
+                </dl>
               </div>
+            </header>
+
+            <div className="divide-y" style={{ borderColor: "var(--line-soft)" }}>
+              <section className="px-3 py-4 sm:px-4">
+                <h4 className="mono mb-2 text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>Execution trace</h4>
+                <ol className="divide-y border-y" style={{ borderColor: "var(--line-soft)" }}>
+                  {selectedRun.steps.length ? selectedRun.steps.map((step) => (
+                    <li key={step.id} className="grid grid-cols-[minmax(90px,0.25fr)_minmax(0,1fr)_auto] items-start gap-3 py-3">
+                      <span className="mono text-[11px] uppercase tracking-[0.06em]" style={{ color: statusColor(step.status) }}>
+                        {statusLabel(step.status)}
+                      </span>
+                      <span className="min-w-0 text-[12px]" style={{ color: "var(--text-secondary)" }}>
+                        <strong className="font-medium" style={{ color: "var(--text-primary)" }}>{step.label}</strong>
+                        <span className="ml-2">{step.summary}</span>
+                      </span>
+                      <span className="mono text-[11px] tabular-nums" style={{ color: "var(--evidence)" }}>{percent(step.confidence)}</span>
+                    </li>
+                  )) : (
+                    <li className="py-4 text-[12px]" style={{ color: "var(--text-tertiary)" }}>No trace steps returned.</li>
+                  )}
+                </ol>
+              </section>
+
+              <section className="px-3 py-4 sm:px-4">
+                <h4 className="mono mb-2 text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>Source coverage</h4>
+                {selectedRun.sourceRefs.length ? (
+                  <ul className="divide-y border-y" style={{ borderColor: "var(--line-soft)" }}>
+                    {selectedRun.sourceRefs.map((source) => (
+                      <li key={source.sourceId} className="flex min-h-11 items-center justify-between gap-3 py-2">
+                        <span className="min-w-0">
+                          <span className="block truncate text-[12px]" style={{ color: "var(--text-primary)" }}>{source.title}</span>
+                          <span className="mono mt-1 block truncate text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-quaternary)" }}>{source.sourceId}</span>
+                        </span>
+                        <a href={source.url} target="_blank" rel="noreferrer" className="mono flex min-h-11 shrink-0 items-center px-2 text-[11px] uppercase tracking-[0.08em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--evidence)]" style={{ color: "var(--evidence)" }}>
+                          View
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p role="status" className="border-y py-4 text-[12px]" style={{ borderColor: "var(--line-soft)", color: "var(--text-tertiary)" }}>
+                    No source references attached to this run.
+                  </p>
+                )}
+              </section>
+
+              {selectedRun.riskFlags.length ? (
+                <section className="px-3 py-4 sm:px-4">
+                  <h4 className="mono mb-2 text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--critical)" }}>{labels.risks}</h4>
+                  <ul className="flex flex-wrap gap-x-4 gap-y-2">
+                    {selectedRun.riskFlags.map((risk) => (
+                      <li key={risk} className="text-[12px]" style={{ color: "var(--critical)" }}>{risk.replaceAll("_", " ")}</li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+
+              <section className="px-3 py-4 sm:px-4">
+                <h4 className="mono mb-2 text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>{labels.approvals}</h4>
+                {selectedRun.approvals.length ? (
+                  <ul className="divide-y border-y" style={{ borderColor: "var(--line-soft)" }}>
+                    {selectedRun.approvals.map((approval) => (
+                      <li key={approval.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                        <span>
+                          <span className="block text-[12px]" style={{ color: "var(--text-primary)" }}>{approval.label}</span>
+                          <span className="mono mt-1 block text-[11px] uppercase tracking-[0.08em]" style={{ color: statusColor(approval.status) }}>{approval.status}</span>
+                        </span>
+                        {approval.status === "pending" ? (
+                          <span className="flex flex-wrap gap-2">
+                            <WorkflowButton
+                              type="button"
+                              onClick={() => handleApproval(approval.id, "approve")}
+                              disabled={pending !== null}
+                              style={{ borderColor: "var(--evidence)", color: "var(--evidence)" }}
+                            >
+                              {pending === "approve:" + approval.id ? "Working…" : labels.approve}
+                            </WorkflowButton>
+                            <WorkflowButton
+                              type="button"
+                              onClick={() => handleApproval(approval.id, "reject")}
+                              disabled={pending !== null}
+                              style={{ borderColor: "var(--critical)", color: "var(--critical)" }}
+                            >
+                              {pending === "reject:" + approval.id ? "Working…" : labels.reject}
+                            </WorkflowButton>
+                          </span>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="border-y py-4 text-[12px]" style={{ borderColor: "var(--line-soft)", color: "var(--text-tertiary)" }}>
+                    No approval steps required.
+                  </p>
+                )}
+              </section>
             </div>
+          </article>
+        ) : (
+          <div role="status" className="flex min-h-48 items-center border-y px-4 text-[12px]" style={{ borderColor: "var(--line-soft)", color: "var(--text-tertiary)" }}>
+            Select a run to inspect its trace.
           </div>
-        ) : null}
-      </div>
+        )}
+      </section>
     </div>
   );
 }

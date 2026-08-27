@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { trapDialogFocus } from "@/components/ui/modal-focus";
 
 type Result = {
   id: string;
@@ -18,6 +19,7 @@ type Props = {
     entities: string;
     alerts: string;
     settings: string;
+    noResults: string;
   };
 };
 
@@ -55,30 +57,38 @@ export function CommandPalette({ entities, alerts, labels }: Readonly<Props>) {
   const [query, setQuery] = useState("");
   const [cursor, setCursor] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const previousActiveRef = useRef<HTMLElement | null>(null);
 
-  const allResults: Result[] = [
-    ...entities.map((e) => ({ id: e.id, label: e.name, type: "entity" as const, href: `/entity?id=${e.id}` })),
-    ...alerts.map((a) => ({ id: a.title, label: a.title, type: "alert" as const, href: "/alerts" })),
-    ...SETTINGS_ITEMS
-  ];
-
-  const filtered = query.trim()
-    ? allResults.filter((r) => r.label.toLowerCase().includes(query.toLowerCase()))
-    : allResults.slice(0, 12);
-
-  const grouped = {
+  const allResults = useMemo<Result[]>(
+    () => [
+      ...entities.map((e) => ({ id: e.id, label: e.name, type: "entity" as const, href: `/entity?id=${e.id}` })),
+      ...alerts.map((a) => ({ id: a.title, label: a.title, type: "alert" as const, href: "/alerts" })),
+      ...SETTINGS_ITEMS
+    ],
+    [entities, alerts]
+  );
+  const normalizedQuery = query.trim().toLowerCase();
+  const filtered = useMemo(
+    () => normalizedQuery
+      ? allResults.filter((r) => r.label.toLowerCase().includes(normalizedQuery))
+      : allResults.slice(0, 12),
+    [allResults, normalizedQuery]
+  );
+  const grouped = useMemo(() => ({
     entity: filtered.filter((r) => r.type === "entity"),
     alert: filtered.filter((r) => r.type === "alert"),
     setting: filtered.filter((r) => r.type === "setting")
-  };
-
-  const flat = [...grouped.entity, ...grouped.alert, ...grouped.setting];
+  }), [filtered]);
+  const flat = useMemo(
+    () => [...grouped.entity, ...grouped.alert, ...grouped.setting],
+    [grouped]
+  );
 
   const openPalette = useCallback(() => {
     setOpen(true);
     setQuery("");
     setCursor(0);
-    setTimeout(() => inputRef.current?.focus(), 50);
   }, []);
 
   const closePalette = useCallback(() => {
@@ -90,6 +100,20 @@ export function CommandPalette({ entities, alerts, labels }: Readonly<Props>) {
     router.push(item.href);
     closePalette();
   }, [router, closePalette]);
+
+  useEffect(() => {
+    if (!open) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    previousActiveRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (!dialog.open) dialog.showModal();
+    const frame = window.requestAnimationFrame(() => inputRef.current?.focus());
+    return () => {
+      window.cancelAnimationFrame(frame);
+      if (dialog.open) dialog.close();
+      previousActiveRef.current?.focus();
+    };
+  }, [open]);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -107,20 +131,34 @@ export function CommandPalette({ entities, alerts, labels }: Readonly<Props>) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, flat, cursor, openPalette, closePalette, selectItem]);
 
+  useEffect(() => {
+    function onOpenRequest() {
+      openPalette();
+    }
+
+    window.addEventListener("odim:open-command", onOpenRequest);
+    return () => window.removeEventListener("odim:open-command", onOpenRequest);
+  }, [openPalette]);
+
   if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]"
-      style={{ background: "rgba(0,0,0,0.60)", backdropFilter: "blur(4px)" }}
-      onClick={closePalette}
+    <dialog
+      ref={dialogRef}
+      aria-label={labels.hint}
+      className="fixed inset-0 z-50 m-0 h-dvh max-h-none w-screen max-w-none border-0 p-0"
+      style={{ background: "rgba(5,7,9,0.86)" }}
+      onKeyDown={trapDialogFocus}
+      onCancel={(event) => { event.preventDefault(); closePalette(); }}
     >
+      <div className="flex h-full items-start justify-center pt-[12vh]" onClick={closePalette}>
       <div
-        className="w-full max-w-lg overflow-hidden rounded-[var(--radius-lg)]"
+        data-testid="command-palette"
+        className="w-full max-w-lg overflow-hidden border"
         style={{
-          background: "var(--ink-850)",
-          border: "1px solid var(--line-soft)",
-          boxShadow: "var(--shadow-lg)"
+          background: "var(--surface, var(--ink-850, #131d26))",
+          borderColor: "var(--line-soft, rgba(255,255,255,.12))",
+          boxShadow: "0 18px 48px rgba(0,0,0,.38)"
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -131,7 +169,7 @@ export function CommandPalette({ entities, alerts, labels }: Readonly<Props>) {
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-            className="shrink-0" style={{ color: "var(--text-quaternary)" }}>
+            className="shrink-0" style={{ color: "var(--text-secondary, #8d97ab)" }}>
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
@@ -140,12 +178,13 @@ export function CommandPalette({ entities, alerts, labels }: Readonly<Props>) {
             value={query}
             onChange={(e) => { setQuery(e.target.value); setCursor(0); }}
             placeholder={labels.hint}
-            className="flex-1 py-4 text-[14px] outline-none"
-            style={{ background: "transparent", color: "var(--text-primary)" }}
+            aria-label={labels.hint}
+            className="flex-1 py-4 text-[14px] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--signal,#4c90f0)]"
+            style={{ background: "transparent", color: "var(--text, var(--text-primary, #e8eff2))" }}
           />
           <kbd
-            className="mono shrink-0 rounded-[4px] px-1.5 py-0.5 text-[10px]"
-            style={{ background: "var(--ink-700)", color: "var(--text-quaternary)", border: "1px solid var(--line-faint)" }}
+            className="mono shrink-0 rounded-[4px] px-1.5 py-0.5 text-[11px]"
+            style={{ background: "var(--field, var(--ink-700, #1c212b))", color: "var(--text-secondary, #8d97ab)", border: "1px solid var(--line-faint, rgba(255,255,255,.06))" }}
           >
             ESC
           </kbd>
@@ -158,8 +197,8 @@ export function CommandPalette({ entities, alerts, labels }: Readonly<Props>) {
             return (
               <div key={type}>
                 <div
-                  className="mono px-5 py-2 text-[10px] uppercase tracking-[0.14em]"
-                  style={{ color: "var(--text-tertiary)" }}
+                  className="mono px-5 py-2 text-[11px] uppercase tracking-[0.14em]"
+                  style={{ color: "var(--text-secondary, #8d97ab)" }}
                 >
                   {typeLabel}
                 </div>
@@ -171,19 +210,19 @@ export function CommandPalette({ entities, alerts, labels }: Readonly<Props>) {
                       type="button"
                       onClick={() => selectItem(item)}
                       onMouseEnter={() => setCursor(idx)}
-                      className="flex w-full items-center gap-3 px-5 py-2.5 text-left text-[13px] transition-all duration-[var(--dur-fast)]"
+                      className="flex min-h-11 w-full items-center gap-3 px-5 py-2.5 text-left text-[13px] transition-colors duration-[120ms] focus-visible:outline-2 focus-visible:outline-[var(--signal,#4c90f0)] motion-reduce:transition-none"
                       style={{
-                        background: cursor === idx ? "var(--rune-wash)" : "transparent",
-                        color: cursor === idx ? "var(--rune)" : "var(--text-primary)",
-                        borderLeft: cursor === idx ? "2px solid var(--rune)" : "2px solid transparent"
+                        background: cursor === idx ? "color-mix(in srgb, var(--signal, #4c90f0) 12%, transparent)" : "transparent",
+                        color: cursor === idx ? "var(--signal, #4c90f0)" : "var(--text, var(--text-primary, #e8eff2))",
+                        borderLeft: cursor === idx ? "2px solid var(--signal, #4c90f0)" : "2px solid transparent"
                       }}
                     >
-                      <span style={{ color: cursor === idx ? "var(--rune)" : "var(--text-quaternary)" }}>
+                      <span style={{ color: cursor === idx ? "var(--signal, #4c90f0)" : "var(--text-secondary, #8d97ab)" }}>
                         {TYPE_ICONS[item.type]}
                       </span>
                       <span className="flex-1 truncate">{item.label}</span>
                       {cursor === idx && (
-                        <span className="mono shrink-0 text-[10px]" style={{ color: "var(--text-quaternary)" }}>↵</span>
+                        <span className="mono shrink-0 text-[11px]" style={{ color: "var(--text-secondary, #8d97ab)" }}>↵</span>
                       )}
                     </button>
                   );
@@ -195,16 +234,17 @@ export function CommandPalette({ entities, alerts, labels }: Readonly<Props>) {
             <div className="flex flex-col items-center gap-2 px-5 py-8">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-                style={{ color: "var(--text-quaternary)" }}>
+                style={{ color: "var(--text-secondary, #8d97ab)" }}>
                 <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
-              <span className="text-[13px]" style={{ color: "var(--text-tertiary)" }}>
-                No results for &ldquo;{query}&rdquo;
+              <span className="text-[13px]" style={{ color: "var(--text-secondary, #8d97ab)" }}>
+                {labels.noResults} &ldquo;{query}&rdquo;
               </span>
             </div>
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </dialog>
   );
 }
