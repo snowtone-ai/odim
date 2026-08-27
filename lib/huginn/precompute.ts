@@ -15,12 +15,25 @@ export type PrecomputedAnswer = {
   status: "active" | "invalidated";
 };
 
+function isObservedBy(answer: PrecomputedAnswer, now: Date) {
+  const computedAt = Date.parse(answer.computedAt);
+  if (!Number.isFinite(computedAt) || computedAt > now.valueOf()) return false;
+  return answer.evidenceSnapshot.every((ref) => {
+    const observedAt = Date.parse(ref.observedAt ?? "");
+    return Number.isFinite(observedAt) && observedAt <= now.valueOf();
+  });
+}
+
 const precomputedAnswers = new Map<string, PrecomputedAnswer[]>();
 
 function shouldFallbackFromSupabaseError(message: string) {
   if (isProductionRuntime()) return false;
   if (process.env.REPOSITORY_SUPABASE_STRICT === "true") return false;
   return /schema cache|does not exist|Could not find the table|relation .* does not exist|column .* does not exist/i.test(message);
+}
+
+function isStrictPrecomputeRuntime() {
+  return isProductionRuntime() || process.env.REPOSITORY_SUPABASE_STRICT === "true";
 }
 
 function tokenize(value: string) {
@@ -80,7 +93,7 @@ export async function seedPrecomputedAnswer(answer: Omit<PrecomputedAnswer, "id"
     .upsert(toRow(next), { onConflict: "id" });
   if (error) {
     if (shouldFallbackFromSupabaseError(error.message)) return next;
-    throw new Error(`precomputed answer write failed: ${error.message}`);
+    throw new Error("precomputed answer write failed");
   }
   return next;
 }
@@ -102,39 +115,60 @@ function ensureFixtureSeed(orgId: string) {
 function findInMemory(input: { orgId: string; question: string; now: Date }) {
   ensureFixtureSeed(input.orgId);
   return (precomputedAnswers.get(input.orgId) ?? [])
-    .filter((answer) => answer.status === "active" && new Date(answer.expiresAt) > input.now && answer.confidence >= 0.7)
+    .filter((answer) => answer.status === "active" && new Date(answer.expiresAt) > input.now && answer.confidence >= 0.7 && isObservedBy(answer, input.now))
     .map((answer) => ({ answer, score: overlap(input.question, answer.questionPattern) }))
     .filter(({ score }) => score >= 0.45)
     .sort((left, right) => right.score - left.score)[0]?.answer;
 }
 
-async function findInSupabase(input: { orgId: string; question: string; now: Date }) {
-  const { data, error } = await createServiceSupabaseClient()
+async function findInSupabase(input: { orgId: string; question: string; now: Date; signal?: AbortSignal }) {
+  if (input.signal?.aborted) return undefined;
+  const nowIso = input.now.toISOString();
+  const request = createServiceSupabaseClient()
     .from("pre_computed_answers")
     .select("id, org_id, question_pattern, answer, evidence_snapshot, confidence, computed_at, expires_at, status")
     .eq("org_id", input.orgId)
     .eq("status", "active")
-    .gt("expires_at", input.now.toISOString())
+    .gt("expires_at", nowIso)
+    // Prevent future-computed rows from consuming the result limit before
+    // the application-level evidence snapshot guard runs.
+    .lte("computed_at", nowIso)
     .gte("confidence", 0.7)
     .limit(50);
+  if (input.signal) request.abortSignal(input.signal);
+  const { data, error } = await request;
   if (error) {
     if (shouldFallbackFromSupabaseError(error.message)) return undefined;
-    throw new Error(`precomputed answer read failed: ${error.message}`);
+    throw new Error("precomputed answer read failed");
   }
   return (data ?? [])
     .map((row) => fromRow(row as Record<string, unknown>))
+    .filter((answer) => answer.orgId === input.orgId)
+    .filter((answer) => isObservedBy(answer, input.now))
     .map((answer) => ({ answer, score: overlap(input.question, answer.questionPattern) }))
     .filter(({ score }) => score >= 0.45)
     .sort((left, right) => right.score - left.score)[0]?.answer;
 }
 
-export async function findPrecomputedAnswer(input: { orgId: string; question: string; now?: Date }) {
+export async function findPrecomputedAnswer(input: { orgId: string; question: string; now?: Date; signal?: AbortSignal }) {
   if (process.env.SLEEP_COMPUTE_ENABLED !== "true") return undefined;
   const now = input.now ?? new Date();
+  if (input.signal?.aborted) return undefined;
   if (hasSupabaseWriteEnv()) {
     const persisted = await findInSupabase({ ...input, now });
+    if (input.signal?.aborted) return undefined;
     if (persisted) return persisted;
+    // A configured Supabase store is authoritative. Never fall through to a
+    // process-local cache in production/strict mode, even when the DB simply
+    // has no matching row; that cache is not tenant- or deployment-durable.
+    if (isStrictPrecomputeRuntime()) return undefined;
+  } else if (isStrictPrecomputeRuntime()) {
+    // Production/strict retrieval must never silently consult the process-local
+    // fixture cache when the Supabase precompute store is unavailable. An
+    // absent cache is safe; an unverified fixture hit is not.
+    throw new Error("precomputed answer store unavailable");
   }
+  if (input.signal?.aborted) return undefined;
   return findInMemory({ ...input, now });
 }
 
@@ -148,7 +182,7 @@ async function invalidatePersistedPrecomputedAnswers(input: { orgId: string; con
     .limit(100);
   if (error) {
     if (shouldFallbackFromSupabaseError(error.message)) return;
-    throw new Error(`precomputed answer invalidation read failed: ${error.message}`);
+    throw new Error("precomputed answer invalidation read failed");
   }
   const ids = (data ?? [])
     .filter((row) => overlap(String(row.question_pattern), input.content) > 0.2)
@@ -161,7 +195,7 @@ async function invalidatePersistedPrecomputedAnswers(input: { orgId: string; con
     .eq("org_id", input.orgId);
   if (update.error) {
     if (shouldFallbackFromSupabaseError(update.error.message)) return;
-    throw new Error(`precomputed answer invalidation failed: ${update.error.message}`);
+    throw new Error("precomputed answer invalidation failed");
   }
 }
 
@@ -170,7 +204,7 @@ export function invalidatePrecomputedAnswers(input: { orgId: string; content: st
   for (const row of rows) {
     if (overlap(row.questionPattern, input.content) > 0.2) row.status = "invalidated";
   }
-  void invalidatePersistedPrecomputedAnswers(input).catch((error) => {
-    console.warn(error instanceof Error ? error.message : "precomputed answer invalidation failed");
+  void invalidatePersistedPrecomputedAnswers(input).catch(() => {
+    console.warn("precomputed answer invalidation failed");
   });
 }

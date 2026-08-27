@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { authorizeV1Request, enforceV1RateLimit } from "@/lib/api/v1-router";
 import { instrumentApiRoute } from "@/lib/observability/instrument";
 import { answerHuginnQuestion } from "@/lib/huginn/query";
+import { createMuninTemporalMemoryReader } from "@/lib/munin/reader";
 
 async function handlePost(request: Request) {
   try {
@@ -14,7 +15,8 @@ async function handlePost(request: Request) {
     const response = await answerHuginnQuestion({
       orgId: auth.context.orgId ?? process.env.DEFAULT_ORG_ID ?? "11111111-1111-4111-8111-111111111111",
       question: body.question,
-      webSearch: body.webSearch
+      webSearch: body.webSearch,
+      temporalMemoryReader: createMuninTemporalMemoryReader()
     });
     return NextResponse.json({ data: response, meta: { timestamp: new Date().toISOString() }, links: { next: null, prev: null } });
   } catch (error) {

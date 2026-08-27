@@ -1,12 +1,26 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import {
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  MapPin,
+  RotateCcw,
+  Search,
+  SlidersHorizontal,
+  X
+} from "lucide-react";
 import type { Map as MapType, GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from "maplibre-gl";
 import { DEMO_ENTITIES, filterEntities, isNewEntity, type TimeRange } from "@/lib/map/entities";
 import { DEMO_CONNECTIONS } from "@/lib/map/connections";
 import type { LayerKey, MapEntity, MapConnection, MapAlert } from "@/lib/map/types";
 import { SubstrateTooltip, type SubstrateTooltipData } from "@/components/ui/substrate-tooltip";
+import { EvidenceThread } from "@/components/ui/evidence-thread";
+import { DailyDiffPanel } from "@/components/ui/daily-diff";
 import { aggregateByGeo, buildGeoFeatureCollections, levelForZoom, zoomForLevel, type GeoLevel } from "@/lib/map/geo-drill";
+import type { DailyDiff } from "@/lib/pipeline/diff";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -22,13 +36,13 @@ function escapeHtml(str: string): string {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const LAYER_COLORS: Record<LayerKey, string> = {
-  energy:        "#d97a2b",
-  cash:          "#3a9a3a",
-  land:          "#b89245",
-  compute:       "#3b82d9",
-  water:         "#1a9bb0",
-  raw_materials: "#9a5aaa",
-  logistics:     "#5a7ea0"
+  energy:        "#5cc6d2",
+  cash:          "#5cc6d2",
+  land:          "#5cc6d2",
+  compute:       "#5cc6d2",
+  water:         "#5cc6d2",
+  raw_materials: "#5cc6d2",
+  logistics:     "#5cc6d2"
 };
 
 const LAYER_KEYS: LayerKey[] = [
@@ -49,19 +63,26 @@ const LAYER_DISPLAY: Record<LayerKey, string> = {
 // CSS custom properties (var(--…)) cannot be used inside MapLibre setHTML strings.
 // These values mirror styles/tokens.css — update both when design tokens change.
 const POPUP_COLORS = {
-  bg:          "rgba(10,12,16,0.94)",
-  border:      "rgba(255,255,255,0.08)",
-  borderAlert: "rgba(220,38,38,0.4)",
-  divider:     "rgba(255,255,255,0.06)",
-  primary:     "#dde1ea",  // --text-primary
-  secondary:   "#8d97ab",  // --text-secondary
-  tertiary:    "#5c6780",  // --text-tertiary
-  rune:        "#c9a961",  // --rune
-  critical:    "#dc2626"   // alert red
+  bg:          "#131d26",
+  border:      "rgba(232,239,242,0.15)",
+  borderAlert: "rgba(226,116,91,0.6)",
+  divider:     "rgba(232,239,242,0.12)",
+  primary:     "#e8eff2",
+  secondary:   "#a2adb4",
+  tertiary:    "#7d8990",
+  rune:        "#4c90f0",
+  critical:    "#e2745b"
 } as const;
 
-// OpenFreeMap Liberty — colorful OSM vector tiles, no API key required
-const MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+// Official OpenFreeMap Dark style — public, keyless, and visually continuous with Field.
+const MAP_STYLE = "https://tiles.openfreemap.org/styles/dark";
+const MAP_TRANSITION_MS = 280;
+
+function mapTransitionDuration() {
+  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ? 0
+    : MAP_TRANSITION_MS;
+}
 
 // ─── Canvas Icon Builders (Professional Maki-style) ───────────────────────────
 
@@ -80,31 +101,50 @@ function createLayerIcon(layer: LayerKey): ImageData {
   const circleR = size * 0.36;
   const color = LAYER_COLORS[layer];
 
-  // Outer glow
-  ctx.shadowColor = color;
-  ctx.shadowBlur = size * 0.15;
-
   // Circle background
   ctx.fillStyle = color;
   ctx.beginPath();
   ctx.arc(cx, cy, circleR, 0, Math.PI * 2);
   ctx.fill();
 
-  // Reset shadow
-  ctx.shadowColor = "transparent";
-  ctx.shadowBlur = 0;
-
-  // White border ring
-  ctx.strokeStyle = "rgba(255,255,255,0.5)";
+  // Restrained field ring and an icon shape keep categories discernible without color coding.
+  ctx.strokeStyle = "rgba(232,239,242,0.7)";
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  // White symbol
-  ctx.fillStyle = "#fff";
-  ctx.strokeStyle = "#fff";
+  // Field-colored symbol
+  ctx.fillStyle = "#0a1016";
+  ctx.strokeStyle = "#0a1016";
   ctx.lineWidth = 1;
   const sr = circleR * 0.52;
   ICON_DRAWERS[layer](ctx, cx, cy, sr);
+
+  return ctx.getImageData(0, 0, size, size);
+}
+
+/**
+ * OpenFreeMap's public styles can reference a small sprite that is absent from
+ * the fetched sprite sheet (currently circle-11). Register a local substitute
+ * as soon as MapLibre asks for it, before the first style render.
+ */
+function createMissingStyleImage(imageId: string): ImageData {
+  const match = /^circle-(\d+)$/.exec(imageId);
+  const size = Math.max(11, Math.min(32, match ? Number(match[1]) : 16));
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  const center = size / 2;
+  const radius = Math.max(2, center - 1.25);
+
+  ctx.clearRect(0, 0, size, size);
+  ctx.beginPath();
+  ctx.arc(center, center, radius, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(19,29,38,0.92)";
+  ctx.fill();
+  ctx.lineWidth = Math.max(1, size / 12);
+  ctx.strokeStyle = "#5cc6d2";
+  ctx.stroke();
 
   return ctx.getImageData(0, 0, size, size);
 }
@@ -124,7 +164,7 @@ const ICON_DRAWERS: Record<LayerKey, IconDrawer> = {
   },
   // Dollar sign
   cash(ctx, cx, cy, r) {
-    ctx.font = `bold ${r * 1.5}px "Inter", "Segoe UI", sans-serif`;
+    ctx.font = `bold ${r * 1.5}px "Noto Sans", sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("$", cx, cy + r * 0.05);
@@ -211,6 +251,7 @@ type ConnectionProperties = {
   width: number;
   opacity: number;
   active: boolean;
+  selected: boolean;
 };
 
 function buildEntityCollection(entities: MapEntity[]) {
@@ -239,11 +280,12 @@ function buildConnectionCollection(
   allEntities: MapEntity[],
   allConnections: MapConnection[]
 ) {
+  const entityById = new Map(allEntities.map((entity) => [entity.id, entity]));
   return {
     type: "FeatureCollection" as const,
     features: allConnections.flatMap((conn) => {
-      const from = allEntities.find((e) => e.id === conn.fromId);
-      const to = allEntities.find((e) => e.id === conn.toId);
+      const from = entityById.get(conn.fromId);
+      const to = entityById.get(conn.toId);
       if (!from || !to) return [];
       if (!visible.has(from.layer) || !visible.has(to.layer)) return [];
 
@@ -251,6 +293,7 @@ function buildConnectionCollection(
         selectedId === null ||
         conn.fromId === selectedId ||
         conn.toId === selectedId;
+      const isSelectedPath = selectedId !== null && isRelated;
 
       const opacity = isRelated ? (conn.active ? 0.9 : 0.5) : 0.12;
       const width = 1.5 + conn.confidence * 2.5;
@@ -274,7 +317,8 @@ function buildConnectionCollection(
             color,
             width,
             opacity,
-            active: conn.active
+            active: conn.active,
+            selected: isSelectedPath
           } satisfies ConnectionProperties
         }
       ];
@@ -335,6 +379,7 @@ type Props = Readonly<{
   };
   filterLabels?: FilterLabels;
   alertOverlayLabel?: string;
+  dailyDiff?: DailyDiff;
 }>;
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -360,7 +405,8 @@ export function RealityMap({
   initialCenter,
   tooltipLabels = DEFAULT_TOOLTIP_LABELS,
   filterLabels = DEFAULT_FILTER_LABELS,
-  alertOverlayLabel = "Alerts"
+  alertOverlayLabel = "Alerts",
+  dailyDiff
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapType | null>(null);
@@ -371,18 +417,26 @@ export function RealityMap({
   const pulseFrameRef = useRef<number | null>(null);
   const cleanupCallbacksRef = useRef<Array<() => void>>([]);
   const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const selectedIdRef = useRef<string | null>(null);
+  const animationControllerRef = useRef<{ start: () => void; stop: () => void } | null>(null);
 
   const [loaded, setLoaded] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [mapAttempt, setMapAttempt] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
-  const [searchResults, setSearchResults] = useState<MapEntity[]>([]);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [tooltipState, setTooltipState] = useState<{
     layer: LayerKey;
     position: { x: number; y: number };
     data: SubstrateTooltipData;
   } | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const inspectorCloseRef = useRef<HTMLButtonElement>(null);
+  const inspectorRestoreFocusRef = useRef<HTMLElement | null>(null);
+  const mobileInspectorOpenRef = useRef(false);
 
   const [layers, setLayers] = useState<LayerToggle[]>(
     LAYER_KEYS.map((key, i) => ({
@@ -426,6 +480,11 @@ export function RealityMap({
   useEffect(() => { entityDataRef.current = entityData; }, [entityData]);
   useEffect(() => { connectionDataRef.current = connectionData; }, [connectionData]);
   useEffect(() => { filteredEntitiesRef.current = filteredEntities; }, [filteredEntities]);
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
+    if (selectedId) animationControllerRef.current?.start();
+    else animationControllerRef.current?.stop();
+  }, [selectedId]);
 
   const toggleLayer = useCallback((key: LayerKey) => {
     setLayers((prev) =>
@@ -439,7 +498,7 @@ export function RealityMap({
       if ((e.key === "f" && (e.metaKey || e.ctrlKey)) || e.key === "/") {
         e.preventDefault();
         setSearchOpen(true);
-        setTimeout(() => searchInputRef.current?.focus(), 50);
+        searchInputRef.current?.focus();
       }
       if (e.key === "Escape") {
         setSearchOpen(false);
@@ -450,27 +509,29 @@ export function RealityMap({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  // Filter search results
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      return;
-    }
-    const q = searchQuery.toLowerCase();
-    setSearchResults(
-      entityData.filter(
-        (e) =>
-          e.name.toLowerCase().includes(q) ||
-          e.layer.toLowerCase().includes(q)
-      ).slice(0, 6)
-    );
-  }, [searchQuery, entityData]);
+    if (!searchOpen) return;
+    const frame = window.requestAnimationFrame(() => searchInputRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [searchOpen]);
+
+  const searchResults = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return [];
+    return entityData
+      .filter((entity) => entity.name.toLowerCase().includes(query) || entity.layer.toLowerCase().includes(query))
+      .slice(0, 6);
+  }, [entityData, searchQuery]);
 
   // ── Map init ──────────────────────────────────────────────────────────────
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
     let cancelled = false;
+    let styleReady = false;
+
+    setLoaded(false);
+    setMapError(null);
 
     import("maplibre-gl").then((maplibregl) => {
       if (cancelled || !containerRef.current) return;
@@ -482,8 +543,35 @@ export function RealityMap({
         zoom: initialCenter?.zoom ?? 3,
         minZoom: 1,
         maxZoom: 16,
-        attributionControl: false
+        attributionControl: { compact: true }
       });
+
+      const installMissingStyleImage = (imageId: string) => {
+        if (cancelled || map.hasImage(imageId)) return;
+        try {
+          if (LAYER_KEYS.includes(imageId as LayerKey)) {
+            map.addImage(imageId, createLayerIcon(imageId as LayerKey), { sdf: false });
+            return;
+          }
+          map.addImage(imageId, createMissingStyleImage(imageId), { sdf: false });
+        } catch {
+          // The map may have been torn down between a style-image request and registration.
+        }
+      };
+
+      // Register before load: the public basemap can request circle-11 during
+      // its first render, before the load callback runs.
+      map.on("styleimagemissing", (event: { id: string }) => {
+        installMissingStyleImage(event.id);
+      });
+
+      const markStyleError = () => {
+        if (!styleReady && !cancelled) {
+          setMapError("The public dark basemap could not be loaded.");
+        }
+      };
+      map.on("error", markStyleError);
+      loadTimeoutRef.current = setTimeout(markStyleError, 12_000);
 
       popupRef.current = new maplibregl.Popup({
         closeButton: false,
@@ -494,31 +582,14 @@ export function RealityMap({
 
       map.on("load", () => {
         if (cancelled) return;
+        styleReady = true;
+        if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
+        loadTimeoutRef.current = null;
+        setMapError(null);
 
         // Register canvas-rendered icons (Maki-style, pre-colored)
         LAYER_KEYS.forEach((key) => {
-          if (!map.hasImage(key)) {
-            map.addImage(key, createLayerIcon(key), { sdf: false });
-          }
-        });
-
-        // Fallback for missing images
-        map.on("styleimagemissing", (e: { id: string }) => {
-          if (LAYER_KEYS.includes(e.id as LayerKey)) return;
-          const size = 16;
-          const canvas = document.createElement("canvas");
-          canvas.width = size;
-          canvas.height = size;
-          const ctx = canvas.getContext("2d");
-          if (ctx) {
-            ctx.beginPath();
-            ctx.arc(size / 2, size / 2, size / 2 - 1, 0, Math.PI * 2);
-            ctx.fillStyle = "#888";
-            ctx.fill();
-            if (!map.hasImage(e.id)) {
-              map.addImage(e.id, ctx.getImageData(0, 0, size, size));
-            }
-          }
+          installMissingStyleImage(key);
         });
 
         // ── Entity source (clustered) ────────────────────────────────────
@@ -569,6 +640,7 @@ export function RealityMap({
           id: "connection-lines",
           type: "line",
           source: "connections",
+          filter: ["==", ["get", "selected"], true],
           layout: {
             "line-cap": "butt",
             "line-join": "round"
@@ -581,7 +653,7 @@ export function RealityMap({
           }
         });
 
-        // ── Confidence circle rings (pulsing) ────────────────────────────
+        // ── Confidence circle rings ──────────────────────────────────────
         map.addLayer({
           id: "entity-rings",
           type: "circle",
@@ -604,6 +676,28 @@ export function RealityMap({
           }
         });
 
+        // The selected object carries the only animated map affordance.
+        map.addLayer({
+          id: "entity-selected-ring",
+          type: "circle",
+          source: "entities",
+          filter: ["==", ["get", "id"], "__none__"],
+          paint: {
+            "circle-radius": [
+              "interpolate",
+              ["linear"],
+              ["zoom"],
+              1, 14,
+              6, 22,
+              12, 32
+            ],
+            "circle-color": "rgba(0,0,0,0)",
+            "circle-stroke-color": "#4c90f0",
+            "circle-stroke-width": 2,
+            "circle-stroke-opacity": 0.86
+          }
+        });
+
         // ── Cluster circles ──────────────────────────────────────────────
         map.addLayer({
           id: "clusters",
@@ -611,13 +705,13 @@ export function RealityMap({
           source: "entities",
           filter: ["has", "point_count"],
           paint: {
-            "circle-color": "rgba(255,255,255,0.92)",
+            "circle-color": "#131d26",
             "circle-radius": [
               "step",
               ["get", "point_count"],
               18, 3, 24, 6, 30
             ],
-            "circle-stroke-color": "rgba(0,0,0,0.12)",
+            "circle-stroke-color": "#5cc6d2",
             "circle-stroke-width": 1.5,
             "circle-opacity": 0.95
           }
@@ -632,10 +726,11 @@ export function RealityMap({
           layout: {
             "text-field": "{point_count_abbreviated}",
             "text-size": 12,
+            "text-font": ["Noto Sans Regular"],
             "text-allow-overlap": true
           },
           paint: {
-            "text-color": "#333"
+            "text-color": "#e8eff2"
           }
         });
         const geoZoomConfig: Record<GeoLevel, { minzoom?: number; maxzoom?: number }> = {
@@ -655,11 +750,11 @@ export function RealityMap({
               "text-field": ["get", "name"],
               "text-size": level === "country" ? 13 : level === "state" ? 11 : 10,
               "text-allow-overlap": false,
-              "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"]
+              "text-font": ["Noto Sans Regular"]
             },
             paint: {
-              "text-color": level === "site" ? "rgba(201,169,97,0.9)" : "rgba(220,225,234,0.7)",
-              "text-halo-color": "rgba(10,12,16,0.7)",
+              "text-color": level === "site" ? "#5cc6d2" : "rgba(232,239,242,0.76)",
+              "text-halo-color": "rgba(10,16,22,0.88)",
               "text-halo-width": 1.2
             }
           });
@@ -684,6 +779,7 @@ export function RealityMap({
             "icon-ignore-placement": true,
             "text-field": ["step", ["zoom"], "", 6, ["get", "name"]],
             "text-size": 11,
+            "text-font": ["Noto Sans Regular"],
             "text-offset": [0, 1.8],
             "text-anchor": "top",
             "text-optional": true,
@@ -691,8 +787,8 @@ export function RealityMap({
           },
           paint: {
             "icon-opacity": 1,
-            "text-color": "#1a1a2e",
-            "text-halo-color": "rgba(255,255,255,0.85)",
+            "text-color": "#e8eff2",
+            "text-halo-color": "rgba(10,16,22,0.88)",
             "text-halo-width": 1.5
           }
         });
@@ -718,14 +814,14 @@ export function RealityMap({
           layout: { visibility: "none" },
           paint: {
             "circle-radius": 9,
-            "circle-color": "#dc2626",
+            "circle-color": "#e2745b",
             "circle-opacity": 0.85,
-            "circle-stroke-color": "rgba(255,255,255,0.6)",
+            "circle-stroke-color": "rgba(232,239,242,0.7)",
             "circle-stroke-width": 1.5
           }
         });
 
-        // Pulsing ring — reduced-motion aware (added in startAnimations)
+        // Alert ring remains static; selected-entity context owns map motion.
         map.addLayer({
           id: "alert-pulse",
           type: "circle",
@@ -734,7 +830,7 @@ export function RealityMap({
           paint: {
             "circle-radius": 9,
             "circle-color": "rgba(0,0,0,0)",
-            "circle-stroke-color": "#dc2626",
+            "circle-stroke-color": "#e2745b",
             "circle-stroke-width": 2,
             "circle-stroke-opacity": 0.5
           }
@@ -749,10 +845,10 @@ export function RealityMap({
           popupRef.current
             ?.setLngLat(coords)
             .setHTML(
-              `<div style="background:${POPUP_COLORS.bg};border:1px solid ${POPUP_COLORS.borderAlert};border-radius:8px;padding:10px 12px;min-width:200px;">
-                <div style="font-family:monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:${POPUP_COLORS.critical};margin-bottom:4px;">${escapeHtml(props.priority)}</div>
+              `<div style="background:${POPUP_COLORS.bg};border:1px solid ${POPUP_COLORS.borderAlert};border-radius:4px;padding:10px 12px;min-width:200px;">
+                <div style="font-family:monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:${POPUP_COLORS.critical};margin-bottom:4px;">${escapeHtml(props.priority)}</div>
                 <div style="font-size:12px;font-weight:600;color:${POPUP_COLORS.primary};line-height:1.4;">${escapeHtml(props.title)}</div>
-                <a href="/alerts" style="font-family:monospace;font-size:10px;color:${POPUP_COLORS.rune};margin-top:6px;display:block;">View alerts →</a>
+                <a href="/alerts" style="font-family:monospace;font-size:11px;color:${POPUP_COLORS.rune};margin-top:6px;display:block;">View alerts →</a>
               </div>`
             )
             .addTo(map);
@@ -775,18 +871,26 @@ export function RealityMap({
         }
 
         function animatePulse() {
+          if (!selectedIdRef.current || document.hidden) {
+            pulseFrameRef.current = null;
+            return;
+          }
           pulsePhase = (pulsePhase + 0.012) % 1;
           const t = Math.sin(pulsePhase * Math.PI * 2) * 0.5 + 0.5;
-          if (map.getLayer("entity-rings")) {
-            map.setPaintProperty("entity-rings", "circle-opacity", 0.06 + t * 0.14);
-            map.setPaintProperty("entity-rings", "circle-stroke-opacity", 0.15 + t * 0.4);
+          if (map.getLayer("entity-selected-ring")) {
+            map.setPaintProperty("entity-selected-ring", "circle-radius", 18 + t * 8);
+            map.setPaintProperty("entity-selected-ring", "circle-stroke-opacity", 0.48 + t * 0.42);
           }
           pulseFrameRef.current = requestAnimationFrame(animatePulse);
         }
 
         function startAnimations() {
-          if (reduceMotion || document.hidden || dashIntervalRef.current || pulseFrameRef.current) return;
+          if (reduceMotion || document.hidden || !selectedIdRef.current || dashIntervalRef.current || pulseFrameRef.current) return;
           dashIntervalRef.current = setInterval(() => {
+            if (!selectedIdRef.current) {
+              stopAnimations();
+              return;
+            }
             dashStep = (dashStep + 1) % 24;
             const t = dashStep / 24;
             if (map.getLayer("connection-lines")) {
@@ -805,10 +909,12 @@ export function RealityMap({
             startAnimations();
           }
         }
+        animationControllerRef.current = { start: startAnimations, stop: stopAnimations };
         document.addEventListener("visibilitychange", handleVisibilityChange);
         cleanupCallbacksRef.current.push(() => {
           document.removeEventListener("visibilitychange", handleVisibilityChange);
           stopAnimations();
+          animationControllerRef.current = null;
         });
         startAnimations();
 
@@ -824,16 +930,16 @@ export function RealityMap({
           popupRef.current
             ?.setLngLat(coords)
             .setHTML(
-              `<div style="background:${POPUP_COLORS.bg};backdrop-filter:blur(16px);border:1px solid ${POPUP_COLORS.border};border-radius:10px;padding:12px 14px;min-width:210px;max-width:260px;box-shadow:0 6px 20px rgba(0,0,0,0.5);">
+              `<div style="background:${POPUP_COLORS.bg};border:1px solid ${POPUP_COLORS.border};border-radius:4px;padding:12px 14px;min-width:210px;max-width:260px;">
                 <div style="font-size:12px;font-weight:600;color:${POPUP_COLORS.primary};letter-spacing:0.01em;line-height:1.4;">${escapeHtml(props.name)}</div>
                 ${props.description ? `<div style="font-size:11px;color:${POPUP_COLORS.secondary};margin-top:5px;line-height:1.5;">${escapeHtml(props.description)}</div>` : ""}
                 <div style="display:flex;align-items:center;gap:10px;margin-top:8px;padding-top:7px;border-top:1px solid ${POPUP_COLORS.divider};">
                   <span style="font-family:monospace;font-size:11px;font-weight:500;color:${color};">Score ${props.score}</span>
-                  <span style="font-family:monospace;font-size:10px;color:${POPUP_COLORS.secondary};">${Math.round(props.confidence * 100)}% conf.</span>
+                  <span style="font-family:monospace;font-size:11px;color:${POPUP_COLORS.secondary};">${Math.round(props.confidence * 100)}% conf.</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:5px;margin-top:6px;">
-                  <span style="width:6px;height:6px;border-radius:50%;background:${color};box-shadow:0 0 5px ${color}60;display:inline-block;flex-shrink:0;"></span>
-                  <span style="font-family:monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:${POPUP_COLORS.tertiary};">${escapeHtml(props.layer.replace("_", " "))}</span>
+                  <span style="width:6px;height:6px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0;"></span>
+                  <span style="font-family:monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:${POPUP_COLORS.tertiary};">${escapeHtml(props.layer.replace("_", " "))}</span>
                 </div>
               </div>`
             )
@@ -893,8 +999,8 @@ export function RealityMap({
           map.flyTo({
             center: (feature.geometry as unknown as { coordinates: [number, number] }).coordinates,
             zoom: Math.max(map.getZoom(), 4),
-            duration: 900,
-            essential: true
+            duration: mapTransitionDuration(),
+            essential: false
           });
         });
 
@@ -905,13 +1011,14 @@ export function RealityMap({
           const clusterId = feature.properties?.cluster_id as number;
           const source = map.getSource("entities") as GeoJSONSource;
           source.getClusterExpansionZoom(clusterId).then((zoom) => {
+            if (cancelled) return;
             map.flyTo({
               center: (feature.geometry as unknown as { coordinates: [number, number] }).coordinates,
               zoom,
-              duration: 700,
-              essential: true
+              duration: mapTransitionDuration(),
+              essential: false
             });
-          });
+          }).catch(() => {});
         });
 
         // ── Click background → deselect ──────────────────────────────────
@@ -937,8 +1044,8 @@ export function RealityMap({
           map.flyTo({
             center: (feature.geometry as unknown as { coordinates: [number, number] }).coordinates,
             zoom: zoomForLevel(level === "country" ? "state" : level === "state" ? "county" : "site"),
-            duration: 850,
-            essential: true
+            duration: mapTransitionDuration(),
+            essential: false
           });
         };
 
@@ -972,19 +1079,19 @@ export function RealityMap({
                   return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:5px;">
                     <div style="display:flex;align-items:center;gap:5px;">
                       <span style="width:6px;height:6px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0;"></span>
-                      <span style="font-family:monospace;font-size:10px;color:${POPUP_COLORS.secondary};">${escapeHtml(label)}</span>
+                      <span style="font-family:monospace;font-size:11px;color:${POPUP_COLORS.secondary};">${escapeHtml(label)}</span>
                     </div>
                     <span style="font-family:monospace;font-size:11px;font-weight:600;color:${color};">${cnt}</span>
                   </div>`;
                 })
                 .join("")
-            : `<div style="font-family:monospace;font-size:10px;color:${POPUP_COLORS.tertiary};margin-top:5px;">Loading…</div>`;
+            : `<div style="font-family:monospace;font-size:11px;color:${POPUP_COLORS.tertiary};margin-top:5px;">Loading…</div>`;
 
-          return `<div style="background:${POPUP_COLORS.bg};backdrop-filter:blur(16px);border:1px solid ${POPUP_COLORS.border};border-radius:10px;padding:12px 14px;min-width:190px;box-shadow:0 6px 20px rgba(0,0,0,0.5);">
-            <div style="font-family:monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:${POPUP_COLORS.tertiary};margin-bottom:4px;">Substrate Cluster</div>
+          return `<div style="background:${POPUP_COLORS.bg};border:1px solid ${POPUP_COLORS.border};border-radius:4px;padding:12px 14px;min-width:190px;">
+            <div style="font-family:monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:${POPUP_COLORS.tertiary};margin-bottom:4px;">Substrate Cluster</div>
             <div style="font-size:16px;font-weight:700;color:${POPUP_COLORS.primary};">${count} signals</div>
             ${layerRows}
-            <div style="font-family:monospace;font-size:9px;color:${POPUP_COLORS.tertiary};margin-top:8px;padding-top:6px;border-top:1px solid ${POPUP_COLORS.divider};">Click to zoom in</div>
+            <div style="font-family:monospace;font-size:11px;color:${POPUP_COLORS.tertiary};margin-top:8px;padding-top:6px;border-top:1px solid ${POPUP_COLORS.divider};">Click to zoom in</div>
           </div>`;
         }
 
@@ -1005,6 +1112,7 @@ export function RealityMap({
           // Fetch layer breakdown asynchronously
           const source = map.getSource("entities") as GeoJSONSource;
           source.getClusterLeaves(clusterId, count, 0).then((leaves) => {
+            if (cancelled) return;
             const layerMap = new Map<string, number>();
             for (const leaf of leaves) {
               const layer = (leaf.properties as EntityProperties).layer as LayerKey;
@@ -1025,6 +1133,8 @@ export function RealityMap({
       });
 
       mapRef.current = map;
+    }).catch(() => {
+      if (!cancelled) setMapError("The map renderer could not be started.");
     });
 
     return () => {
@@ -1032,9 +1142,11 @@ export function RealityMap({
       if (dashIntervalRef.current) clearInterval(dashIntervalRef.current);
       if (pulseFrameRef.current) cancelAnimationFrame(pulseFrameRef.current);
       if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+      if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
       dashIntervalRef.current = null;
       pulseFrameRef.current = null;
       tooltipTimerRef.current = null;
+      loadTimeoutRef.current = null;
       for (const cleanupCallback of cleanupCallbacksRef.current.splice(0)) cleanupCallback();
       popupRef.current?.remove();
       if (mapRef.current) {
@@ -1043,7 +1155,7 @@ export function RealityMap({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [mapAttempt]);
 
   // ── Sync selected entity → connection highlight ───────────────────────────
 
@@ -1053,6 +1165,9 @@ export function RealityMap({
     const connSrc = map.getSource("connections") as GeoJSONSource | undefined;
     if (!connSrc) return;
     connSrc.setData(buildConnectionCollection(enabledKeys, selectedId, entityData, connectionData));
+    if (map.getLayer("entity-selected-ring")) {
+      map.setFilter("entity-selected-ring", ["==", ["get", "id"], selectedId ?? "__none__"]);
+    }
   }, [selectedId, loaded, enabledKeys, entityData, connectionData]);
 
   // ── Sync layer visibility + filters → entity source ──────────────────────
@@ -1124,8 +1239,8 @@ export function RealityMap({
       map.flyTo({
         center: [entity.lng, entity.lat],
         zoom: 5,
-        duration: 1100,
-        essential: true
+        duration: mapTransitionDuration(),
+        essential: false
       });
     },
     [onEntitySelect]
@@ -1139,7 +1254,7 @@ export function RealityMap({
       if (node.children.length) {
         setGeoPath((current) => [...current, node.name]);
         setGeoZoomLevel(node.level);
-        map.flyTo({ center: [node.lng, node.lat], zoom: zoomForLevel(node.level === "country" ? "state" : node.level === "state" ? "county" : "site"), duration: 900, essential: true });
+        map.flyTo({ center: [node.lng, node.lat], zoom: zoomForLevel(node.level === "country" ? "state" : node.level === "state" ? "county" : "site"), duration: mapTransitionDuration(), essential: false });
         return;
       }
       if (node.entityId) {
@@ -1150,295 +1265,387 @@ export function RealityMap({
     [filteredEntities, geoNodes, handleSearchSelect]
   );
 
+  const selectedEntity = useMemo(
+    () => (selectedId ? entityData.find((entity) => entity.id === selectedId) ?? null : null),
+    [entityData, selectedId]
+  );
+  const relatedConnections = useMemo(
+    () => selectedEntity
+      ? connectionData.filter((connection) => connection.fromId === selectedEntity.id || connection.toId === selectedEntity.id)
+      : [],
+    [connectionData, selectedEntity]
+  );
+
+  const clearSelection = useCallback(() => {
+    const restoreTarget = inspectorRestoreFocusRef.current;
+    inspectorRestoreFocusRef.current = null;
+    setSelectedId(null);
+    onEntitySelect?.(null);
+    popupRef.current?.remove();
+    if (restoreTarget?.isConnected) {
+      window.requestAnimationFrame(() => restoreTarget.focus());
+    }
+  }, [onEntitySelect]);
+
+  useEffect(() => {
+    if (!selectedEntity) {
+      mobileInspectorOpenRef.current = false;
+      inspectorRestoreFocusRef.current = null;
+      return;
+    }
+    if (!window.matchMedia("(max-width: 767px)").matches || mobileInspectorOpenRef.current) return;
+
+    mobileInspectorOpenRef.current = true;
+    const activeElement = document.activeElement;
+    inspectorRestoreFocusRef.current =
+      activeElement instanceof HTMLElement && activeElement !== document.body ? activeElement : null;
+    const frame = window.requestAnimationFrame(() => inspectorCloseRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [selectedEntity]);
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape" || !window.matchMedia("(max-width: 767px)").matches || !selectedIdRef.current) return;
+      event.preventDefault();
+      clearSelection();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [clearSelection]);
+
+  const resetWorkspace = useCallback(() => {
+    setLayers((current) => current.map((layer) => ({ ...layer, enabled: true })));
+    setTimeRange("30d");
+    setMinConfidence(0);
+    setAlertsVisible(false);
+    setGeoPath([]);
+    setSearchOpen(false);
+    setSearchQuery("");
+    setFiltersOpen(false);
+    clearSelection();
+    mapRef.current?.flyTo({ center: [-98.6, 39.8], zoom: 3, duration: mapTransitionDuration(), essential: false });
+  }, [clearSelection]);
+
+  const retryMap = useCallback(() => {
+    setMapError(null);
+    setMapAttempt((attempt) => attempt + 1);
+  }, []);
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-b-[var(--radius-lg)]">
+    <section className="relative h-full w-full overflow-hidden bg-[var(--field)]" aria-label="Reality map workspace">
       {/* Map canvas */}
       <div ref={containerRef} className="h-full w-full" />
 
-      {/* Search bar */}
-      <div
-        className="absolute left-3 top-3 z-10"
-        style={{ width: 240 }}
-      >
-        {searchOpen ? (
-          <div
-            className="overflow-hidden rounded-[var(--radius-md)]"
-            style={{
-              background: "rgba(9,11,15,0.92)",
-              backdropFilter: "blur(14px) saturate(1.2)",
-              border: "1px solid var(--glass-border)",
-              boxShadow: "var(--shadow-lg)"
-            }}
-          >
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={searchHint}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  setSearchOpen(false);
-                  setSearchQuery("");
-                }
-              }}
-              className="w-full bg-transparent px-3 py-2 text-[12px] outline-none"
-              style={{
-                color: "var(--text-primary)",
-                borderBottom: searchResults.length > 0 ? "1px solid var(--line-faint)" : "none"
-              }}
-            />
-            {searchResults.map((entity) => (
-              <button
-                key={entity.id}
-                type="button"
-                onClick={() => handleSearchSelect(entity)}
-                className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-white/5"
-              >
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{
-                    backgroundColor: LAYER_COLORS[entity.layer],
-                    boxShadow: `0 0 5px ${LAYER_COLORS[entity.layer]}60`
+      {/* One command strip keeps search, scope, and recovery within the working canvas. */}
+      <div className="pointer-events-none absolute inset-x-3 top-3 z-20">
+        <div
+          data-testid="map-command-strip"
+          className="pointer-events-auto overflow-hidden border bg-[var(--surface-primary)]"
+          style={{ borderColor: "var(--line-soft)" }}
+        >
+          <div className="flex min-h-11 flex-wrap items-stretch gap-1 p-1.5">
+            <div className="flex min-h-11 min-w-[min(100%,220px)] flex-1 items-center border px-2" style={{ borderColor: "var(--line-soft)", background: "var(--field)" }}>
+              <Search size={16} aria-hidden="true" style={{ color: "var(--text-secondary)" }} />
+              {searchOpen ? (
+                <>
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder={searchHint}
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape") {
+                        setSearchOpen(false);
+                        setSearchQuery("");
+                      }
+                    }}
+                    className="min-w-0 flex-1 bg-transparent px-2 text-[13px] outline-none"
+                    style={{ color: "var(--text-primary)" }}
+                    aria-label={searchHint}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
+                    className="odim-icon-control min-h-11 min-w-11"
+                    aria-label="Close search"
+                  >
+                    <X size={16} aria-hidden="true" />
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchOpen(true);
                   }}
-                />
-                <div className="min-w-0">
-                  <div className="truncate text-[11px]" style={{ color: "var(--text-primary)" }}>
-                    {entity.name}
-                  </div>
-                  <div className="mono text-[9px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>
-                    {entity.layer.replace("_", " ")} · {entity.score}
-                  </div>
+                  className="flex min-h-11 min-w-0 flex-1 items-center gap-2 px-2 text-left text-[13px]"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  <span className="truncate">{searchHint}</span>
+                  <kbd className="mono ml-auto hidden border px-1 text-[11px] sm:inline" style={{ borderColor: "var(--line-soft)", color: "var(--text-tertiary)" }}>/</kbd>
+                </button>
+              )}
+            </div>
+
+            <label className="odim-control flex min-h-11 items-center px-2 text-[12px]" style={{ background: "var(--field)" }}>
+              <span className="sr-only">{filterLabels.timeRange}</span>
+              <select
+                value={timeRange}
+                onChange={(event) => setTimeRange(event.target.value as TimeRange)}
+                className="min-h-11 bg-transparent pr-1 outline-none"
+                style={{ color: "var(--text-primary)" }}
+                aria-label={filterLabels.timeRange}
+              >
+                {(["7d", "30d", "90d", "1y", "all"] as const).map((range) => (
+                  <option key={range} value={range}>{filterLabels[range]}</option>
+                ))}
+              </select>
+            </label>
+
+            <button
+              type="button"
+              onClick={() => setFiltersOpen((open) => !open)}
+              className="odim-control flex min-h-11 items-center gap-2 px-3 text-[12px]"
+              aria-expanded={filtersOpen}
+              aria-controls="map-filter-controls"
+              style={{ background: filtersOpen ? "var(--signal-wash)" : "var(--field)" }}
+            >
+              <SlidersHorizontal size={16} aria-hidden="true" />
+              <span className="hidden sm:inline">{filterLabels.label}</span>
+              <span className="mono text-[11px]" style={{ color: "var(--text-secondary)" }}>{layers.filter((layer) => layer.enabled).length}/{layers.length}</span>
+              {filtersOpen ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
+            </button>
+
+            <button
+              type="button"
+              onClick={resetWorkspace}
+              className="odim-control odim-icon-control min-h-11 min-w-11"
+              style={{ background: "var(--field)" }}
+              aria-label="Reset map workspace"
+              title="Reset map workspace"
+            >
+              <RotateCcw size={16} aria-hidden="true" />
+            </button>
+
+            <span
+              data-testid="map-fixture-status"
+              className="mono hidden min-h-11 items-center border px-2 text-[11px] tracking-[0.04em] xl:inline-flex"
+              style={{ borderColor: "var(--line-soft)", color: "var(--text-secondary)" }}
+            >
+              Fixture map · not live
+            </span>
+          </div>
+
+          {searchOpen ? (
+            <div className="border-t" style={{ borderColor: "var(--line-soft)" }}>
+              {searchResults.length > 0 ? (
+                <div role="listbox" aria-label="Entity search results" className="divide-y" style={{ borderColor: "var(--line-soft)" }}>
+                  {searchResults.map((entity) => (
+                    <button
+                      key={entity.id}
+                      type="button"
+                      onClick={() => handleSearchSelect(entity)}
+                      className="flex min-h-11 w-full items-center gap-3 px-3 text-left hover:bg-[var(--surface-hover)]"
+                      role="option"
+                    >
+                      <MapPin size={16} aria-hidden="true" style={{ color: "var(--evidence)" }} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[13px]" style={{ color: "var(--text-primary)" }}>{entity.name}</span>
+                        <span className="mono block text-[11px]" style={{ color: "var(--text-secondary)" }}>{LAYER_DISPLAY[entity.layer]} · score {entity.score}</span>
+                      </span>
+                    </button>
+                  ))}
                 </div>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => {
-              setSearchOpen(true);
-              setTimeout(() => searchInputRef.current?.focus(), 50);
-            }}
-            className="flex items-center gap-2 rounded-[var(--radius-md)] px-3 py-1.5 text-[11px] transition-all hover:bg-white/5"
-            style={{
-              background: "rgba(9,11,15,0.72)",
-              backdropFilter: "blur(10px)",
-              border: "1px solid var(--glass-border)",
-              color: "var(--text-tertiary)"
-            }}
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-            </svg>
-            <span className="mono uppercase tracking-[0.1em]">{searchHint}</span>
-            <span
-              className="mono ml-auto rounded px-1 text-[9px] tracking-wide"
-              style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-tertiary)" }}
-            >
-              /
-            </span>
-          </button>
-        )}
+              ) : searchQuery.trim() ? (
+                <p className="px-3 py-3 text-[12px]" style={{ color: "var(--text-secondary)" }}>No fixture entities match this search.</p>
+              ) : (
+                <p className="px-3 py-3 text-[12px]" style={{ color: "var(--text-secondary)" }}>Search fixture entities by name or substrate.</p>
+              )}
+            </div>
+          ) : null}
+
+          {filtersOpen ? (
+            <div id="map-filter-controls" className="border-t px-3 py-3" style={{ borderColor: "var(--line-soft)" }}>
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
+                <fieldset>
+                  <legend className="mono mb-2 text-[11px] tracking-[0.04em]" style={{ color: "var(--text-secondary)" }}>{selectLabel}</legend>
+                  <div className="flex flex-wrap gap-1.5">
+                    {layers.map((layer) => (
+                      <button
+                        key={layer.key}
+                        type="button"
+                        onClick={() => toggleLayer(layer.key)}
+                        className="odim-control min-h-11 px-3 text-[12px]"
+                        aria-pressed={layer.enabled}
+                        style={{
+                          background: layer.enabled ? "var(--signal-wash)" : "var(--field)",
+                          color: layer.enabled ? "var(--text-primary)" : "var(--text-secondary)"
+                        }}
+                      >
+                        {layer.label}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+
+                <div className="grid gap-3 border-l-0 pt-3 lg:border-l lg:pl-3 lg:pt-0" style={{ borderColor: "var(--line-soft)" }}>
+                  <label className="block">
+                    <span className="mb-1 flex items-center justify-between text-[12px]" style={{ color: "var(--text-secondary)" }}>
+                      <span>{filterLabels.confidence}</span>
+                      <span className="mono" style={{ color: "var(--text-primary)" }}>{minConfidence}%</span>
+                    </span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={5}
+                      value={minConfidence}
+                      onChange={(event) => setMinConfidence(Number(event.target.value))}
+                      className="w-full"
+                      style={{ accentColor: "var(--signal)" }}
+                      aria-label={filterLabels.confidence}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setAlertsVisible((visible) => !visible)}
+                    className="odim-control flex min-h-11 items-center justify-between px-3 text-[12px]"
+                    aria-pressed={alertsVisible}
+                    style={{ background: alertsVisible ? "var(--critical-wash)" : "var(--field)" }}
+                  >
+                    <span>{alertOverlayLabel}</span>
+                    <AlertTriangle size={16} aria-hidden="true" style={{ color: alertsVisible ? "var(--critical)" : "var(--text-secondary)" }} />
+                  </button>
+                </div>
+              </div>
+
+              {geoPath.length > 0 ? (
+                <nav aria-label="Map scope" className="mt-3 flex min-h-11 flex-wrap items-center gap-1 border-t pt-3" style={{ borderColor: "var(--line-soft)" }}>
+                  <button type="button" onClick={() => { setGeoPath([]); mapRef.current?.flyTo({ center: [-98.6, 39.8], zoom: 3, duration: mapTransitionDuration(), essential: false }); }} className="mono px-1 text-[11px]" style={{ color: "var(--signal)" }}>Global</button>
+                  {geoPath.map((step, index) => (
+                    <span key={`${step}-${index}`} className="flex items-center gap-1">
+                      <span aria-hidden="true" style={{ color: "var(--text-tertiary)" }}>/</span>
+                      <button type="button" onClick={() => setGeoPath(geoPath.slice(0, index + 1))} className="mono px-1 text-[11px]" style={{ color: "var(--text-secondary)" }}>{step}</button>
+                    </span>
+                  ))}
+                </nav>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       </div>
 
-      {/* Layer toggles */}
-      <div
-        className="absolute right-3 top-3 z-10 grid gap-0.5 rounded-[var(--radius-md)] p-2"
-        style={{
-          background: "rgba(9,11,15,0.86)",
-          backdropFilter: "blur(14px) saturate(1.2)",
-          WebkitBackdropFilter: "blur(14px) saturate(1.2)",
-          border: "1px solid var(--glass-border)",
-          boxShadow: "var(--shadow-lg)"
-        }}
-      >
-        <div
-          className="mono px-2 pb-1.5 text-[10px] uppercase tracking-[0.14em]"
-          style={{ color: "var(--text-tertiary)" }}
-        >
-          {selectLabel}
+      {dailyDiff ? (
+        <div className="pointer-events-none absolute inset-x-3 bottom-[84px] z-20 md:inset-x-auto md:bottom-3 md:left-3 md:w-[340px]">
+          <div className="pointer-events-auto">
+            <DailyDiffPanel diff={dailyDiff} selectionActive={Boolean(selectedEntity)} />
+          </div>
         </div>
-        {layers.map((layer) => (
-          <button
-            key={layer.key}
-            onClick={() => toggleLayer(layer.key)}
-            className="flex items-center gap-2.5 rounded-[var(--radius-sm)] px-2 py-1.5 transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:bg-[rgba(255,255,255,0.05)]"
-            style={{ color: layer.enabled ? "var(--text-primary)" : "var(--text-tertiary)" }}
-            type="button"
-          >
-            <span
-              className="h-2 w-2 rounded-full transition-all duration-[var(--dur-fast)]"
-              style={{
-                backgroundColor: layer.color,
-                opacity: layer.enabled ? 1 : 0.2,
-                boxShadow: layer.enabled ? `0 0 6px ${layer.color}55` : "none"
-              }}
+      ) : null}
+
+      {selectedEntity ? (
+        <aside
+          data-testid="map-inspector"
+          aria-label={`Selected entity: ${selectedEntity.name}`}
+          className="absolute inset-x-3 bottom-[84px] z-20 max-h-[44dvh] overflow-y-auto border bg-[var(--surface)] animate-slide-up md:inset-x-auto md:bottom-3 md:right-3 md:top-[148px] md:max-h-none md:w-[360px]"
+          style={{ borderColor: "var(--line-soft)" }}
+        >
+          <header className="flex min-h-11 items-start justify-between gap-3 border-b px-4 py-3" style={{ borderColor: "var(--line-soft)" }}>
+            <div className="min-w-0">
+              <p className="mono mb-1 text-[11px] tracking-[0.04em]" style={{ color: "var(--evidence)" }}>
+                {LAYER_DISPLAY[selectedEntity.layer]} · fixture entity · not live
+              </p>
+              <h2 className="text-[18px] font-medium leading-6 tracking-[-0.01em]" style={{ color: "var(--text-primary)" }}>{selectedEntity.name}</h2>
+            </div>
+            <button
+              type="button"
+              ref={inspectorCloseRef}
+              onClick={clearSelection}
+              className="odim-control odim-icon-control min-h-11 min-w-11 shrink-0"
+              style={{ background: "var(--field)" }}
+              aria-label="Close selected entity"
+            >
+              <X size={16} aria-hidden="true" />
+            </button>
+          </header>
+
+          <div className="px-4 py-3">
+            <p className="text-[13px] leading-5" style={{ color: "var(--text-secondary)" }}>
+              {selectedEntity.description || "No fixture description is available for this entity."}
+            </p>
+          </div>
+
+          <dl className="grid grid-cols-3 border-y" style={{ borderColor: "var(--line-soft)" }}>
+            <div className="min-w-0 px-4 py-3">
+              <dt className="mono text-[11px] tracking-[0.04em]" style={{ color: "var(--text-tertiary)" }}>Score</dt>
+              <dd className="mono mt-1 text-[15px]" style={{ color: "var(--text-primary)" }}>{selectedEntity.score}</dd>
+            </div>
+            <div className="min-w-0 border-l px-4 py-3" style={{ borderColor: "var(--line-soft)" }}>
+              <dt className="mono text-[11px] tracking-[0.04em]" style={{ color: "var(--text-tertiary)" }}>Confidence</dt>
+              <dd className="mono mt-1 text-[15px]" style={{ color: "var(--text-primary)" }}>{Math.round(selectedEntity.confidence * 100)}%</dd>
+            </div>
+            <div className="min-w-0 border-l px-4 py-3" style={{ borderColor: "var(--line-soft)" }}>
+              <dt className="mono text-[11px] tracking-[0.04em]" style={{ color: "var(--text-tertiary)" }}>Scope</dt>
+              <dd className="mono mt-1 truncate text-[12px]" style={{ color: "var(--text-primary)" }}>{geoZoomLevel}</dd>
+            </div>
+          </dl>
+
+          <div className="border-b px-4 py-3" style={{ borderColor: "var(--line-soft)" }}>
+            <p className="mono mb-3 text-[11px] tracking-[0.05em]" style={{ color: "var(--text-secondary)" }}>Evidence path</p>
+            <EvidenceThread
+              activeId="entity"
+              label="Fixture evidence path"
+              steps={[
+                { id: "fixture", label: "Fixture data", detail: "not live" },
+                { id: "entity", label: selectedEntity.name, detail: `${Math.round(selectedEntity.confidence * 100)}% confidence`, verified: true },
+                { id: "links", label: `${relatedConnections.length} linked objects`, detail: "map connections" },
+                { id: "review", label: "Review", detail: "open entity workspace" }
+              ]}
             />
-            <span className="text-[12px]">{layer.label}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Filter controls + Alerts — single merged panel */}
-      <div
-        className="absolute right-3 z-10 overflow-hidden rounded-[var(--radius-md)]"
-        style={{
-          top: "calc(3rem + 230px)",
-          background: "rgba(9,11,15,0.88)",
-          backdropFilter: "blur(14px) saturate(1.2)",
-          WebkitBackdropFilter: "blur(14px) saturate(1.2)",
-          border: "1px solid var(--glass-border)",
-          boxShadow: "var(--shadow-lg)",
-          width: 160
-        }}
-      >
-        {/* ── Time Range ─────────────────────────────── */}
-        <div className="px-2.5 pb-2 pt-2.5">
-          <div
-            className="mono mb-1.5 text-[9px] uppercase tracking-[0.16em]"
-            style={{ color: "var(--rune-dim)" }}
-          >
-            {filterLabels.timeRange}
           </div>
-          <div className="grid grid-cols-3 gap-0.5">
-            {(["7d", "30d", "90d", "1y", "all"] as const).map((range) => (
-              <button
-                key={range}
-                type="button"
-                onClick={() => setTimeRange(range)}
-                className="mono rounded-[3px] px-1 py-1.5 text-center text-[9px] uppercase tracking-[0.06em] transition-all duration-[var(--dur-fast)]"
-                style={{
-                  background: timeRange === range ? "rgba(201,169,97,0.16)" : "rgba(255,255,255,0.03)",
-                  color: timeRange === range ? "var(--rune)" : "var(--text-tertiary)",
-                  border: `1px solid ${timeRange === range ? "rgba(201,169,97,0.35)" : "var(--line-faint)"}`,
-                  boxShadow: timeRange === range ? "0 0 8px rgba(201,169,97,0.12)" : "none"
-                }}
-              >
-                {filterLabels[range]}
-              </button>
-            ))}
-          </div>
-        </div>
 
-        {/* ── Confidence ──────────────────────────────── */}
-        <div className="px-2.5 pb-2 pt-2" style={{ borderTop: "1px solid var(--line-faint)" }}>
-          <div className="mb-1.5 flex items-center justify-between">
-            <span
-              className="mono text-[9px] uppercase tracking-[0.12em]"
-              style={{ color: "var(--text-tertiary)" }}
+          <div className="flex items-center justify-between gap-3 px-4 py-3">
+            <span className="mono text-[11px]" style={{ color: "var(--text-tertiary)" }}>
+              {isNewEntity(selectedEntity) ? "New fixture record" : "Fixture record"}
+            </span>
+            <a
+              href={`/entity?id=${encodeURIComponent(selectedEntity.id)}`}
+              className="odim-control flex min-h-11 items-center gap-2 px-3 text-[12px]"
+              style={{ background: "var(--signal-wash)", borderColor: "color-mix(in srgb, var(--signal) 68%, var(--line-strong))" }}
             >
-              {filterLabels.confidence}
-            </span>
-            <span
-              className="mono tabular-nums"
-              style={{ fontSize: 11, fontWeight: 600, color: "var(--rune)", lineHeight: 1 }}
-            >
-              {minConfidence}
-              <span style={{ fontSize: 8, opacity: 0.75 }}>%</span>
-            </span>
+              Inspect entity
+              <ExternalLink size={15} aria-hidden="true" />
+            </a>
           </div>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            step={5}
-            value={minConfidence}
-            onChange={(e) => setMinConfidence(Number(e.target.value))}
-            className="w-full"
-            style={{ accentColor: "var(--rune)" }}
-          />
-          <div
-            className="mono mt-0.5 flex justify-between text-[8px] tabular-nums"
-            style={{ color: "var(--text-quaternary)", opacity: 0.6 }}
-          >
-            <span>0</span><span>50</span><span>100</span>
+        </aside>
+      ) : null}
+
+      {mapError ? (
+        <div data-testid="map-load-error" role="alert" className="absolute inset-0 z-30 flex items-center justify-center bg-[var(--field)] px-5">
+          <div className="w-full max-w-sm border-l-2 px-4 py-5" style={{ borderColor: "var(--critical)", background: "var(--surface)" }}>
+            <div className="flex items-start gap-3">
+              <AlertTriangle size={18} aria-hidden="true" style={{ color: "var(--critical)" }} />
+              <div>
+                <h2 className="text-[16px] font-medium" style={{ color: "var(--text-primary)" }}>Dark basemap unavailable</h2>
+                <p className="mt-1 text-[13px] leading-5" style={{ color: "var(--text-secondary)" }}>{mapError}</p>
+              </div>
+            </div>
+            <button type="button" data-testid="map-retry" onClick={retryMap} className="odim-control mt-4 min-h-11 px-3 text-[12px]" style={{ background: "var(--field)" }}>
+              Retry map
+            </button>
           </div>
         </div>
-
-        {/* ── Alerts toggle ────────────────────────────── */}
-        <button
-          type="button"
-          onClick={() => setAlertsVisible((v) => !v)}
-          className="flex w-full items-center justify-between px-2.5 py-2 transition-all duration-[var(--dur-fast)]"
-          style={{
-            borderTop: "1px solid var(--line-faint)",
-            background: alertsVisible ? "rgba(220,38,38,0.07)" : "transparent"
-          }}
-        >
-          <span
-            className="mono text-[9px] uppercase tracking-[0.14em]"
-            style={{ color: alertsVisible ? "#ef4444" : "var(--text-tertiary)" }}
-          >
-            {alertOverlayLabel}
-          </span>
-          <span
-            style={{
-              display: "inline-block",
-              width: 6,
-              height: 6,
-              borderRadius: "50%",
-              background: alertsVisible ? "#ef4444" : "var(--line-vivid)",
-              boxShadow: alertsVisible ? "0 0 6px rgba(239,68,68,0.8)" : "none",
-              transition: "all 200ms"
-            }}
-          />
-        </button>
-      </div>
-
-      {/* Geographic breadcrumb — minimal, bottom-left */}
-      {geoPath.length > 0 && (
-        <div
-          className="absolute bottom-3 left-3 z-10 flex items-center gap-1 rounded-[var(--radius-md)] px-3 py-2"
-          style={{
-            background: "rgba(9,11,15,0.82)",
-            backdropFilter: "blur(14px) saturate(1.2)",
-            border: "1px solid var(--glass-border)"
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => { setGeoPath([]); mapRef.current?.flyTo({ center: [-98.6, 39.8], zoom: 3, duration: 900, essential: true }); }}
-            className="mono rounded px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] transition-colors hover:bg-white/5"
-            style={{ color: "var(--rune)" }}
-          >
-            Global
-          </button>
-          {geoPath.map((step, index) => (
-            <span key={`${step}-${index}`} className="flex items-center gap-1">
-              <span className="mono text-[9px]" style={{ color: "var(--text-tertiary)" }}>/</span>
-              <button
-                type="button"
-                onClick={() => setGeoPath(geoPath.slice(0, index + 1))}
-                className="mono rounded px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] transition-colors hover:bg-white/5"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                {step}
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* Loading overlay */}
-      {!loaded && (
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{ background: "rgba(245,245,240,0.95)" }}
-        >
-          <div
-            className="mono text-[11px] uppercase tracking-[0.14em]"
-            style={{
-              color: "#666",
-              animation: "glow-pulse 2s ease-in-out infinite"
-            }}
-          >
-            Loading substrate map
+      ) : !loaded ? (
+        <div data-testid="map-loading" role="status" className="absolute inset-0 z-30 flex items-center justify-center bg-[var(--field)] px-5">
+          <div className="flex items-center gap-3 border-l-2 px-4 py-3" style={{ borderColor: "var(--signal)", background: "var(--surface)" }}>
+            <span className="h-2 w-2 bg-[var(--signal)]" aria-hidden="true" />
+            <span className="mono text-[11px] tracking-[0.05em]" style={{ color: "var(--text-secondary)" }}>Loading dark basemap</span>
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Substrate tooltip */}
       {tooltipState && (
@@ -1449,6 +1656,6 @@ export function RealityMap({
           labels={tooltipLabels}
         />
       )}
-    </div>
+    </section>
   );
 }

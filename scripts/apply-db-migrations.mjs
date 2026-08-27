@@ -49,7 +49,8 @@ const files = migrations.length
       "supabase/migrations/0011_watchtower_hardening.sql",
       "supabase/migrations/0012_billing_entitlements.sql",
       "supabase/migrations/0013_org_onboarding.sql",
-      "supabase/migrations/0014_service_role_grants.sql"
+      "supabase/migrations/0014_service_role_grants.sql",
+      "supabase/migrations/0015_huginn_muninn_v3.sql"
     ];
 
 // On Windows, PostgreSQL tools may not be on PATH; try common install locations.

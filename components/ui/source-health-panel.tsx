@@ -1,16 +1,9 @@
 "use client";
 
 import type { SourceAttribution } from "@/lib/pipeline/attribution";
+import type { SourceHealthEntry, SourceHealthState } from "@/lib/pipeline/source-health";
 
-export type SourceHealthEntry = {
-  sourceId: string;
-  lastSuccessAt: string | null;
-  lastObservedAt: string | null;
-  rawSignalCount: number;
-  status: "healthy" | "stale" | "failing";
-  slaHours?: number;
-  hoursSinceUpdate?: number;
-};
+export type { SourceHealthEntry, SourceHealthState } from "@/lib/pipeline/source-health";
 
 type Messages = {
   title: string;
@@ -21,25 +14,56 @@ type Messages = {
   statusHealthy: string;
   statusStale: string;
   statusFailing: string;
+  colState?: string;
+  statusConfigured?: string;
+  statusLiveVerified?: string;
+  statusFixtureOnly?: string;
+  statusSkipped?: string;
+  statusFailed?: string;
 };
-
-
 
 const STATUS_COLORS: Record<SourceHealthEntry["status"], string> = {
-  healthy: "var(--positive, #22c55e)",
-  stale:   "#eab308",
-  failing: "var(--critical, #dc2626)"
+  healthy: "var(--positive)",
+  stale: "var(--evidence)",
+  failing: "var(--critical)"
 };
 
-const STATUS_BG: Record<SourceHealthEntry["status"], string> = {
-  healthy: "transparent",
-  stale:   "rgba(234,179,8,0.05)",
-  failing: "rgba(220,38,38,0.05)"
+const STATE_COLORS: Record<SourceHealthState, string> = {
+  configured: "var(--text-tertiary)",
+  "live-verified": "var(--positive)",
+  "fixture-only": "var(--evidence)",
+  skipped: "var(--text-secondary)",
+  failed: "var(--critical)"
+};
+
+const STATE_FALLBACK_LABELS: Record<SourceHealthState, string> = {
+  configured: "Configured",
+  "live-verified": "Live verified",
+  "fixture-only": "Fixture only",
+  skipped: "Skipped",
+  failed: "Failed"
 };
 
 function shortDate(value: string | null) {
   if (!value) return "—";
   return value.slice(0, 10);
+}
+
+function statusLabel(status: SourceHealthEntry["status"], messages: Messages) {
+  if (status === "healthy") return messages.statusHealthy;
+  if (status === "stale") return messages.statusStale;
+  return messages.statusFailing;
+}
+
+function stateLabel(state: SourceHealthState, messages: Messages) {
+  const key = {
+    configured: "statusConfigured",
+    "live-verified": "statusLiveVerified",
+    "fixture-only": "statusFixtureOnly",
+    skipped: "statusSkipped",
+    failed: "statusFailed"
+  }[state] as keyof Messages;
+  return messages[key] ?? STATE_FALLBACK_LABELS[state];
 }
 
 export function SourceHealthPanel({
@@ -53,98 +77,39 @@ export function SourceHealthPanel({
 }>) {
   return (
     <div>
-      <div
-        className="mono text-[10px] uppercase tracking-[0.12em] mb-3"
-        style={{ color: "var(--rune-dim)" }}
-      >
-        {messages.title}
-      </div>
-      <div
-        className="overflow-hidden rounded-[var(--radius-sm)]"
-        style={{ border: "1px solid var(--line-faint)" }}
-      >
-        {/* Header */}
-        <div
-          className="grid grid-cols-[1fr_1fr_auto_auto] gap-3 px-3 py-2 text-[10px]"
-          style={{
-            background: "var(--surface-tertiary)",
-            borderBottom: "1px solid var(--line-faint)"
-          }}
-        >
-          <span className="mono uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>
-            {messages.colSource}
-          </span>
-          <span className="mono uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>
-            {messages.colLastSuccess}
-          </span>
-          <span className="mono uppercase tracking-[0.1em] text-right" style={{ color: "var(--text-tertiary)" }}>
-            {messages.colSignals}
-          </span>
-          <span className="mono uppercase tracking-[0.1em] text-right" style={{ color: "var(--text-tertiary)" }}>
-            {messages.colStatus}
-          </span>
+      <div className="mono mb-3 text-[11px] uppercase tracking-[0.14em]" style={{ color: "var(--text-tertiary)" }}>{messages.title}</div>
+      <div role="table" aria-label={messages.title} className="border-y" style={{ borderColor: "var(--line-soft)" }}>
+        <div role="row" className="hidden grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_auto_auto] gap-3 border-b px-3 py-2 text-[11px] sm:grid" style={{ borderColor: "var(--line-soft)", background: "var(--surface-inset)" }}>
+          <span role="columnheader" className="mono uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>{messages.colSource}</span>
+          <span role="columnheader" className="mono uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>{messages.colLastSuccess}</span>
+          <span role="columnheader" className="mono text-right uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>{messages.colSignals}</span>
+          <span role="columnheader" className="mono text-right uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>{messages.colState ?? messages.colStatus}</span>
         </div>
-
-        {/* Rows */}
         {sources.map((entry) => (
-          <div
-            key={entry.sourceId}
-            className="grid grid-cols-[1fr_1fr_auto_auto] items-center gap-3 px-3 py-2.5 text-[12px]"
-            style={{
-              borderBottom: "1px solid var(--line-faint)",
-              background: STATUS_BG[entry.status]
-            }}
-          >
-            <span className="truncate" style={{ color: "var(--text-primary)" }}>
-              {entry.sourceId}
+          <div role="row" key={entry.sourceId} className="grid grid-cols-2 gap-x-3 gap-y-2 border-b px-3 py-3 last:border-b-0 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_auto_auto] sm:items-center" style={{ borderColor: "var(--line-faint)" }}>
+            <span role="cell" className="min-w-0 truncate text-[12px]" style={{ color: "var(--text-primary)" }}>{entry.sourceId}</span>
+            <span role="cell" className="mono text-right text-[11px] sm:text-left" style={{ color: "var(--text-secondary)" }}>{shortDate(entry.lastSuccessAt)}{entry.slaHours ? " / SLA " + entry.slaHours + "h" : ""}</span>
+            <span role="cell" className="mono text-[11px]" style={{ color: "var(--evidence)" }}>{messages.colSignals}: {entry.rawSignalCount}</span>
+            <span role="cell" className="mono flex items-center justify-end gap-2 text-[11px] uppercase tracking-[0.1em] sm:text-right" style={{ color: STATE_COLORS[entry.state] }}>
+              <span className="inline-block h-2 w-2 shrink-0" aria-hidden="true" style={{ background: STATE_COLORS[entry.state] }} />
+              {stateLabel(entry.state, messages)}
+              {entry.state === "live-verified" ? <span className="normal-case tracking-normal" style={{ color: STATUS_COLORS[entry.status] }}>· {statusLabel(entry.status, messages)}</span> : null}
             </span>
-            <span className="mono text-[11px]" style={{ color: "var(--text-secondary)" }}>
-              {shortDate(entry.lastSuccessAt)}{entry.slaHours ? ` / SLA ${entry.slaHours}h` : ""}
-            </span>
-            <span className="mono text-right text-[11px]" style={{ color: "var(--rune)" }}>
-              {entry.rawSignalCount}
-            </span>
-            <div className="flex items-center justify-end gap-1.5">
-              <span
-                className="inline-block rounded-full"
-                style={{
-                  width: 8,
-                  height: 8,
-                  background: STATUS_COLORS[entry.status],
-                  boxShadow: `0 0 5px ${STATUS_COLORS[entry.status]}60`
-                }}
-              />
-              <span
-                className="mono text-[9px] uppercase tracking-[0.1em]"
-                style={{ color: STATUS_COLORS[entry.status] }}
-              >
-                {messages[`status${entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}` as keyof Messages]}
-              </span>
-            </div>
+            {entry.detail || (entry.lastObservedAt && entry.lastObservedAt !== entry.lastSuccessAt) ? <span className="col-span-2 text-[11px] sm:col-span-4" style={{ color: entry.state === "failed" ? "var(--critical)" : "var(--text-tertiary)" }}>{entry.detail ? entry.detail : `Observed ${shortDate(entry.lastObservedAt)}${typeof entry.hoursSinceUpdate === "number" ? " · " + Math.round(entry.hoursSinceUpdate) + "h since update" : ""}`}</span> : null}
           </div>
         ))}
-
-        {sources.length === 0 && (
-          <div className="px-3 py-4 text-center mono text-[11px]" style={{ color: "var(--text-tertiary)" }}>
-            —
-          </div>
-        )}
+        {sources.length === 0 ? <div className="px-3 py-6 text-center mono text-[11px]" aria-live="polite" style={{ color: "var(--text-secondary)" }}>No source health records.</div> : null}
       </div>
+
       {attribution?.length ? (
-        <div className="mt-4">
-          <div className="mono mb-2 text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
-            Top source contribution
-          </div>
-          <div className="grid gap-2">
+        <div className="mt-5">
+          <div className="mono mb-2 text-[11px] uppercase tracking-[0.14em]" style={{ color: "var(--text-tertiary)" }}>Top source contribution</div>
+          <div className="border-y" style={{ borderColor: "var(--line-soft)" }}>
             {attribution.slice(0, 5).map((entry) => (
-              <div key={entry.sourceId} className="grid grid-cols-[1fr_auto_auto] gap-3 text-[12px]">
-                <span style={{ color: "var(--text-primary)" }}>{entry.sourceId}</span>
-                <span className="mono" style={{ color: "var(--text-secondary)" }}>
-                  {entry.alertCount} alerts
-                </span>
-                <span className="mono" style={{ color: "var(--rune)" }}>
-                  {Math.round(entry.qualityScore * 100)}%
-                </span>
+              <div key={entry.sourceId} className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-3 border-b px-3 py-3 text-[12px] last:border-b-0" style={{ borderColor: "var(--line-faint)" }}>
+                <span className="truncate" style={{ color: "var(--text-primary)" }}>{entry.sourceId}</span>
+                <span className="mono" style={{ color: "var(--text-secondary)" }}>{entry.alertCount} alerts</span>
+                <span className="mono" style={{ color: "var(--evidence)" }}>{Math.round(entry.qualityScore * 100)}%</span>
               </div>
             ))}
           </div>

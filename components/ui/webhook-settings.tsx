@@ -37,53 +37,24 @@ export function WebhookSettings({
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-4">
-        <span
-          className="inline-block rounded-full"
-          style={{
-            width: 8,
-            height: 8,
-            background: isConfigured ? "var(--positive, #22c55e)" : "var(--text-tertiary)",
-            boxShadow: isConfigured ? "0 0 6px rgba(34,197,94,0.5)" : "none"
-          }}
-        />
-        <span className="text-[13px]" style={{ color: "var(--text-primary)" }}>
-          {isConfigured ? messages.configured : messages.notConfigured}
-        </span>
+      <div className="flex min-h-11 items-center justify-between gap-3 border-y px-3" style={{ borderColor: "var(--line-soft)" }}>
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="inline-block h-2 w-2 shrink-0" aria-hidden="true" style={{ background: isConfigured ? "var(--positive)" : "var(--text-tertiary)" }} />
+          <span className="truncate text-[13px]" style={{ color: "var(--text-primary)" }}>{isConfigured ? messages.configured : messages.notConfigured}</span>
+        </div>
+        <span className="mono shrink-0 text-[11px] uppercase tracking-[0.1em]" style={{ color: isConfigured ? "var(--positive)" : "var(--text-tertiary)" }}>{messages.title}</span>
       </div>
 
-      {isConfigured && (
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleTest}
-            disabled={testing}
-            className="mono text-[10px] uppercase tracking-[0.1em] px-3 py-1.5 rounded transition-colors hover:brightness-110"
-            style={{
-              background: testing ? "var(--rune-wash)" : "rgba(201,169,97,0.1)",
-              border: "1px solid rgba(201,169,97,0.25)",
-              color: "var(--rune)"
-            }}
-          >
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        {isConfigured ? (
+          <button type="button" onClick={handleTest} disabled={testing} className="mono min-h-11 border px-3 text-[12px] uppercase tracking-[0.1em] transition-colors duration-[120ms] hover:bg-[var(--signal-wash)] focus-visible:outline-2 focus-visible:outline-[var(--signal)] disabled:opacity-45 motion-reduce:transition-none" style={{ background: "var(--signal-wash)", borderColor: "var(--signal)", color: "var(--signal)" }}>
             {testing ? "…" : messages.testButton}
           </button>
-
-          {testResult === "success" && (
-            <span className="mono text-[10px] uppercase tracking-[0.1em]" style={{ color: "var(--positive, #22c55e)" }}>
-              {messages.testSuccess}
-            </span>
-          )}
-          {testResult === "failed" && (
-            <span className="mono text-[10px] uppercase tracking-[0.1em]" style={{ color: "var(--critical)" }}>
-              {messages.testFailed}
-            </span>
-          )}
-        </div>
-      )}
-
-      <div className="mono mt-3 text-[10px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
-        {messages.minPriority}: CRITICAL
+        ) : null}
+        {testResult === "success" ? <span className="mono text-[12px] uppercase tracking-[0.1em]" aria-live="polite" style={{ color: "var(--positive)" }}>{messages.testSuccess}</span> : null}
+        {testResult === "failed" ? <span className="mono text-[12px] uppercase tracking-[0.1em]" aria-live="assertive" style={{ color: "var(--critical)" }}>{messages.testFailed}</span> : null}
       </div>
+      <div className="mono mt-3 text-[11px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>{messages.minPriority}: CRITICAL</div>
     </div>
   );
 }

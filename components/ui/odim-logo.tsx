@@ -1,17 +1,20 @@
 import Image from "next/image";
 
-// Intrinsic ratio: 714 × 420 (≈ 1.7 : 1)
-const RATIO = 714 / 420;
-
-export function OdimLogo({ size = 30, className }: Readonly<{ size?: number; className?: string }>) {
+export function OdimLogo({
+  size = 30,
+  className,
+  priority = false
+}: Readonly<{ size?: number; className?: string; priority?: boolean }>) {
   return (
     <Image
-      src="/odim-logo.png"
-      alt="Odim"
-      width={Math.round(size * RATIO)}
+      src="/brand/odim-mark.png"
+      alt=""
+      width={size}
       height={size}
+      sizes={`${size}px`}
       className={className}
-      priority
+      style={{ width: size, height: size, aspectRatio: "1 / 1", objectFit: "contain" }}
+      priority={priority}
     />
   );
 }
@@ -20,7 +23,7 @@ export function OdimLogo({ size = 30, className }: Readonly<{ size?: number; cla
 export function OdimWordmark({ className }: Readonly<{ className?: string }>) {
   return (
     <span
-      className={`font-[var(--font-spectral)] text-[15px] font-semibold tracking-[0.08em] ${className ?? ""}`}
+      className={`font-[var(--font-plex-sans)] text-[15px] font-semibold tracking-[0.08em] ${className ?? ""}`}
       style={{ color: "var(--text-primary)" }}
     >
       ODIM

@@ -36,8 +36,8 @@ const LAYER_DISPLAY: Record<LayerKey, string> = {
 
 const GAP_COLORS: Record<string, string> = {
   HIGH: "var(--critical)",
-  MEDIUM: "#f59e0b",
-  LOW: "#22c55e"
+  MEDIUM: "var(--warning)",
+  LOW: "var(--positive)"
 };
 
 function formatCapital(value: number): string {
@@ -63,7 +63,7 @@ export function SubstrateTooltip({ layer, position, data, labels }: Readonly<Pro
     el.style.top = `${y}px`;
   }, [position]);
 
-  const deltaColor = data.signalsDelta >= 0 ? "#22c55e" : "var(--critical)";
+  const deltaColor = data.signalsDelta >= 0 ? "var(--positive)" : "var(--critical)";
   const gapColor = GAP_COLORS[data.narrativeGap] ?? "var(--text-primary)";
 
   const content = (
@@ -76,35 +76,23 @@ export function SubstrateTooltip({ layer, position, data, labels }: Readonly<Pro
         left: position.x + 16,
         top: position.y + 16,
         zIndex: 9999,
-        background: "var(--surface-primary)",
-        border: "1px solid var(--line-strong)",
-        borderRadius: 8,
+        background: "var(--surface)",
+        border: "1px solid var(--line-soft)",
+        borderLeft: "2px solid var(--evidence)",
+        borderRadius: 4,
         padding: "12px 14px",
         minWidth: 230,
-        boxShadow: "0 4px 12px rgba(0,0,0,0.5), 0 12px 36px rgba(0,0,0,0.35)",
+        boxShadow: "var(--shadow-md)",
         pointerEvents: "none",
-        backdropFilter: "blur(12px)"
+        animation: "odim-surface-enter var(--motion-state) var(--ease-primary) both"
       }}
     >
-      <style>{`
-        @media (prefers-reduced-motion: no-preference) {
-          .substrate-tooltip {
-            animation: substrate-tooltip-fadein 150ms ease-out;
-          }
-        }
-        @keyframes substrate-tooltip-fadein {
-          from { opacity: 0; transform: translateY(4px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
-
       {/* Layer header */}
       <div
         style={{
-          fontFamily: "monospace",
+          fontFamily: "var(--font-plex-mono), ui-monospace, monospace",
           fontSize: 11,
-          textTransform: "uppercase",
-          letterSpacing: "0.12em",
+          letterSpacing: "0.04em",
           color: "var(--text-secondary)",
           marginBottom: 8,
           fontWeight: 500
@@ -123,7 +111,7 @@ export function SubstrateTooltip({ layer, position, data, labels }: Readonly<Pro
           <span style={{ fontSize: 12, color: "var(--text-primary)", fontWeight: 600 }}>
             {data.activeSignals}
             {data.signalsDelta !== 0 && (
-              <span style={{ fontSize: 10, color: deltaColor, marginLeft: 4 }}>
+              <span style={{ fontSize: 11, color: deltaColor, marginLeft: 4 }}>
                 {data.signalsDelta > 0 ? "+" : ""}
                 {data.signalsDelta}
               </span>
@@ -156,7 +144,7 @@ export function SubstrateTooltip({ layer, position, data, labels }: Readonly<Pro
               style={{
                 height: 3,
                 background: "var(--line-faint)",
-                borderRadius: 2,
+                borderRadius: 0,
                 overflow: "hidden"
               }}
             >
@@ -164,8 +152,8 @@ export function SubstrateTooltip({ layer, position, data, labels }: Readonly<Pro
                 style={{
                   height: "100%",
                   width: `${Math.round(data.topEntity.confidence * 100)}%`,
-                  background: "var(--rune)",
-                  borderRadius: 2
+                  background: "var(--signal)",
+                  borderRadius: 0
                 }}
               />
             </div>

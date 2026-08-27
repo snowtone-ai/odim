@@ -29,6 +29,15 @@
       "adapter": "scrapers/sec-edgar.ts"
     },
     {
+      "id": "sec-form-d",
+      "layer": "cash",
+      "region": "us",
+      "type": "public-feed",
+      "enabled": true,
+      "requiredEnv": ["SEC_EDGAR_USER_AGENT"],
+      "adapter": "scrapers/sec-form-d.ts"
+    },
+    {
       "id": "ferc-elibrary",
       "layer": "energy",
       "region": "us",

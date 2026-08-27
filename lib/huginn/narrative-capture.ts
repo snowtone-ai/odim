@@ -3,6 +3,7 @@ import type { SourceRef } from "../pipeline/types.ts";
 import { isProductionRuntime } from "../env/runtime.ts";
 import { deterministicUuid } from "../pipeline/idempotency.ts";
 import { createServiceSupabaseClient, hasSupabaseWriteEnv } from "../supabase/client.ts";
+import { createHash } from "node:crypto";
 
 export type NarrativeCaptureResult = {
   id: string;
@@ -20,14 +21,15 @@ function shouldFallbackFromSupabaseError(message: string) {
   return /schema cache|does not exist|Could not find the table|relation .* does not exist|column .* does not exist/i.test(message);
 }
 
-async function persistNarrativeSignal(input: { orgId: string; question: string; result: NarrativeCaptureResult }) {
+async function persistNarrativeSignal(input: { orgId: string; question: string; result: NarrativeCaptureResult; signal?: AbortSignal }) {
   if (!hasSupabaseWriteEnv()) return;
+  if (input.signal?.aborted) return;
   const fingerprint = deterministicUuid("raw_signals:narrative_capture", {
     orgId: input.orgId,
     url: input.result.url,
     question: input.question
   });
-  const { error } = await createServiceSupabaseClient()
+  const request = createServiceSupabaseClient()
     .from("raw_signals")
     .upsert(
       {
@@ -39,9 +41,11 @@ async function persistNarrativeSignal(input: { orgId: string; question: string; 
         payload: {
           title: input.result.title,
           url: input.result.url,
-          content: input.result.content,
+          contentHash: createHash("sha256").update(input.result.content).digest("hex"),
+          contentLength: input.result.content.length,
           sentiment: input.result.sentiment,
-          question: input.question,
+          questionHash: createHash("sha256").update(input.question).digest("hex"),
+          questionLength: input.question.length,
           source_type: input.result.sourceType
         },
         source_refs: input.result.sourceRefs,
@@ -52,14 +56,17 @@ async function persistNarrativeSignal(input: { orgId: string; question: string; 
       },
       { onConflict: "fingerprint" }
     );
+  if (input.signal) request.abortSignal(input.signal);
+  const { error } = await request;
   if (error) {
     if (shouldFallbackFromSupabaseError(error.message)) return;
     throw new Error(`narrative capture persistence failed: ${error.message}`);
   }
 }
 
-export async function narrativeCaptureSearch(input: { orgId: string; question: string }): Promise<NarrativeCaptureResult[]> {
+export async function narrativeCaptureSearch(input: { orgId: string; question: string; signal?: AbortSignal }): Promise<NarrativeCaptureResult[]> {
   if (process.env.NARRATIVE_CAPTURE_ENABLED !== "true" && (process.env.AI_PROVIDER ?? "mock") !== "mock") return [];
+  if (input.signal?.aborted) return [];
   const result: NarrativeCaptureResult = {
     id: "narrative:fixture",
     title: "Fixture market narrative",
@@ -83,7 +90,9 @@ export async function narrativeCaptureSearch(input: { orgId: string; question: s
     memoryClass: "fact"
   });
   if (gated.action !== "REJECTED_FROM_MEMORY") throw new Error("web_narrative must be rejected from munin_memory");
-  await persistNarrativeSignal({ orgId: input.orgId, question: input.question, result });
+  if (input.signal?.aborted) return [];
+  await persistNarrativeSignal({ orgId: input.orgId, question: input.question, result, signal: input.signal });
+  if (input.signal?.aborted) return [];
   return [result];
 }
 

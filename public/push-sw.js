@@ -10,7 +10,7 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(payload.title, {
       body: payload.body,
       tag: payload.tag,
-      icon: "/odim-logo.png",
+      icon: "/brand/odim-mark.png",
       data: { href: "/alerts" }
     })
   );

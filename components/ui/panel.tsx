@@ -1,37 +1,33 @@
-export function Panel({
-  title,
-  children,
-  noPad,
-  accent
-}: Readonly<{ title: string; children: React.ReactNode; noPad?: boolean; accent?: boolean }>) {
+type PanelProps = Readonly<{
+  title: string;
+  children: React.ReactNode;
+  noPad?: boolean;
+  accent?: boolean;
+}>;
+
+/**
+ * Transitional section primitive for routes still migrating from card layouts.
+ * It deliberately uses rails and strata instead of rounded, elevated containers.
+ */
+export function Panel({ title, children, noPad, accent }: PanelProps) {
   return (
-    <div
-      className="overflow-hidden rounded-[var(--radius-lg)]"
+    <section
+      aria-label={title}
+      className="border-y bg-[var(--surface)]"
       style={{
-        background: "var(--ink-800)",
-        border: accent ? "1px solid var(--line-strong)" : "1px solid var(--glass-border)",
-        boxShadow: accent
-          ? "var(--shadow-inset), var(--shadow-md), var(--shadow-glow)"
-          : "var(--shadow-inset), var(--shadow-sm)",
-        backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.016) 0%, transparent 64px)"
+        borderColor: "var(--line-soft)",
+        borderLeft: accent ? "2px solid var(--signal)" : undefined
       }}
     >
-      {/* Panel header */}
       <div
-        className="flex items-center px-5 py-3"
-        style={{
-          borderBottom: "1px solid var(--line-soft)",
-          backgroundImage: "linear-gradient(90deg, rgba(255,255,255,0.008) 0%, transparent 50%)"
-        }}
+        className="flex min-h-11 items-center px-4 py-2 sm:px-5"
+        style={{ borderBottom: "1px solid var(--line-soft)" }}
       >
-        <span
-          className="mono text-[11px] font-medium uppercase tracking-[0.12em]"
-          style={{ color: "var(--text-secondary)" }}
-        >
+        <h2 className="mono text-[12px] font-medium tracking-[0.03em]" style={{ color: "var(--text-secondary)" }}>
           {title}
-        </span>
+        </h2>
       </div>
-      <div className={noPad ? "" : "p-5"}>{children}</div>
-    </div>
+      <div className={noPad ? "" : "p-4 sm:p-5"}>{children}</div>
+    </section>
   );
 }

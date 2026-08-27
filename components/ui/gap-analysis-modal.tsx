@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
-import { Confidence } from "@/components/ui/confidence";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
+import { useEffect, useMemo, useRef } from "react";
+import { trapDialogFocus } from "@/components/ui/modal-focus";
+import { X } from "lucide-react";
 
 type Entity = {
   id: string;
@@ -30,666 +29,222 @@ type OntologyLink = {
   source: string;
 };
 
-// ─── Layer color map ──────────────────────────────────────────────────────────
-
 const LAYER_COLOR: Record<string, string> = {
-  Energy:           "var(--layer-energy)",
-  Cash:             "var(--layer-cash)",
-  Land:             "var(--layer-land)",
-  Compute:          "var(--layer-compute)",
-  Water:            "var(--layer-water)",
-  "Raw Materials":  "var(--layer-material)",
-  Logistics:        "var(--layer-logistics)",
+  Energy: "var(--evidence)",
+  Cash: "var(--signal)",
+  Land: "var(--text-secondary)",
+  Compute: "var(--signal)",
+  Water: "var(--evidence)",
+  "Raw Materials": "var(--text-secondary)",
+  Logistics: "var(--text-tertiary)"
 };
 
-// ─── Chart constants ──────────────────────────────────────────────────────────
+const divider = "var(--line-soft)";
 
-const SVG_W = 640;
-const SVG_H = 220;
-const L = 52;
-const T = 28;
-const R = 20;
-const B = 32;
-const PW = SVG_W - L - R;
-const PH = SVG_H - T - B;
-
-// ─── Smooth bezier helpers ────────────────────────────────────────────────────
-
-function buildSmoothPath(pts: [number, number][]): string {
-  if (pts.length < 2) return "";
-  let d = `M ${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
-  for (let i = 1; i < pts.length; i++) {
-    const [x0, y0] = pts[i - 1];
-    const [x1, y1] = pts[i];
-    const cpx = ((x0 + x1) / 2).toFixed(1);
-    d += ` C ${cpx},${y0.toFixed(1)} ${cpx},${y1.toFixed(1)} ${x1.toFixed(1)},${y1.toFixed(1)}`;
-  }
-  return d;
+function pct(value: number) {
+  return `${Math.round(Math.max(0, Math.min(1, value)) * 100)}%`;
 }
 
-function buildAreaPath(pts: [number, number][], bottomY: number): string {
-  const line = buildSmoothPath(pts);
-  if (!line) return "";
-  const last = pts[pts.length - 1];
-  const first = pts[0];
-  return `${line} L ${last[0].toFixed(1)},${bottomY.toFixed(1)} L ${first[0].toFixed(1)},${bottomY.toFixed(1)} Z`;
-}
-
-// ─── Chart computation ────────────────────────────────────────────────────────
-
-function buildChartData(events: TimelineEvent[], lead: number) {
-  const sorted = [...events].sort((a, b) => a.date.localeCompare(b.date));
-  const n = sorted.length;
-  if (n < 2) return null;
-
-  const t0 = new Date(sorted[0].date).getTime();
-  function getDay(dateStr: string) {
-    return Math.max(0, Math.floor((new Date(dateStr).getTime() - t0) / 86400000));
-  }
-
-  const lastDay = getDay(sorted[n - 1].date);
-  const totalDays = lastDay + lead + Math.ceil(lead * 0.12 + 6);
-  const toX = (day: number) => L + (day / totalDays) * PW;
-  const toY = (cnt: number) => T + PH - (cnt / n) * PH;
-  const bottomY = T + PH;
-
-  // Substrate keypoints — de-duplicate same-day events
-  const subPts: [number, number][] = [[toX(0), toY(0)]];
-  for (let i = 0; i < n; i++) {
-    const x = toX(getDay(sorted[i].date));
-    if (Math.abs(x - subPts[subPts.length - 1][0]) < 1) {
-      subPts[subPts.length - 1] = [x, toY(i + 1)];
-    } else {
-      subPts.push([x, toY(i + 1)]);
-    }
-  }
-  subPts.push([toX(totalDays), toY(n)]);
-
-  // Narrative keypoints — substrate shifted right by lead days
-  const narrPts: [number, number][] = [[toX(lead), toY(0)]];
-  for (let i = 0; i < n; i++) {
-    const day = getDay(sorted[i].date) + lead;
-    if (day > totalDays) break;
-    const x = toX(day);
-    if (Math.abs(x - narrPts[narrPts.length - 1][0]) < 1) {
-      narrPts[narrPts.length - 1] = [x, toY(i + 1)];
-    } else {
-      narrPts.push([x, toY(i + 1)]);
-    }
-  }
-  const lastNarr = narrPts[narrPts.length - 1];
-  if (lastNarr[0] < toX(totalDays) - 2) narrPts.push([toX(totalDays), lastNarr[1]]);
-
-  const subLine = buildSmoothPath(subPts);
-  const narrLine = buildSmoothPath(narrPts);
-  const subArea = buildAreaPath(subPts, bottomY);
-  const narrArea = buildAreaPath(narrPts, bottomY);
-
-  const xTicks = Array.from({ length: 5 }, (_, i) => {
-    const day = Math.round((i / 4) * totalDays);
-    const date = new Date(t0 + day * 86400000);
-    return {
-      x: toX(day),
-      label: `${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getDate().toString().padStart(2, "0")}`
-    };
+function chartPoints(events: TimelineEvent[], lead: number) {
+  const ordered = [...events].sort((a, b) => a.date.localeCompare(b.date)).slice(-14);
+  const width = 760;
+  const height = 220;
+  const left = 34;
+  const right = 18;
+  const top = 18;
+  const bottom = 26;
+  const plotWidth = width - left - right;
+  const plotHeight = height - top - bottom;
+  const count = Math.max(ordered.length - 1, 1);
+  const substrate = ordered.map((event, index) => {
+    const x = left + (index / count) * plotWidth;
+    const y = top + (1 - Math.max(0, Math.min(1, event.confidence))) * plotHeight;
+    return [x, y] as const;
   });
-
-  const yTicks = [0, 0.2, 0.4, 0.6, 0.8, 1].map((frac) => ({
-    y: toY(Math.round(frac * n)),
-    label: `${Math.round(frac * n)}`
-  }));
-
-  const gapX1 = toX(lastDay);
-  const gapX2 = Math.min(toX(lastDay + lead), L + PW);
-  const gapAnnotY = T + 10;
-
-  // Endpoint dots for both lines
-  const subEndPt = subPts[subPts.length - 1];
-  const narrEndPt = narrPts[narrPts.length - 1];
-  // "Today" marker — where substrate data ends
-  const todayX = toX(lastDay);
-
-  return { subLine, narrLine, subArea, narrArea, xTicks, yTicks, gapX1, gapX2, gapAnnotY, bottomY, subEndPt, narrEndPt, todayX };
+  const narrative = ordered.map((event, index) => {
+    const x = left + (index / count) * plotWidth;
+    const lag = Math.min(0.75, Math.max(0.08, lead / 30));
+    const y = top + (1 - Math.max(0, Math.min(1, event.confidence - lag))) * plotHeight;
+    return [x, y] as const;
+  });
+  const points = (values: readonly (readonly [number, number])[]) => values.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  return { ordered, width, height, left, top, bottom, plotWidth, substrate, narrative, substratePath: points(substrate), narrativePath: points(narrative) };
 }
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export function GapAnalysisModal({
   entity,
   timelineEvents,
   ontologyLinks,
-  onClose,
+  onClose
 }: Readonly<{
   entity: Entity;
   timelineEvents: TimelineEvent[];
   ontologyLinks: OntologyLink[];
   onClose: () => void;
 }>) {
-  // ESC to close
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousActiveRef = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    previousActiveRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (!dialog.open) dialog.showModal();
+    const frame = requestAnimationFrame(() => closeButtonRef.current?.focus());
+    return () => {
+      cancelAnimationFrame(frame);
+      if (dialog.open) dialog.close();
+      previousActiveRef.current?.focus();
+    };
+  }, []);
 
-  const chart = useMemo(
-    () => buildChartData(timelineEvents, entity.lead),
-    [timelineEvents, entity.lead]
-  );
-
+  const chart = useMemo(() => chartPoints(timelineEvents, entity.lead), [timelineEvents, entity.lead]);
   const layerSummary = useMemo(() => {
-    const map = new Map<string, { count: number; totalConf: number }>();
-    for (const e of timelineEvents) {
-      const prev = map.get(e.layer) ?? { count: 0, totalConf: 0 };
-      map.set(e.layer, { count: prev.count + 1, totalConf: prev.totalConf + e.confidence });
+    const map = new Map<string, { count: number; confidence: number }>();
+    for (const event of timelineEvents) {
+      const current = map.get(event.layer) ?? { count: 0, confidence: 0 };
+      map.set(event.layer, { count: current.count + 1, confidence: current.confidence + event.confidence });
     }
-    return Array.from(map.entries())
-      .map(([layer, { count, totalConf }]) => ({ layer, count, avgConf: totalConf / count }))
-      .sort((a, b) => b.count - a.count);
+    return [...map.entries()].map(([layer, value]) => ({ layer, count: value.count, confidence: value.confidence / value.count })).sort((a, b) => b.count - a.count);
   }, [timelineEvents]);
-
-  const sortedEvents = useMemo(
-    () => [...timelineEvents].sort((a, b) => a.date.localeCompare(b.date)).slice(0, 24),
-    [timelineEvents]
-  );
-
-  const avgConf = useMemo(
-    () => timelineEvents.length > 0
-      ? timelineEvents.reduce((s, e) => s + e.confidence, 0) / timelineEvents.length
-      : 0,
-    [timelineEvents]
-  );
-
-  const narrativeChannels = [
-    { name: "Financial Media (Bloomberg/Reuters/FT)", result: "No coverage detected" },
-    { name: "SEC / EDGAR Filings", result: "No public disclosure" },
-    { name: "Analyst Consensus", result: "Below coverage threshold" },
-    { name: "Official Announcements", result: "No statement issued" },
-  ];
+  const sortedEvents = useMemo(() => [...timelineEvents].sort((a, b) => a.date.localeCompare(b.date)).slice(0, 24), [timelineEvents]);
+  const averageConfidence = timelineEvents.length ? timelineEvents.reduce((sum, event) => sum + event.confidence, 0) / timelineEvents.length : 0;
+  const maxLayerCount = Math.max(1, ...layerSummary.map((layer) => layer.count));
 
   return (
-    // Backdrop — scrollable so tall modal content is always reachable
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-50 overflow-y-auto"
-      style={{ background: "rgba(4,6,10,0.80)", backdropFilter: "blur(5px)" }}
-      onClick={onClose}
+    <dialog
+      ref={dialogRef}
+      aria-labelledby="gap-analysis-title"
+      className="fixed inset-0 z-50 m-0 h-dvh max-h-none w-screen max-w-none overflow-y-auto border-0 bg-[color-mix(in_srgb,var(--field)_88%,transparent)] px-3 py-3 sm:px-6 sm:py-8"
+      onKeyDown={trapDialogFocus}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}
     >
-      <div className="flex min-h-full items-start justify-center px-4 py-10">
-
-        {/* Modal panel — natural height, no internal scroll trap */}
-        <div
-          className="relative w-full max-w-[940px] overflow-hidden rounded-[var(--radius-lg)]"
-          style={{
-            background: "var(--ink-850)",
-            border: "1px solid var(--line-strong)",
-            boxShadow: "var(--shadow-inset), 0 28px 72px rgba(0,0,0,0.72), var(--shadow-glow)",
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-
-          {/* ── Header ──────────────────────────────────────────────────── */}
-          <div
-            className="flex items-center gap-6 px-6 py-4"
-            style={{ borderBottom: "1px solid var(--line-soft)" }}
-          >
-            <div className="min-w-0 flex-1">
-              <div className="mono text-[9px] uppercase tracking-[0.16em]" style={{ color: "var(--text-quaternary)" }}>
-                Narrative–Reality Gap Analysis
-              </div>
-              <h2 className="mt-0.5 text-[15px] font-semibold leading-tight truncate" style={{ color: "var(--text-primary)" }}>
-                {entity.name}
-              </h2>
-            </div>
-
-            {/* Key metrics */}
-            <div className="flex items-center gap-6 shrink-0">
-              <div className="text-center">
-                <div
-                  className="mono text-[22px] font-semibold leading-none"
-                  style={{ color: "var(--rune)", textShadow: "0 0 18px rgba(201,169,97,0.28)" }}
-                >
-                  +{entity.lead}d
-                </div>
-                <div className="mono mt-1 text-[9px] uppercase tracking-[0.1em]" style={{ color: "var(--text-quaternary)" }}>
-                  Lead Time
-                </div>
-              </div>
-              <div className="h-8 w-px" style={{ background: "var(--line-faint)" }} />
-              <div className="text-center">
-                <div className="mono text-[17px] font-semibold leading-none" style={{ color: "var(--text-primary)" }}>
-                  {entity.score}
-                </div>
-                <div className="mono mt-1 text-[9px] uppercase tracking-[0.1em]" style={{ color: "var(--text-quaternary)" }}>
-                  Reality Score
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="mono text-[17px] font-semibold leading-none" style={{ color: "var(--rune)" }}>
-                  {entity.committed}
-                </div>
-                <div className="mono mt-1 text-[9px] uppercase tracking-[0.1em]" style={{ color: "var(--text-quaternary)" }}>
-                  Committed
-                </div>
-              </div>
-            </div>
-
-            {/* Close */}
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--radius-xs)] transition-colors duration-[var(--dur-fast)] hover:bg-white/[0.06]"
-              style={{ border: "1px solid var(--line-faint)", color: "var(--text-tertiary)" }}
-            >
-              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                <path d="M1 1l9 9M10 1L1 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </button>
+      <div
+        className="animate-fade-in mx-auto w-full max-w-[980px] border bg-[var(--surface)]"
+        style={{ borderColor: "var(--line-strong)", boxShadow: "var(--shadow-lg)" }}
+      >
+        <header className="flex items-start justify-between gap-4 border-b px-5 py-5 sm:px-7" style={{ borderColor: divider }}>
+          <div className="min-w-0">
+            <p className="mono text-[11px] uppercase tracking-[0.14em]" style={{ color: "var(--signal)" }}>Evidence review</p>
+            <h2 id="gap-analysis-title" className="mt-2 text-[20px] font-medium tracking-[-0.015em]" style={{ color: "var(--text)" }}>Narrative gap analysis</h2>
+            <p className="mt-2 truncate text-[13px]" style={{ color: "var(--text-secondary)" }}>{entity.name} · {entity.id}</p>
           </div>
+          <button ref={closeButtonRef} type="button" onClick={onClose} className="odim-icon-control h-11 w-11 shrink-0" aria-label="Close gap analysis" title="Close">
+            <X size={17} />
+          </button>
+        </header>
 
-          {/* ── Body ────────────────────────────────────────────────────── */}
-          <div className="flex flex-col gap-5 p-6">
+        <div className="grid border-b sm:grid-cols-4" style={{ borderColor: divider }}>
+          {[
+            ["Score", entity.score],
+            ["Committed", entity.committed],
+            ["Lead", `+${entity.lead}d`],
+            ["Confidence", pct(entity.confidence)]
+          ].map(([label, value], index) => (
+            <div key={String(label)} className="border-b px-5 py-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0" style={{ borderColor: divider }}>
+              <p className="mono text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-tertiary)" }}>{label}</p>
+              <p className="mono mt-2 text-[15px] tabular-nums" style={{ color: index === 0 || index === 2 ? "var(--signal)" : "var(--text)" }}>{value}</p>
+            </div>
+          ))}
+        </div>
 
-            {/* ── Lead Time Chart ───────────────────────────────────────── */}
-            <div>
-              {/* Chart header */}
-              <div className="mb-2 flex items-center justify-between gap-4">
-                <div>
-                  <div className="mono text-[10px] uppercase tracking-[0.14em]" style={{ color: "var(--text-tertiary)" }}>
-                    Lead Time Analysis
-                  </div>
-                  <div className="mt-0.5 text-[11px]" style={{ color: "var(--text-quaternary)" }}>
-                    Cumulative signal count over time — substrate leads narrative
-                  </div>
-                </div>
-                <div className="flex shrink-0 items-center gap-4">
-                  <div className="flex items-center gap-1.5">
-                    <div className="h-[2.5px] w-5 rounded-full" style={{ background: "rgba(201,169,97,0.9)" }} />
-                    <span className="mono text-[9px] uppercase tracking-[0.1em]" style={{ color: "var(--text-quaternary)" }}>Reality</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <svg width="20" height="3" viewBox="0 0 20 3">
-                      <line x1="0" y1="1.5" x2="20" y2="1.5" stroke="rgba(120,130,160,0.6)" strokeWidth="1.5" strokeDasharray="4,3" />
-                    </svg>
-                    <span className="mono text-[9px] uppercase tracking-[0.1em]" style={{ color: "var(--text-quaternary)" }}>Narrative</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="h-3 w-3 rounded-[2px]" style={{ background: "rgba(201,169,97,0.12)", border: "1px solid rgba(201,169,97,0.3)" }} />
-                    <span className="mono text-[9px] uppercase tracking-[0.1em]" style={{ color: "var(--text-quaternary)" }}>Lead window</span>
-                  </div>
-                </div>
+        <div className="space-y-8 px-5 py-6 sm:px-7 sm:py-8">
+          <section aria-labelledby="gap-chart-title">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="mono text-[11px] uppercase tracking-[0.14em]" style={{ color: "var(--text-tertiary)" }}>Substrate versus narrative</p>
+                <h3 id="gap-chart-title" className="mt-2 text-[16px] font-medium" style={{ color: "var(--text)" }}>Reality is {entity.lead} days ahead of narrative confirmation.</h3>
               </div>
-
-              <div
-                className="overflow-hidden rounded-[var(--radius-md)]"
-                style={{ background: "var(--ink-900)", border: "1px solid var(--line-faint)" }}
-              >
-                {/* Y-axis label */}
-                <div className="relative">
-                  <div
-                    className="mono absolute left-1 top-1/2 -translate-y-1/2 text-[8px] uppercase tracking-[0.14em]"
-                    style={{
-                      color: "rgba(255,255,255,0.2)",
-                      writingMode: "vertical-rl",
-                      transform: "translateY(-50%) rotate(180deg)"
-                    }}
-                  >
-                    Signals
-                  </div>
-                {chart ? (
-                  <svg
-                    viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-                    className="w-full"
-                    style={{ display: "block" }}
-                  >
-                    <defs>
-                      <linearGradient id="subGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="rgba(201,169,97,0.28)" />
-                        <stop offset="100%" stopColor="rgba(201,169,97,0.01)" />
-                      </linearGradient>
-                      <linearGradient id="narrGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="rgba(100,110,150,0.15)" />
-                        <stop offset="100%" stopColor="rgba(100,110,150,0.00)" />
-                      </linearGradient>
-                      <linearGradient id="gapFill" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="rgba(201,169,97,0.10)" />
-                        <stop offset="100%" stopColor="rgba(201,169,97,0.02)" />
-                      </linearGradient>
-                    </defs>
-
-                    {/* Background: plot area */}
-                    <rect x={L} y={T} width={PW} height={PH} fill="rgba(255,255,255,0.01)" rx="2" />
-
-                    {/* Horizontal grid lines */}
-                    {chart.yTicks.map((tick, i) => (
-                      <line
-                        key={i}
-                        x1={L} y1={tick.y} x2={L + PW} y2={tick.y}
-                        stroke={i === 0 ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.05)"}
-                        strokeWidth={1}
-                        strokeDasharray={i === 0 ? "0" : "3,6"}
-                      />
-                    ))}
-
-                    {/* Y-axis labels */}
-                    {chart.yTicks.map((tick, i) => (
-                      <text
-                        key={i}
-                        x={L - 6} y={tick.y + 4}
-                        textAnchor="end" fontSize={9} fontFamily="monospace"
-                        fill="rgba(255,255,255,0.28)"
-                      >
-                        {tick.label}
-                      </text>
-                    ))}
-
-                    {/* Lead window: shaded gap region */}
-                    {chart.gapX2 - chart.gapX1 > 8 && (
-                      <>
-                        <rect
-                          x={chart.gapX1} y={T}
-                          width={chart.gapX2 - chart.gapX1} height={PH}
-                          fill="url(#gapFill)"
-                        />
-                        {/* Vertical start line */}
-                        <line
-                          x1={chart.gapX1} y1={T}
-                          x2={chart.gapX1} y2={T + PH}
-                          stroke="rgba(201,169,97,0.3)" strokeWidth={1} strokeDasharray="2,3"
-                        />
-                        {/* Lead annotation */}
-                        <text
-                          x={(chart.gapX1 + chart.gapX2) / 2}
-                          y={chart.gapAnnotY}
-                          textAnchor="middle" fontSize={9} fontFamily="monospace" fontWeight="700"
-                          fill="rgba(201,169,97,0.75)"
-                          letterSpacing="0.06em"
-                        >
-                          +{entity.lead}d LEAD
-                        </text>
-                        {/* Bracket lines */}
-                        <line
-                          x1={chart.gapX1 + 4} y1={chart.gapAnnotY + 5}
-                          x2={(chart.gapX1 + chart.gapX2) / 2 - 24} y2={chart.gapAnnotY + 5}
-                          stroke="rgba(201,169,97,0.35)" strokeWidth={1}
-                        />
-                        <line
-                          x1={(chart.gapX1 + chart.gapX2) / 2 + 24} y1={chart.gapAnnotY + 5}
-                          x2={chart.gapX2 - 4} y2={chart.gapAnnotY + 5}
-                          stroke="rgba(201,169,97,0.35)" strokeWidth={1}
-                        />
-                      </>
-                    )}
-
-                    {/* Area fills (behind lines) */}
-                    <path d={chart.narrArea} fill="url(#narrGrad)" />
-                    <path d={chart.subArea} fill="url(#subGrad)" />
-
-                    {/* Narrative line */}
-                    <path
-                      d={chart.narrLine}
-                      fill="none"
-                      stroke="rgba(120,130,160,0.55)"
-                      strokeWidth={1.8}
-                      strokeDasharray="5,4"
-                      strokeLinecap="round"
-                    />
-
-                    {/* Substrate (Reality) line — primary */}
-                    <path
-                      d={chart.subLine}
-                      fill="none"
-                      stroke="rgba(201,169,97,1)"
-                      strokeWidth={2.5}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-
-                    {/* Endpoint dot — substrate */}
-                    {chart.subEndPt && (
-                      <>
-                        <circle
-                          cx={chart.subEndPt[0]} cy={chart.subEndPt[1]}
-                          r={4}
-                          fill="rgba(201,169,97,1)"
-                          stroke="rgba(14,18,24,1)"
-                          strokeWidth={1.5}
-                        />
-                        <circle
-                          cx={chart.subEndPt[0]} cy={chart.subEndPt[1]}
-                          r={7}
-                          fill="none"
-                          stroke="rgba(201,169,97,0.2)"
-                          strokeWidth={1}
-                        />
-                      </>
-                    )}
-
-                    {/* Endpoint dot — narrative */}
-                    {chart.narrEndPt && (
-                      <circle
-                        cx={chart.narrEndPt[0]} cy={chart.narrEndPt[1]}
-                        r={3}
-                        fill="rgba(120,130,160,0.7)"
-                        stroke="rgba(14,18,24,1)"
-                        strokeWidth={1.5}
-                      />
-                    )}
-
-                    {/* X-axis baseline */}
-                    <line
-                      x1={L} y1={chart.bottomY}
-                      x2={L + PW} y2={chart.bottomY}
-                      stroke="rgba(255,255,255,0.14)" strokeWidth={1}
-                    />
-
-                    {/* X-axis tick labels */}
-                    {chart.xTicks.map((tick, i) => (
-                      <text
-                        key={i}
-                        x={tick.x} y={SVG_H - 8}
-                        textAnchor="middle" fontSize={9} fontFamily="monospace"
-                        fill="rgba(255,255,255,0.30)"
-                      >
-                        {tick.label}
-                      </text>
-                    ))}
-
-                    {/* Y-axis line */}
-                    <line
-                      x1={L} y1={T}
-                      x2={L} y2={T + PH}
-                      stroke="rgba(255,255,255,0.10)" strokeWidth={1}
-                    />
-                  </svg>
-                ) : (
-                  <div className="flex items-center justify-center py-10 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
-                    Insufficient data for chart
-                  </div>
-                )}
-                </div>
+              <div className="flex gap-4 text-[11px]" style={{ color: "var(--text-tertiary)" }}>
+                <span className="inline-flex items-center gap-2"><i className="h-2 w-2" style={{ background: "var(--evidence)" }} />Observed</span>
+                <span className="inline-flex items-center gap-2"><i className="h-2 w-2" style={{ background: "var(--signal)" }} />Narrative</span>
               </div>
             </div>
-
-            {/* ── Two-column: Substrate Evidence + Narrative Channel Scan ── */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-
-              {/* Substrate Evidence by Layer */}
-              <div
-                className="rounded-[var(--radius-md)] p-4"
-                style={{ background: "var(--ink-900)", border: "1px solid var(--line-faint)" }}
-              >
-                <div className="mono mb-3 text-[10px] uppercase tracking-[0.14em]" style={{ color: "var(--text-tertiary)" }}>
-                  Substrate Evidence by Layer
-                </div>
-                <div className="flex flex-col gap-2.5">
-                  {layerSummary.map((item) => {
-                    const color = LAYER_COLOR[item.layer] ?? "var(--rune-dim)";
-                    const maxCount = layerSummary[0].count;
-                    return (
-                      <div key={item.layer}>
-                        <div className="flex items-center justify-between gap-3 mb-1">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: color }} />
-                            <span className="truncate text-[12px]" style={{ color: "var(--text-secondary)" }}>
-                              {item.layer}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3 shrink-0">
-                            <span className="mono text-[12px] font-medium" style={{ color }}>{item.count}</span>
-                            <span className="mono text-[10px]" style={{ color: "var(--text-quaternary)" }}>
-                              {Math.round(item.avgConf * 100)}%
-                            </span>
-                          </div>
-                        </div>
-                        <div className="h-[2px] overflow-hidden rounded-full" style={{ background: "var(--ink-700)" }}>
-                          <div
-                            className="h-full rounded-full"
-                            style={{ width: `${Math.round((item.count / maxCount) * 100)}%`, background: color, opacity: 0.6 }}
-                          />
-                        </div>
-                      </div>
-                    );
+            <div className="mt-4 overflow-x-auto border-y py-3" style={{ borderColor: divider }}>
+              {chart.ordered.length > 1 ? (
+                <svg viewBox={`0 0 ${chart.width} ${chart.height}`} className="min-w-[620px] w-full" role="img" aria-label="Observed evidence and narrative confidence over time">
+                  {[0.25, 0.5, 0.75].map((fraction) => {
+                    const y = chart.top + fraction * (chart.height - chart.top - chart.bottom);
+                    return <line key={fraction} x1={chart.left} x2={chart.width - 18} y1={y} y2={y} stroke="var(--line-faint)" strokeWidth="1" />;
                   })}
-                </div>
-                <div
-                  className="mono mt-4 rounded-[var(--radius-sm)] px-3 py-2 text-[10px] leading-relaxed"
-                  style={{ background: "var(--ink-800)", color: "var(--text-tertiary)", border: "1px solid var(--line-faint)" }}
-                >
-                  {timelineEvents.length} confirmed signals · avg {Math.round(avgConf * 100)}% confidence
-                </div>
-              </div>
-
-              {/* Narrative Channel Scan */}
-              <div
-                className="rounded-[var(--radius-md)] p-4"
-                style={{ background: "var(--ink-900)", border: "1px solid var(--line-faint)" }}
-              >
-                <div className="mono mb-3 text-[10px] uppercase tracking-[0.14em]" style={{ color: "var(--text-tertiary)" }}>
-                  Narrative Channel Scan
-                </div>
-                <div className="flex flex-col gap-2">
-                  {narrativeChannels.map((ch) => (
-                    <div key={ch.name} className="flex items-start justify-between gap-2">
-                      <span className="text-[11px] leading-snug" style={{ color: "var(--text-secondary)" }}>
-                        {ch.name}
-                      </span>
-                      <span
-                        className="mono shrink-0 text-[10px]"
-                        style={{ color: "var(--text-quaternary)" }}
-                      >
-                        {ch.result}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                <div
-                  className="mono mt-4 rounded-[var(--radius-sm)] px-3 py-2.5 text-[10px] leading-[1.6]"
-                  style={{
-                    background: "linear-gradient(135deg, rgba(201,169,97,0.07) 0%, rgba(201,169,97,0.03) 100%)",
-                    border: "1px solid rgba(201,169,97,0.14)",
-                    color: "var(--text-secondary)"
-                  }}
-                >
-                  <span style={{ color: "var(--rune)", fontWeight: 600 }}>+{entity.lead}d</span> information asymmetry confirmed.
-                  Substrate signals precede any narrative acknowledgment as of{" "}
-                  <span style={{ color: "var(--text-primary)" }}>{entity.committed}</span>.
-                </div>
-
-                {ontologyLinks.length > 0 && (
-                  <div className="mt-3">
-                    <div className="mono mb-1.5 text-[10px] uppercase tracking-[0.1em]" style={{ color: "var(--text-quaternary)" }}>
-                      Key Ontology Links
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      {ontologyLinks.slice(0, 3).map((link, i) => (
-                        <div key={i} className="mono truncate text-[10px]" style={{ color: "var(--rune-dim)" }}>
-                          {link.type}: {link.from} → {link.to}
-                          <span className="ml-2" style={{ color: "var(--text-quaternary)" }}>
-                            {Math.round(link.confidence * 100)}%
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="mt-3">
-                  <div className="mono mb-1.5 text-[10px] uppercase tracking-[0.1em]" style={{ color: "var(--text-quaternary)" }}>
-                    Confidence
-                  </div>
-                  <Confidence value={entity.confidence} />
-                </div>
-              </div>
+                  <polyline points={chart.substratePath} fill="none" stroke="var(--evidence)" strokeWidth="2" />
+                  <polyline points={chart.narrativePath} fill="none" stroke="var(--signal)" strokeWidth="1.5" strokeDasharray="5 5" />
+                  {chart.substrate.map(([x, y], index) => <circle key={`observed-${x}`} cx={x} cy={y} r={index === chart.substrate.length - 1 ? 4 : 2.5} fill="var(--evidence)" />)}
+                  {chart.narrative.map(([x, y], index) => <circle key={`narrative-${x}`} cx={x} cy={y} r={index === chart.narrative.length - 1 ? 3 : 2} fill="var(--signal)" />)}
+                  <text x={chart.left} y={chart.height - 7} fill="var(--text-tertiary)" fontSize="10">{chart.ordered[0]?.date}</text>
+                  <text x={chart.width - 18} y={chart.height - 7} fill="var(--text-tertiary)" fontSize="10" textAnchor="end">{chart.ordered.at(-1)?.date}</text>
+                </svg>
+              ) : <p className="py-8 text-[13px]" style={{ color: "var(--text-secondary)" }}>Not enough dated evidence to draw a trajectory.</p>}
             </div>
+            <p className="mt-3 text-[12px] leading-5" style={{ color: "var(--text-secondary)" }}>The observed line reflects source-backed events. The narrative line is shifted by the current lead estimate so the missing confirmation remains visible.</p>
+          </section>
 
-            {/* ── Evidence Table ────────────────────────────────────────── */}
+          <section className="grid gap-8 border-t pt-6 lg:grid-cols-[1fr_1fr]" style={{ borderColor: divider }} aria-label="Evidence summary">
             <div>
-              <div className="mono mb-3 text-[10px] uppercase tracking-[0.14em]" style={{ color: "var(--text-tertiary)" }}>
-                Raw Substrate Signals ({sortedEvents.length})
-              </div>
-              <div
-                className="overflow-hidden rounded-[var(--radius-md)]"
-                style={{ border: "1px solid var(--line-faint)" }}
-              >
-                {/* Header row */}
-                <div
-                  className="grid gap-3 px-4 py-2"
-                  style={{
-                    gridTemplateColumns: "64px 88px 1fr 52px",
-                    background: "var(--ink-900)",
-                    borderBottom: "1px solid var(--line-faint)"
-                  }}
-                >
-                  {["Date", "Layer", "Signal", "Conf."].map((h) => (
-                    <span key={h} className="mono text-[9px] uppercase tracking-[0.12em]" style={{ color: "var(--text-quaternary)" }}>
-                      {h}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Data rows */}
-                <div className="max-h-[300px] overflow-y-auto" style={{ background: "var(--ink-850)" }}>
-                  {sortedEvents.map((event, i) => {
-                    const color = LAYER_COLOR[event.layer] ?? "var(--rune-dim)";
-                    return (
-                      <div
-                        key={`${event.date}-${i}`}
-                        className="grid items-center gap-3 px-4 py-2.5"
-                        style={{
-                          gridTemplateColumns: "64px 88px 1fr 52px",
-                          borderBottom: i < sortedEvents.length - 1 ? "1px solid var(--line-faint)" : "none"
-                        }}
-                      >
-                        <span className="mono text-[10px]" style={{ color: "var(--text-tertiary)" }}>
-                          {event.date.slice(5)}
-                        </span>
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: color }} />
-                          <span className="mono truncate text-[10px]" style={{ color }}>
-                            {event.layer}
-                          </span>
-                        </div>
-                        <span className="truncate text-[12px]" style={{ color: "var(--text-primary)" }}>
-                          {event.title}
-                        </span>
-                        <span className="mono text-right text-[10px] font-medium" style={{ color: "var(--text-secondary)" }}>
-                          {Math.round(event.confidence * 100)}%
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+              <p className="mono text-[11px] uppercase tracking-[0.14em]" style={{ color: "var(--text-tertiary)" }}>Layer coverage</p>
+              <div className="mt-3 divide-y" style={{ borderColor: divider }}>
+                {layerSummary.length ? layerSummary.map((layer) => (
+                  <div key={layer.layer} className="py-3">
+                    <div className="flex items-center justify-between gap-3 text-[12px]">
+                      <span style={{ color: LAYER_COLOR[layer.layer] ?? "var(--text-secondary)" }}>{layer.layer}</span>
+                      <span className="mono text-[11px]" style={{ color: "var(--text-tertiary)" }}>{layer.count} records · {pct(layer.confidence)}</span>
+                    </div>
+                    <div className="mt-2 h-[2px]" style={{ background: "var(--line-faint)" }}><div className="h-full" style={{ width: `${(layer.count / maxLayerCount) * 100}%`, background: LAYER_COLOR[layer.layer] ?? "var(--evidence)" }} /></div>
+                  </div>
+                )) : <p className="py-3 text-[12px]" style={{ color: "var(--text-secondary)" }}>No source records attached.</p>}
               </div>
             </div>
+            <div>
+              <p className="mono text-[11px] uppercase tracking-[0.14em]" style={{ color: "var(--text-tertiary)" }}>Narrative channels</p>
+              <div className="mt-3 divide-y" style={{ borderColor: divider }}>
+                {["Financial media", "SEC / EDGAR filings", "Analyst consensus", "Official announcements"].map((channel) => (
+                  <div key={channel} className="flex items-center justify-between gap-3 py-3">
+                    <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{channel}</span>
+                    <span className="mono text-[11px]" style={{ color: "var(--critical)" }}>No confirmation</span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 text-[12px]" style={{ color: "var(--text-tertiary)" }}>Average source confidence: <span style={{ color: "var(--evidence)" }}>{pct(averageConfidence)}</span></p>
+            </div>
+          </section>
 
-          </div>
+          {ontologyLinks.length ? (
+            <section className="border-t pt-6" style={{ borderColor: divider }} aria-labelledby="gap-links-title">
+              <p id="gap-links-title" className="mono text-[11px] uppercase tracking-[0.14em]" style={{ color: "var(--text-tertiary)" }}>Ontology links</p>
+              <div className="mt-3 grid gap-x-8 sm:grid-cols-2">
+                {ontologyLinks.slice(0, 8).map((link) => (
+                  <div key={`${link.from}-${link.to}-${link.type}`} className="border-t py-3" style={{ borderColor: divider }}>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="mono text-[11px] uppercase" style={{ color: "var(--evidence)" }}>{link.type}</span>
+                      <span className="mono text-[11px]" style={{ color: "var(--text-tertiary)" }}>{pct(link.confidence)}</span>
+                    </div>
+                    <p className="mt-1 truncate text-[12px]" style={{ color: "var(--text-secondary)" }}>{link.from} <span style={{ color: "var(--signal)" }}>→</span> {link.to}</p>
+                    <p className="mono mt-1 truncate text-[11px]" style={{ color: "var(--text-tertiary)" }}>{link.source}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          <section className="border-t pt-6" style={{ borderColor: divider }} aria-labelledby="gap-events-title">
+            <div className="flex items-center justify-between gap-3">
+              <p id="gap-events-title" className="mono text-[11px] uppercase tracking-[0.14em]" style={{ color: "var(--text-tertiary)" }}>Source record trail</p>
+              <span className="mono text-[11px]" style={{ color: "var(--text-tertiary)" }}>{sortedEvents.length} shown</span>
+            </div>
+            <div className="mt-3 overflow-x-auto border-y" style={{ borderColor: divider }}>
+              <table className="w-full min-w-[650px] text-left text-[12px]">
+                <thead><tr className="border-b" style={{ borderColor: divider }}><th className="px-3 py-3 font-normal" style={{ color: "var(--text-tertiary)" }}>Date</th><th className="px-3 py-3 font-normal" style={{ color: "var(--text-tertiary)" }}>Layer</th><th className="px-3 py-3 font-normal" style={{ color: "var(--text-tertiary)" }}>Event</th><th className="px-3 py-3 font-normal" style={{ color: "var(--text-tertiary)" }}>Source</th><th className="px-3 py-3 text-right font-normal" style={{ color: "var(--text-tertiary)" }}>Conf.</th></tr></thead>
+                <tbody>{sortedEvents.map((event) => <tr key={`${event.date}-${event.title}`} className="border-b last:border-b-0" style={{ borderColor: divider }}><td className="whitespace-nowrap px-3 py-3 mono text-[11px]" style={{ color: "var(--text-tertiary)" }}>{event.date}</td><td className="whitespace-nowrap px-3 py-3" style={{ color: LAYER_COLOR[event.layer] ?? "var(--text-secondary)" }}>{event.layer}</td><td className="px-3 py-3" style={{ color: "var(--text)" }}>{event.title}</td><td className="whitespace-nowrap px-3 py-3 mono text-[11px]" style={{ color: "var(--text-secondary)" }}>{event.source}</td><td className="px-3 py-3 text-right mono text-[11px]" style={{ color: "var(--evidence)" }}>{pct(event.confidence)}</td></tr>)}</tbody>
+              </table>
+            </div>
+          </section>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

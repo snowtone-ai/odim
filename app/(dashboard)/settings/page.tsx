@@ -11,12 +11,11 @@ import { SettingsShell, SETTINGS_ICONS } from "@/components/ui/settings-shell";
 import type { SettingsSection } from "@/components/ui/settings-shell";
 import { getMessages } from "@/lib/i18n/messages";
 import { getLocale } from "@/lib/i18n/locale";
-import { getAdminSettings } from "@/lib/repositories/admin";
+import { getAdminSettings, type IngestionRun, type SourceWatermark } from "@/lib/repositories/admin";
 import { listSeedMemories } from "@/lib/munin/seed";
 import { auditEvents } from "@/lib/data";
 import { SourceHealthPanel } from "@/components/ui/source-health-panel";
 import { HuginnTemplateEditor } from "@/components/ui/huginn-template-editor";
-import type { SourceHealthEntry } from "@/components/ui/source-health-panel";
 import { AlertRuleBuilder } from "@/components/ui/alert-rule-builder";
 import { WebhookSettings } from "@/components/ui/webhook-settings";
 import { WatchtowerWorkflows } from "@/components/ui/watchtower-workflows";
@@ -30,11 +29,13 @@ import { sourceBackedPlan } from "@/lib/data";
 import { billingEnabled } from "@/lib/billing/stripe";
 import { getOrgBilling } from "@/lib/repositories/billing";
 import { listWatchtowerPlaybooks, listWatchtowerRuns } from "@/lib/repositories/watchtower";
+import { listPendingMemoryProposals } from "@/lib/munin/proposals";
 import { buildCalibrationObservations, buildCalibrationReport } from "@/lib/pipeline/calibration";
 import { computeSourceAttribution } from "@/lib/pipeline/attribution";
-import { checkFreshness } from "@/lib/pipeline/freshness";
-
-const defaultSettingsOrgId = process.env.DEFAULT_ORG_ID || "11111111-1111-4111-8111-111111111111";
+import { buildSourceHealthEntries } from "@/lib/pipeline/source-health";
+import { MuninReviewQueue } from "@/components/ui/munin-review-queue";
+import { getMuninReviewContext } from "@/lib/munin/review-auth";
+import sourcesConfig from "../../../config/sources.json" with { type: "json" };
 
 function shortDate(value?: string) {
   if (!value) return "not recorded";
@@ -45,40 +46,63 @@ function isStuckRunning(startedAt: string): boolean {
   return Date.now() - new Date(startedAt).getTime() > 2 * 60 * 60 * 1000;
 }
 
-function buildHealthEntries(
-  watermarks: { sourceId: string; lastSuccessAt: string; lastObservedAt?: string; rawSignalCount: number }[]
-): SourceHealthEntry[] {
-  const freshness = new Map(checkFreshness(watermarks).map((entry) => [entry.sourceId, entry]));
-  return watermarks.map((watermark) => {
-    const entry = freshness.get(watermark.sourceId);
-    return {
-      sourceId: watermark.sourceId,
-      lastSuccessAt: watermark.lastSuccessAt ?? null,
-      lastObservedAt: watermark.lastObservedAt ?? null,
-      rawSignalCount: watermark.rawSignalCount,
-      status: entry?.status === "fresh" ? "healthy" : entry?.status === "stale" ? "stale" : "failing",
-      slaHours: entry?.slaHours,
-      hoursSinceUpdate: entry?.hoursSinceUpdate
-    };
-  });
+const configuredSources = sourcesConfig.sources.map((source) => ({ id: source.id, enabled: source.enabled }));
+
+function buildHealthEntries(ingestionRuns: IngestionRun[], watermarks: SourceWatermark[], forceFixtureOnly: boolean) {
+  return buildSourceHealthEntries(configuredSources, ingestionRuns, watermarks, forceFixtureOnly);
 }
 
 export default async function SettingsPage() {
   const locale = await getLocale();
   const messages = getMessages(locale);
   const screen = messages.screens.settings;
-  const [settings, seeds, watchtower, billing, invites] = await Promise.all([
-    getAdminSettings({ orgId: defaultSettingsOrgId }).catch((err: Error) => {
+  const reviewContext = await getMuninReviewContext().catch((error: unknown) => {
+    console.error("[settings] Munin review context failed:", error instanceof Error ? error.message : error);
+    return null;
+  });
+  if (!reviewContext) {
+    return (
+      <Screen title="Settings">
+        <div className="flex flex-col gap-3 p-8">
+          <p className="mono text-[13px]" style={{ color: "var(--critical)" }}>
+            {locale === "ja"
+              ? "管理者の組織セッションを確認できません。"
+              : "An authorized organization administrator session is required."}
+          </p>
+        </div>
+      </Screen>
+    );
+  }
+  const settingsOrgId = reviewContext.orgId;
+  const reviewQueuePromise = reviewContext
+    ? listPendingMemoryProposals(reviewContext.orgId)
+        .then((proposals) => ({ proposals, error: undefined as string | undefined }))
+        .catch((error: unknown) => {
+          console.error("[settings] listPendingMemoryProposals failed:", error instanceof Error ? error.message : error);
+          return {
+            proposals: [],
+            error: locale === "ja" ? "レビューキューを読み込めませんでした。" : "The review queue could not be loaded."
+          };
+        })
+    : Promise.resolve({
+        proposals: [],
+        error: locale === "ja"
+          ? "組織セッションが必要です。"
+          : "An authorized organization session is required."
+      });
+  const [settings, seeds, watchtower, billing, invites, reviewQueue] = await Promise.all([
+    getAdminSettings({ orgId: settingsOrgId }).catch((err: Error) => {
       console.error("[settings] getAdminSettings failed:", err.message);
       return null;
     }),
-    listSeedMemories(defaultSettingsOrgId).catch(() => [] as Awaited<ReturnType<typeof listSeedMemories>>),
-    listWatchtowerRuns({ orgId: defaultSettingsOrgId }).catch(() => ({ runs: [] as Awaited<ReturnType<typeof listWatchtowerRuns>>["runs"] })),
-    getOrgBilling(defaultSettingsOrgId).catch((err: Error) => {
+    listSeedMemories(settingsOrgId).catch(() => [] as Awaited<ReturnType<typeof listSeedMemories>>),
+    listWatchtowerRuns({ orgId: settingsOrgId }).catch(() => ({ runs: [] as Awaited<ReturnType<typeof listWatchtowerRuns>>["runs"] })),
+    getOrgBilling(settingsOrgId).catch((err: Error) => {
       console.error("[settings] getOrgBilling failed:", err.message);
       return null;
     }),
-    listInvites({ orgId: defaultSettingsOrgId }).catch(() => [] as Awaited<ReturnType<typeof listInvites>>)
+    listInvites({ orgId: settingsOrgId }).catch(() => [] as Awaited<ReturnType<typeof listInvites>>),
+    reviewQueuePromise
   ]);
 
   if (!settings) {
@@ -131,10 +155,10 @@ export default async function SettingsPage() {
             >
               <span className="flex items-center gap-2.5" style={{ color: "var(--text-primary)" }}>
                 <span
-                  className="mono inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px]"
+                  className="mono inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[11px]"
                   style={{
-                    border: `1px solid ${step.done ? "var(--rune)" : "var(--line-soft)"}`,
-                    color: step.done ? "var(--rune)" : "var(--text-tertiary)"
+                    border: `1px solid ${step.done ? "var(--signal)" : "var(--line-soft)"}`,
+                    color: step.done ? "var(--signal)" : "var(--text-tertiary)"
                   }}
                 >
                   {step.done ? "✓" : ""}
@@ -142,13 +166,13 @@ export default async function SettingsPage() {
                 {step.label}
               </span>
               {step.done ? (
-                <span className="mono shrink-0 text-[10px] uppercase tracking-[0.1em]" style={{ color: "var(--rune)" }}>
+                <span className="mono shrink-0 text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--signal)" }}>
                   {screen.gettingStarted.done}
                 </span>
               ) : step.href ? (
                 <a
                   href={step.href}
-                  className="mono shrink-0 text-[10px] uppercase tracking-[0.1em]"
+                  className="mono inline-flex min-h-11 items-center text-[12px] uppercase tracking-[0.1em] underline-offset-2 focus-visible:outline-2 focus-visible:outline-[var(--signal)]"
                   style={{ color: "var(--text-secondary)" }}
                 >
                   {screen.gettingStarted.open} →
@@ -217,7 +241,7 @@ export default async function SettingsPage() {
       icon: SETTINGS_ICONS.apiKeys,
       content: (
         <ApiKeyManager
-          orgId={defaultSettingsOrgId}
+          orgId={settingsOrgId}
           initialKeys={settings.apiKeys.map((key) => ({
             id: key.id,
             name: key.name,
@@ -238,7 +262,7 @@ export default async function SettingsPage() {
       icon: SETTINGS_ICONS.permissions,
       content: (
         <OrgMembersPanel
-          orgId={defaultSettingsOrgId}
+          orgId={settingsOrgId}
           members={settings.members.map((member) => ({
             id: member.id,
             displayName: member.displayName,
@@ -268,7 +292,22 @@ export default async function SettingsPage() {
             orgId: seed.orgId
           }))}
           labels={screen.seed}
-          orgId={defaultSettingsOrgId}
+          orgId={settingsOrgId}
+        />
+      )
+    },
+    {
+      id: "muninReview",
+      title: locale === "ja" ? "Muninレビュー" : "Munin review",
+      description: locale === "ja"
+        ? "AIが提案した記憶を、出典と基準時点を確認してから明示的に承認します。"
+        : "Review AI-proposed memory with its source and as-of time before explicit approval.",
+      icon: SETTINGS_ICONS.customKnowledge,
+      content: (
+        <MuninReviewQueue
+          initialProposals={reviewQueue.proposals}
+          initialError={reviewQueue.error}
+          locale={locale === "ja" ? "ja" : "en"}
         />
       )
     },
@@ -286,7 +325,7 @@ export default async function SettingsPage() {
       icon: SETTINGS_ICONS.ingestion,
       content: (
         <>
-          <div className="mono text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
+          <div className="mono text-[11px] uppercase tracking-[0.12em]" style={{ color: "var(--text-tertiary)" }}>
             {settings.source} · scheduled scrape / backfill observability
           </div>
           <div className="mt-4 grid gap-3">
@@ -297,7 +336,7 @@ export default async function SettingsPage() {
             ) : null}
             {settings.ingestionRuns.map((run) => {
               const stuck = run.status === "running" && isStuckRunning(run.startedAt);
-              const statusColor = run.status === "failed" || stuck ? "var(--critical)" : "var(--rune)";
+              const statusColor = run.status === "failed" || stuck ? "var(--critical)" : "var(--signal)";
               return (
                 <div
                   className="pb-3"
@@ -312,7 +351,7 @@ export default async function SettingsPage() {
                       {run.rawSignalCount} signals
                     </span>
                   </div>
-                  <div className="mono mt-1 text-[10px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
+                  <div className="mono mt-1 text-[11px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
                     {shortDate(run.startedAt)} · limit {run.sourceLimit} · {run.alertCount} alerts
                   </div>
                   {run.error ? (
@@ -338,7 +377,7 @@ export default async function SettingsPage() {
               >
                 <span className="truncate" style={{ color: "var(--text-primary)" }}>{watermark.sourceId}</span>
                 <span className="mono" style={{ color: "var(--text-secondary)" }}>{shortDate(watermark.lastObservedAt)}</span>
-                <span className="mono" style={{ color: "var(--rune)" }}>{watermark.rawSignalCount}</span>
+                <span className="mono" style={{ color: "var(--signal)" }}>{watermark.rawSignalCount}</span>
               </div>
             ))}
           </div>
@@ -356,14 +395,14 @@ export default async function SettingsPage() {
           <div className="mt-4 max-h-[420px] overflow-y-auto">
             {auditEvents.map((event) => (
               <div
-                className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3 py-2.5 text-[13px] transition-colors duration-[var(--dur-fast)] hover:bg-[var(--ink-750)]"
+                className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3 py-2.5 text-[13px] transition-colors duration-[120ms] hover:bg-[var(--surface-hover)] motion-reduce:transition-none"
                 style={{ borderBottom: "1px solid var(--line-faint)" }}
                 key={event.id}
               >
                 <span className="mono truncate text-[12px]" style={{ color: "var(--text-primary)" }}>{event.event}</span>
                 <span className="truncate" style={{ color: "var(--text-secondary)" }}>{event.actor}</span>
                 <span className="mono truncate text-[12px]" style={{ color: "var(--text-secondary)" }}>{event.source}</span>
-                <span className="mono text-right text-[12px]" style={{ color: "var(--rune)" }}>{event.confidence}</span>
+                <span className="mono text-right text-[12px]" style={{ color: "var(--signal)" }}>{event.confidence}</span>
               </div>
             ))}
           </div>
@@ -377,7 +416,7 @@ export default async function SettingsPage() {
       icon: SETTINGS_ICONS.ontology,
       content: (
         <>
-          <div className="mono text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
+          <div className="mono text-[11px] uppercase tracking-[0.12em]" style={{ color: "var(--text-tertiary)" }}>
             {locale === "ja" ? "公開・組織別分離" : "public-or-org isolation"}
           </div>
           <div className="mt-3 text-[13px]" style={{ color: "var(--text-secondary)" }}>
@@ -385,7 +424,7 @@ export default async function SettingsPage() {
               ? "オントロジー・アラート・監査・APIキー・Muninのデータパスは、org_idまたは公開可視性でスコープ管理されています。"
               : "Ontology, alert, audit, API key, and Munin data paths are scoped by org_id or public visibility."}
           </div>
-          <div className="mono mt-4 text-[10px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
+          <div className="mono mt-4 text-[11px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
             {locale === "ja" ? "出典バックドコントロール / RLS適用" : "source-backed control / rls-backed"}
           </div>
         </>
@@ -399,12 +438,12 @@ export default async function SettingsPage() {
       content: (
         <div className="grid gap-5">
           <SourceHealthPanel
-            sources={buildHealthEntries(settings.sourceWatermarks)}
+            sources={buildHealthEntries(settings.ingestionRuns, settings.sourceWatermarks, settings.source === "fallback")}
             messages={screen.sourceHealth}
             attribution={attribution}
           />
           <div>
-            <div className="mono mb-2 text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--rune-dim)" }}>
+            <div className="mono mb-2 text-[11px] uppercase tracking-[0.12em]" style={{ color: "var(--text-tertiary)" }}>
               {locale === "ja" ? "信頼度較正" : "Confidence calibration"}
             </div>
             <div className="grid gap-2">
@@ -414,7 +453,7 @@ export default async function SettingsPage() {
                     {bucket.range[0].toFixed(1)}-{bucket.range[1].toFixed(1)}
                   </span>
                   <div className="h-2 overflow-hidden rounded-full" style={{ background: "var(--surface-secondary)" }}>
-                    <div className="h-full rounded-full" style={{ width: `${bucket.actual * 100}%`, background: "var(--rune)" }} />
+                    <div className="h-full" style={{ width: `${bucket.actual * 100}%`, background: "var(--signal)" }} />
                   </div>
                   <span className="mono" style={{ color: "var(--text-secondary)" }}>
                     {Math.round(bucket.actual * 100)}%
@@ -422,7 +461,7 @@ export default async function SettingsPage() {
                 </div>
               ))}
             </div>
-            <div className="mono mt-3 text-[10px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>
+            <div className="mono mt-3 text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>
               Brier {calibration.overallBrier.toFixed(3)}
             </div>
           </div>
@@ -459,7 +498,18 @@ export default async function SettingsPage() {
 
   return (
     <Screen title={screen.title}>
-      <SettingsShell sections={sections} />
+      <SettingsShell
+        sections={sections}
+        categoryLabels={locale === "ja"
+          ? {
+              gettingStarted: "はじめに",
+              signals: "シグナルとワークフロー",
+              data: "データとナレッジ",
+              access: "アクセスとワークスペース",
+              audit: "監査"
+            }
+          : undefined}
+      />
     </Screen>
   );
 }

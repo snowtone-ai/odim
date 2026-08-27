@@ -81,7 +81,7 @@ const sections = [
 export default function TermsPage() {
   return (
     <PublicShell title="Terms of Service">
-      <p className="mono mt-3 text-[11px] uppercase tracking-[0.12em]" style={{ color: "var(--text-quaternary)" }}>
+      <p className="mono mt-3 text-[11px] tracking-[0.12em]" style={{ color: "color-mix(in srgb, var(--text) 48%, transparent)" }}>
         Last updated: {LAST_UPDATED}
       </p>
       <ProseSections sections={sections} />

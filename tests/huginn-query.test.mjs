@@ -133,7 +133,7 @@ test("Huginn prepares recall draft when Supabase schema is not applied", async (
 
     assert.equal(response.context.source, "fallback");
     assert.equal(response.munin.persisted, false);
-    assert.ok(response.reasoningTrace.some((step) => step.summary.includes("Prepared org-scoped Munin recall memory draft")));
+    assert.ok(response.reasoningTrace.some((step) => step.summary.includes("non-persisted org-scoped Munin recall draft")));
   } finally {
     for (const [key, value] of Object.entries(previous)) {
       if (value === undefined) delete process.env[key];
@@ -143,7 +143,7 @@ test("Huginn prepares recall draft when Supabase schema is not applied", async (
   }
 });
 
-test("Huginn does not hide Supabase write schema errors in production", async () => {
+test("Huginn never auto-persists an active fact when production retrieval is unavailable", async () => {
   const previous = {
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -164,20 +164,18 @@ test("Huginn does not hide Supabase write schema errors in production", async ()
     });
 
   try {
-    await assert.rejects(
-      () =>
-        answerHuginnQuestion({
-          orgId: "demo-org",
-          question: "Which source-backed alerts matter?",
-          generate: async () => ({
-            answer: "Fallback source-backed context is not acceptable in production.",
-            model: "test-model",
-            confidence: 0.7,
-            sources: ["test-generator"]
-          })
-        }),
-      /read failed|Munin recall write failed/
-    );
+    const response = await answerHuginnQuestion({
+      orgId: "demo-org",
+      question: "Which source-backed alerts matter?",
+      generate: async () => ({
+        answer: "Fallback source-backed context is not acceptable in production.",
+        model: "test-model",
+        confidence: 0.7,
+        sources: ["test-generator"]
+      })
+    });
+    assert.equal(response.status.code, "retrieval_unavailable");
+    assert.equal(response.munin.persisted, false);
   } finally {
     for (const [key, value] of Object.entries(previous)) {
       if (value === undefined) delete process.env[key];

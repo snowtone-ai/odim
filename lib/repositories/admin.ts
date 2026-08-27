@@ -32,6 +32,16 @@ export type IngestionRun = {
   startedAt: string;
   finishedAt?: string;
   error?: string;
+  sourceReports?: SourceReport[];
+};
+
+export type SourceReport = {
+  id: string;
+  ok: boolean;
+  count: number;
+  lastObservedAt?: string;
+  error?: string;
+  skipped?: string;
 };
 
 export type SourceWatermark = {
@@ -92,7 +102,8 @@ const fallbackIngestionRuns: IngestionRun[] = [
     alertCount: 4,
     sourceLimit: 50,
     startedAt: "2026-05-27T08:17:00.000Z",
-    finishedAt: "2026-05-27T08:18:12.000Z"
+    finishedAt: "2026-05-27T08:18:12.000Z",
+    sourceReports: []
   },
   {
     id: deterministicUuid("ingestion_run", "fallback-backfill"),
@@ -102,7 +113,8 @@ const fallbackIngestionRuns: IngestionRun[] = [
     alertCount: 37,
     sourceLimit: 500,
     startedAt: "2026-05-26T01:00:00.000Z",
-    finishedAt: "2026-05-26T01:08:42.000Z"
+    finishedAt: "2026-05-26T01:08:42.000Z",
+    sourceReports: []
   }
 ];
 
@@ -194,7 +206,7 @@ export async function getAdminSettings(context: OrgContext = {}) {
     // ALTER TABLE source_watermarks ADD COLUMN org_id uuid; plus .eq("org_id", orgId) filters.
     client
       .from("ingestion_runs")
-      .select("id, mode, status, source_limit, raw_signal_count, alert_count, error, started_at, finished_at")
+      .select("id, mode, status, source_limit, raw_signal_count, alert_count, error, source_report, started_at, finished_at")
       .order("started_at", { ascending: false })
       .limit(10),
     client
@@ -259,7 +271,22 @@ export async function getAdminSettings(context: OrgContext = {}) {
       sourceLimit: Number(row.source_limit ?? 0),
       startedAt: String(row.started_at),
       finishedAt: row.finished_at ? String(row.finished_at) : undefined,
-      error: row.error ? String(row.error) : undefined
+      error: row.error ? String(row.error) : undefined,
+      sourceReports: Array.isArray(row.source_report)
+        ? row.source_report.flatMap((report) => {
+            if (!report || typeof report !== "object") return [];
+            const source = report as Record<string, unknown>;
+            if (typeof source.id !== "string") return [];
+            return [{
+              id: source.id,
+              ok: source.ok === true,
+              count: Number(source.count ?? 0),
+              lastObservedAt: typeof source.lastObservedAt === "string" ? source.lastObservedAt : undefined,
+              error: typeof source.error === "string" ? source.error : undefined,
+              skipped: typeof source.skipped === "string" ? source.skipped : undefined
+            } satisfies SourceReport];
+          })
+        : []
     })),
     sourceWatermarks: (sourceWatermarksResult.data ?? []).map((row) => ({
       sourceId: String(row.source_id),

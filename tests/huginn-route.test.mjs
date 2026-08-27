@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { resetRequestRateLimit } from "../lib/api/rate-limit.ts";
 import { issueApiKey, toApiKeyRow } from "../lib/auth/api-keys.ts";
@@ -22,6 +23,7 @@ function snapshotEnv() {
     AI_API_KEY: process.env.AI_API_KEY,
     API_KEY_PEPPER: process.env.API_KEY_PEPPER,
     AUTH_REQUIRED: process.env.AUTH_REQUIRED,
+    ODIM_RUNTIME_ENV: process.env.ODIM_RUNTIME_ENV,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -41,6 +43,19 @@ test("Huginn route rejects missing question", async () => {
   process.env.AUTH_REQUIRED = "false";
   try {
     const response = await POST(jsonRequest({ orgId: orgA }));
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), { error: "question is required" });
+  } finally {
+    restoreEnv(previous);
+  }
+});
+
+test("Huginn route validates the request DTO before invoking the runtime", async () => {
+  resetRequestRateLimit();
+  const previous = snapshotEnv();
+  process.env.AUTH_REQUIRED = "false";
+  try {
+    const response = await POST(jsonRequest({ orgId: orgA, question: 42 }));
     assert.equal(response.status, 400);
     assert.deepEqual(await response.json(), { error: "question is required" });
   } finally {
@@ -114,7 +129,7 @@ test("Huginn route rejects authenticated orgId override", async () => {
   }
 });
 
-test("Huginn route returns JSON 500 on provider error", async () => {
+test("Huginn route returns a safe abstain payload on provider error", async () => {
   resetRequestRateLimit();
   const previous = snapshotEnv();
   process.env.AUTH_REQUIRED = "false";
@@ -123,9 +138,18 @@ test("Huginn route returns JSON 500 on provider error", async () => {
   try {
     const response = await POST(jsonRequest({ orgId: orgA, question: "Which alerts matter?" }));
     const payload = await response.json();
-    assert.equal(response.status, 500);
-    assert.match(payload.error, /AI_API_KEY/);
+    assert.equal(response.status, 200);
+    assert.equal(payload.status.code, "provider_unavailable");
+    assert.doesNotMatch(JSON.stringify(payload), /AI_API_KEY/);
   } finally {
     restoreEnv(previous);
   }
+});
+
+test("Huginn Server Action derives org scope from SSO and applies a bounded action rate limit", () => {
+  const action = readFileSync(new URL("../app/actions/huginn.ts", import.meta.url), "utf8");
+  assert.match(action, /verifySsoSession/);
+  assert.match(action, /requestedOrgId !== session\.orgId/);
+  assert.match(action, /checkRequestRateLimit/);
+  assert.match(action, /maxRequests: 10/);
 });

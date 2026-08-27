@@ -61,6 +61,9 @@ const EMPTY_FORM: AlertRuleForm = {
   enabled: true
 };
 
+const controlClass = "min-h-11 border bg-[var(--field)] px-3 text-[12px] text-[var(--text-primary)] outline-none transition-[background-color,border-color,color] duration-[var(--motion-micro)] focus-visible:ring-2 focus-visible:ring-[var(--signal)]";
+const actionClass = "mono inline-flex min-h-11 items-center justify-center border px-3 text-[11px] uppercase tracking-[0.08em] transition-[background-color,border-color,color,transform] duration-[var(--motion-micro)] hover:bg-[var(--signal-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)] motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-50";
+
 export function AlertRuleBuilder({
   initialRules,
   messages
@@ -73,13 +76,16 @@ export function AlertRuleBuilder({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<AlertRuleForm>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState("");
 
   function openAdd() {
     setForm(EMPTY_FORM);
     setEditingId(null);
     setShowForm(true);
     setError(null);
+    setFeedback("");
   }
 
   function openEdit(rule: ExistingRule) {
@@ -94,6 +100,7 @@ export function AlertRuleBuilder({
     setEditingId(rule.id);
     setShowForm(true);
     setError(null);
+    setFeedback("");
   }
 
   function closeForm() {
@@ -109,6 +116,7 @@ export function AlertRuleBuilder({
     }
     setSaving(true);
     setError(null);
+    setFeedback("");
     try {
       const payload = {
         name: form.name.trim(),
@@ -119,17 +127,14 @@ export function AlertRuleBuilder({
       };
 
       if (editingId) {
-        const res = await fetch(`/api/alert-rules?id=${editingId}`, {
+        const res = await fetch("/api/alert-rules?id=" + editingId, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
         if (!res.ok) throw new Error(await res.text());
-        setRules((prev) =>
-          prev.map((r) =>
-            r.id === editingId ? { ...r, ...payload } : r
-          )
-        );
+        setRules((prev) => prev.map((rule) => rule.id === editingId ? { ...rule, ...payload } : rule));
+        setFeedback("Rule updated");
       } else {
         const res = await fetch("/api/alert-rules", {
           method: "POST",
@@ -139,6 +144,7 @@ export function AlertRuleBuilder({
         if (!res.ok) throw new Error(await res.text());
         const { rule } = await res.json() as { rule: ExistingRule };
         setRules((prev) => [rule, ...prev]);
+        setFeedback("Rule added");
       }
       closeForm();
     } catch (err) {
@@ -149,273 +155,190 @@ export function AlertRuleBuilder({
   }
 
   async function handleDelete(id: string) {
+    setPendingId(id);
+    setError(null);
     try {
-      const res = await fetch(`/api/alert-rules?id=${id}`, { method: "DELETE" });
+      const res = await fetch("/api/alert-rules?id=" + id, { method: "DELETE" });
       if (!res.ok) throw new Error(await res.text());
-      setRules((prev) => prev.filter((r) => r.id !== id));
+      setRules((prev) => prev.filter((rule) => rule.id !== id));
+      setFeedback("Rule deleted");
     } catch (err) {
-      console.warn("Delete failed", err);
+      setError(err instanceof Error ? err.message : "Delete failed");
+    } finally {
+      setPendingId(null);
     }
   }
 
   async function handleToggle(rule: ExistingRule) {
+    setPendingId(rule.id);
+    setError(null);
     try {
-      const res = await fetch(`/api/alert-rules?id=${rule.id}`, {
+      const res = await fetch("/api/alert-rules?id=" + rule.id, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled: !rule.enabled })
       });
       if (!res.ok) throw new Error(await res.text());
-      setRules((prev) =>
-        prev.map((r) => (r.id === rule.id ? { ...r, enabled: !r.enabled } : r))
-      );
+      setRules((prev) => prev.map((candidate) => candidate.id === rule.id ? { ...candidate, enabled: !candidate.enabled } : candidate));
+      setFeedback(rule.enabled ? "Rule paused" : "Rule enabled");
     } catch (err) {
-      console.warn("Toggle failed", err);
+      setError(err instanceof Error ? err.message : "Toggle failed");
+    } finally {
+      setPendingId(null);
     }
   }
 
   return (
     <div>
-      {/* Existing rules */}
-      <div className="grid gap-2.5 mb-3">
-        {rules.map((rule) => (
-          <div
-            key={rule.id}
-            className="pb-3"
-            style={{ borderBottom: "1px solid var(--line-faint)" }}
-          >
-            <div className="flex items-center justify-between gap-2 text-[13px]">
-              <span
-                className="truncate"
-                style={{
-                  color: rule.enabled ? "var(--text-primary)" : "var(--text-tertiary)"
-                }}
-              >
-                {rule.name}
-              </span>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => handleToggle(rule)}
-                  className="mono text-[9px] uppercase tracking-[0.1em] px-1.5 py-0.5 rounded transition-colors"
-                  style={{
-                    background: rule.enabled ? "rgba(201,169,97,0.1)" : "var(--surface-tertiary)",
-                    border: "1px solid var(--line-faint)",
-                    color: rule.enabled ? "var(--rune)" : "var(--text-tertiary)"
-                  }}
-                >
-                  {rule.enabled ? "On" : "Off"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openEdit(rule)}
-                  className="mono text-[9px] uppercase tracking-[0.1em] px-1.5 py-0.5 rounded transition-colors hover:text-[var(--rune)]"
-                  style={{ color: "var(--text-tertiary)" }}
-                >
-                  {messages.editRule}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(rule.id)}
-                  className="mono text-[9px] uppercase tracking-[0.1em] px-1.5 py-0.5 rounded transition-colors hover:text-[var(--critical)]"
-                  style={{ color: "var(--text-tertiary)" }}
-                >
-                  {messages.deleteRule}
-                </button>
-              </div>
+      <div className="divide-y border-y" style={{ borderColor: "var(--line-soft)" }}>
+        {rules.length ? rules.map((rule) => (
+          <div key={rule.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+            <div className="min-w-0">
+              <p className="truncate text-[13px]" style={{ color: rule.enabled ? "var(--text-primary)" : "var(--text-tertiary)" }}>{rule.name}</p>
+              <p className="mono mt-1 text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-tertiary)" }}>
+                {rule.layer} · {rule.destination} · {Math.round(rule.minConfidence * 100)}%
+              </p>
             </div>
-            <div className="mono mt-1 text-[10px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
-              {rule.layer} · {rule.destination} · {Math.round(rule.minConfidence * 100)}%
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                aria-pressed={rule.enabled}
+                onClick={() => handleToggle(rule)}
+                disabled={pendingId !== null}
+                className={actionClass}
+                style={{ borderColor: rule.enabled ? "var(--evidence)" : "var(--line-soft)", color: rule.enabled ? "var(--evidence)" : "var(--text-tertiary)" }}
+              >
+                {rule.enabled ? "On" : "Off"}
+              </button>
+              <button
+                type="button"
+                onClick={() => openEdit(rule)}
+                disabled={pendingId !== null}
+                className={actionClass}
+                style={{ borderColor: "var(--line-soft)", color: "var(--text-tertiary)" }}
+              >
+                {messages.editRule}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(rule.id)}
+                disabled={pendingId !== null}
+                className={actionClass}
+                style={{ borderColor: "var(--line-soft)", color: "var(--critical)" }}
+              >
+                {messages.deleteRule}
+              </button>
             </div>
           </div>
-        ))}
+        )) : (
+          <p role="status" className="py-5 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
+            No alert rules configured.
+          </p>
+        )}
       </div>
 
-      {/* Inline form */}
+      <div role="status" aria-live="polite" className="min-h-5 py-2 text-[11px]" style={{ color: "var(--evidence)" }}>
+        {feedback}
+      </div>
+
       {showForm ? (
-        <div
-          className="rounded-[var(--radius-md)] p-4 mt-3"
-          style={{
-            background: "var(--surface-secondary)",
-            border: "1px solid var(--line-faint)"
-          }}
-        >
-          <div className="grid gap-3">
-            {/* Name */}
+        <div className="border-y py-4" style={{ borderColor: "var(--line-soft)" }}>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h3 className="mono text-[12px] uppercase tracking-[0.1em]" style={{ color: "var(--text-primary)" }}>
+              {editingId ? messages.editRule : messages.addRule}
+            </h3>
+            <button type="button" onClick={closeForm} disabled={saving} className={actionClass} style={{ color: "var(--text-tertiary)" }}>
+              {messages.cancel}
+            </button>
+          </div>
+
+          <div className="grid gap-4">
             <div>
-              <label className="mono text-[9px] uppercase tracking-[0.1em] block mb-1" style={{ color: "var(--text-tertiary)" }}>
+              <label htmlFor="alert-rule-name" className="mono mb-1 block text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-tertiary)" }}>
                 {messages.labelName}
               </label>
               <input
+                id="alert-rule-name"
                 type="text"
                 value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                className="w-full rounded px-2.5 py-1.5 text-[12px] outline-none"
-                style={{
-                  background: "var(--surface-primary)",
-                  border: "1px solid var(--line-faint)",
-                  color: "var(--text-primary)"
-                }}
+                onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                className={controlClass + " w-full"}
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              {/* Layer */}
+            <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mono text-[9px] uppercase tracking-[0.1em] block mb-1" style={{ color: "var(--text-tertiary)" }}>
+                <label htmlFor="alert-rule-layer" className="mono mb-1 block text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-tertiary)" }}>
                   {messages.labelLayer}
                 </label>
-                <select
-                  value={form.layer}
-                  onChange={(e) => setForm((f) => ({ ...f, layer: e.target.value }))}
-                  className="w-full rounded px-2.5 py-1.5 text-[12px] outline-none"
-                  style={{
-                    background: "var(--surface-primary)",
-                    border: "1px solid var(--line-faint)",
-                    color: "var(--text-primary)"
-                  }}
-                >
-                  {LAYER_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
+                <select id="alert-rule-layer" value={form.layer} onChange={(event) => setForm((current) => ({ ...current, layer: event.target.value }))} className={controlClass + " w-full"}>
+                  {LAYER_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
               </div>
-
-              {/* Destination */}
               <div>
-                <label className="mono text-[9px] uppercase tracking-[0.1em] block mb-1" style={{ color: "var(--text-tertiary)" }}>
+                <label htmlFor="alert-rule-destination" className="mono mb-1 block text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-tertiary)" }}>
                   {messages.labelDestination}
                 </label>
-                <select
-                  value={form.destination}
-                  onChange={(e) => setForm((f) => ({ ...f, destination: e.target.value }))}
-                  className="w-full rounded px-2.5 py-1.5 text-[12px] outline-none"
-                  style={{
-                    background: "var(--surface-primary)",
-                    border: "1px solid var(--line-faint)",
-                    color: "var(--text-primary)"
-                  }}
-                >
-                  {DESTINATION_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
+                <select id="alert-rule-destination" value={form.destination} onChange={(event) => setForm((current) => ({ ...current, destination: event.target.value }))} className={controlClass + " w-full"}>
+                  {DESTINATION_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              {/* Min confidence */}
+            <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mono text-[9px] uppercase tracking-[0.1em] block mb-1 flex items-center justify-between" style={{ color: "var(--text-tertiary)" }}>
+                <label htmlFor="alert-rule-confidence" className="mono mb-1 flex items-center justify-between text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-tertiary)" }}>
                   <span>{messages.labelMinConf}</span>
-                  <span style={{ color: "var(--rune)" }}>{form.minConfidence}%</span>
+                  <span style={{ color: "var(--evidence)" }}>{form.minConfidence}%</span>
                 </label>
                 <input
+                  id="alert-rule-confidence"
                   type="range"
                   min={0}
                   max={100}
                   step={5}
                   value={form.minConfidence}
-                  onChange={(e) => setForm((f) => ({ ...f, minConfidence: Number(e.target.value) }))}
-                  className="w-full"
-                  style={{ accentColor: "var(--rune)" }}
+                  onChange={(event) => setForm((current) => ({ ...current, minConfidence: Number(event.target.value) }))}
+                  className="min-h-11 w-full accent-[var(--evidence)]"
                 />
               </div>
-
-              {/* Priority */}
               <div>
-                <label className="mono text-[9px] uppercase tracking-[0.1em] block mb-1" style={{ color: "var(--text-tertiary)" }}>
+                <label htmlFor="alert-rule-priority" className="mono mb-1 block text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-tertiary)" }}>
                   {messages.labelPriority}
                 </label>
-                <select
-                  value={form.priority}
-                  onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value }))}
-                  className="w-full rounded px-2.5 py-1.5 text-[12px] outline-none"
-                  style={{
-                    background: "var(--surface-primary)",
-                    border: "1px solid var(--line-faint)",
-                    color: "var(--text-primary)"
-                  }}
-                >
-                  {PRIORITY_OPTIONS.map((p) => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
+                <select id="alert-rule-priority" value={form.priority} onChange={(event) => setForm((current) => ({ ...current, priority: event.target.value }))} className={controlClass + " w-full"}>
+                  {PRIORITY_OPTIONS.map((priority) => <option key={priority} value={priority}>{priority}</option>)}
                 </select>
               </div>
             </div>
 
-            {/* Enabled toggle */}
-            <div className="flex items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => setForm((f) => ({ ...f, enabled: !f.enabled }))}
-                className="w-8 h-4 rounded-full transition-colors relative"
-                style={{
-                  background: form.enabled ? "var(--rune)" : "var(--line-faint)"
-                }}
-              >
-                <span
-                  className="absolute top-0.5 rounded-full transition-all"
-                  style={{
-                    left: form.enabled ? "calc(100% - 14px)" : "2px",
-                    width: 12,
-                    height: 12,
-                    background: "white"
-                  }}
-                />
-              </button>
-              <span className="mono text-[10px] uppercase tracking-[0.1em]" style={{ color: "var(--text-secondary)" }}>
-                {messages.labelEnabled}
+            <button
+              type="button"
+              aria-pressed={form.enabled}
+              onClick={() => setForm((current) => ({ ...current, enabled: !current.enabled }))}
+              className="flex min-h-11 items-center justify-between border px-3 text-left transition-colors duration-[var(--motion-micro)] hover:bg-[var(--signal-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)] motion-reduce:transition-none"
+              style={{ borderColor: form.enabled ? "var(--evidence)" : "var(--line-soft)" }}
+            >
+              <span className="mono text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-secondary)" }}>{messages.labelEnabled}</span>
+              <span className="mono text-[11px] uppercase tracking-[0.08em]" style={{ color: form.enabled ? "var(--evidence)" : "var(--text-tertiary)" }}>
+                {form.enabled ? "On" : "Off"}
               </span>
-            </div>
+            </button>
 
-            {error && (
-              <div className="text-[11px]" style={{ color: "var(--critical)" }}>
-                {error}
-              </div>
-            )}
+            {error ? <div role="alert" className="text-[12px]" style={{ color: "var(--critical)" }}>{error}</div> : null}
 
-            <div className="flex gap-2 justify-end">
-              <button
-                type="button"
-                onClick={closeForm}
-                disabled={saving}
-                className="mono text-[10px] uppercase tracking-[0.1em] px-3 py-1.5 rounded transition-colors"
-                style={{
-                  background: "var(--surface-tertiary)",
-                  border: "1px solid var(--line-faint)",
-                  color: "var(--text-secondary)"
-                }}
-              >
+            <div className="flex flex-wrap justify-end gap-2">
+              <button type="button" onClick={closeForm} disabled={saving} className={actionClass} style={{ color: "var(--text-tertiary)" }}>
                 {messages.cancel}
               </button>
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={saving}
-                className="mono text-[10px] uppercase tracking-[0.1em] px-3 py-1.5 rounded transition-colors"
-                style={{
-                  background: saving ? "var(--rune-wash)" : "rgba(201,169,97,0.15)",
-                  border: "1px solid rgba(201,169,97,0.3)",
-                  color: "var(--rune)"
-                }}
-              >
-                {saving ? "…" : messages.save}
+              <button type="button" onClick={handleSave} disabled={saving} className={actionClass} style={{ borderColor: "var(--signal)", color: "var(--signal)" }}>
+                {saving ? "Working…" : messages.save}
               </button>
             </div>
           </div>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={openAdd}
-          className="mono text-[10px] uppercase tracking-[0.1em] px-3 py-1.5 rounded transition-colors hover:brightness-110"
-          style={{
-            background: "rgba(201,169,97,0.08)",
-            border: "1px solid rgba(201,169,97,0.22)",
-            color: "var(--rune)"
-          }}
-        >
+        <button type="button" onClick={openAdd} className={actionClass} style={{ borderColor: "var(--signal)", color: "var(--signal)" }}>
           + {messages.addRule}
         </button>
       )}

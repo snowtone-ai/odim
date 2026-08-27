@@ -1,7 +1,8 @@
 import type { MuninMemory } from "./memory.ts";
+import { tokenize } from "./memory.ts";
 
 function tokens(value: string) {
-  return new Set(value.toLowerCase().replace(/[^a-z0-9]+/g, " ").split(" ").filter((token) => token.length > 2));
+  return tokenize(value);
 }
 
 export function tokenOverlap(left: string, right: string) {
@@ -62,12 +63,12 @@ export function detectContradictions(memories: MuninMemory[]) {
   return contradictions;
 }
 
+/**
+ * Compatibility adapter for v2 callers. v3 deliberately does not select a
+ * winner from recency alone; every contradiction remains reviewable.
+ */
 export function resolveByRecency(contradictions: Array<{ left: MuninMemory; right: MuninMemory; reason: string }>) {
-  return contradictions.map((item) => {
-    const leftTime = new Date(item.left.createdAt).valueOf();
-    const rightTime = new Date(item.right.createdAt).valueOf();
-    return { ...item, winner: leftTime >= rightTime ? item.left : item.right };
-  });
+  return contradictions.map((item) => ({ ...item, winner: undefined, resolution: "needs_review" as const }));
 }
 
 export function extractRecurringPatterns(memories: MuninMemory[]) {
@@ -75,6 +76,7 @@ export function extractRecurringPatterns(memories: MuninMemory[]) {
   return groups.map((cluster) => ({
     frequency: cluster.length,
     content: `Procedure pattern promoted from ${cluster.length} recurring facts: ${cluster[0]?.content ?? ""}`,
-    sourceRefs: cluster.flatMap((memory) => memory.sourceRefs)
+    sourceRefs: cluster.flatMap((memory) => memory.sourceRefs),
+    parentMemoryIds: cluster.map((memory) => memory.id)
   }));
 }

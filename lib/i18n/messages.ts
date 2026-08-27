@@ -20,11 +20,34 @@ export const messages = {
         huginn: "Huginn",
         settings: "Settings"
       },
+      mobileNav: {
+        map: "Map",
+        entity: "Entities",
+        alerts: "Alerts",
+        huginn: "Huginn",
+        settings: "More"
+      },
       commandPalette: {
         hint: "Search entities, alerts, settings…",
         entities: "Entities",
         alerts: "Alerts",
-        settings: "Settings"
+        settings: "Settings",
+        noResults: "No results for"
+      },
+      frame: {
+        railLabel: "Workspace navigation",
+        railNavLabel: "Primary workspace routes",
+        languageLabel: "Interface language",
+        commandLabel: "Search workspace",
+        fixtureStatus: "Fixture data · not live",
+        workspaceNote: "Source → entity → signal → action",
+        threadLabel: "Evidence Thread",
+        thread: {
+          source: "Source",
+          entity: "Entity",
+          signal: "Signal",
+          action: "Action"
+        }
       }
     },
     layers: ["Energy", "Cash", "Land", "Compute", "Water", "Raw Materials", "Logistics"],
@@ -255,9 +278,15 @@ export const messages = {
           colLastSuccess: "Last Success",
           colSignals: "Signals",
           colStatus: "Status",
+          colState: "State",
           statusHealthy: "Healthy",
           statusStale: "Stale",
-          statusFailing: "Failing"
+          statusFailing: "Failing",
+          statusConfigured: "Configured",
+          statusLiveVerified: "Live verified",
+          statusFixtureOnly: "Fixture only",
+          statusSkipped: "Skipped",
+          statusFailed: "Failed"
         },
         alertRuleBuilder: {
           addRule: "Add Rule",
@@ -332,11 +361,34 @@ export const messages = {
         huginn: "Huginn",
         settings: "設定"
       },
+      mobileNav: {
+        map: "マップ",
+        entity: "エンティティ",
+        alerts: "アラート",
+        huginn: "Huginn",
+        settings: "その他"
+      },
       commandPalette: {
         hint: "エンティティ・アラート・設定を検索…",
         entities: "エンティティ",
         alerts: "アラート",
-        settings: "設定"
+        settings: "設定",
+        noResults: "該当なし"
+      },
+      frame: {
+        railLabel: "ワークスペースナビゲーション",
+        railNavLabel: "主要ワークスペースルート",
+        languageLabel: "表示言語",
+        commandLabel: "ワークスペースを検索",
+        fixtureStatus: "フィクスチャデータ・ライブではありません",
+        workspaceNote: "出典 → エンティティ → シグナル → アクション",
+        threadLabel: "Evidence Thread",
+        thread: {
+          source: "出典",
+          entity: "エンティティ",
+          signal: "シグナル",
+          action: "アクション"
+        }
       }
     },
     layers: ["エネルギー", "資本", "土地", "計算資源", "水", "原材料", "物流"],
@@ -567,9 +619,15 @@ export const messages = {
           colLastSuccess: "最終成功",
           colSignals: "シグナル数",
           colStatus: "状態",
+          colState: "確認状態",
           statusHealthy: "正常",
           statusStale: "遅延",
-          statusFailing: "失敗"
+          statusFailing: "失敗",
+          statusConfigured: "設定済み",
+          statusLiveVerified: "ライブ確認済み",
+          statusFixtureOnly: "フィクスチャのみ",
+          statusSkipped: "スキップ",
+          statusFailed: "失敗"
         },
         alertRuleBuilder: {
           addRule: "ルール追加",

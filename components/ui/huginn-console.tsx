@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Panel } from "@/components/ui/panel";
-import { Confidence } from "@/components/ui/confidence";
+import { ChevronDown, ExternalLink, Globe, Map, RefreshCw, Search } from "lucide-react";
 import { HuginnInput } from "@/components/ui/huginn-input";
-import { HuginnIcon } from "@/components/ui/huginn-icon";
 import { EvalButton } from "@/components/ui/eval-button";
+import { EvidenceThread, type EvidenceThreadStep } from "@/components/ui/evidence-thread";
+import { HuginnThinking } from "@/components/ui/huginn-thinking";
 import type { ClientHuginnResponse } from "@/app/actions/huginn";
 import type { LayerKey } from "@/lib/map/types";
 import { useHuginnTemplates } from "@/lib/stores/huginn-templates";
@@ -16,7 +16,6 @@ import { useQueryHistory } from "@/lib/stores/query-history";
 import { SavedSearchBar } from "@/components/ui/saved-search-bar";
 
 type HuginnResponse = ClientHuginnResponse;
-
 type CascadeLayers = Record<string, string>;
 
 type EvalLabels = {
@@ -63,7 +62,6 @@ type Props = {
   action: (question: string, orgId: string, webSearch?: boolean) => Promise<HuginnResponse>;
 };
 
-// Layer keywords to detect map-related queries
 const LAYER_KEYWORDS: Record<string, LayerKey> = {
   energy: "energy", "エネルギー": "energy",
   cash: "cash", capital: "cash", "資本": "cash", "資金": "cash",
@@ -75,16 +73,14 @@ const LAYER_KEYWORDS: Record<string, LayerKey> = {
 };
 
 function detectMapFilter(question: string, answer: string): LayerKey | null {
-  const text = `${question} ${answer}`.toLowerCase();
+  const text = (question + " " + answer).toLowerCase();
   for (const [keyword, layer] of Object.entries(LAYER_KEYWORDS)) {
     if (text.includes(keyword.toLowerCase())) return layer;
   }
   return null;
 }
 
-// Geographic region → map center coordinates
 const REGION_COORDS: Record<string, { lat: number; lng: number; zoom: number }> = {
-  // Countries (EN)
   japan: { lat: 36.2, lng: 138.3, zoom: 5 }, usa: { lat: 39.8, lng: -98.6, zoom: 4 },
   "united states": { lat: 39.8, lng: -98.6, zoom: 4 }, china: { lat: 35.9, lng: 104.2, zoom: 4 },
   india: { lat: 20.6, lng: 78.9, zoom: 5 }, uk: { lat: 53.4, lng: -2.0, zoom: 5.5 },
@@ -100,7 +96,6 @@ const REGION_COORDS: Record<string, { lat: number; lng: number; zoom: number }> 
   texas: { lat: 31.0, lng: -100.0, zoom: 5.5 }, iowa: { lat: 42.0, lng: -93.5, zoom: 6.5 },
   nevada: { lat: 38.8, lng: -116.4, zoom: 6 }, ohio: { lat: 40.4, lng: -82.7, zoom: 6.5 },
   virginia: { lat: 37.4, lng: -78.7, zoom: 6.5 },
-  // Countries (JA)
   "日本": { lat: 36.2, lng: 138.3, zoom: 5 }, "アメリカ": { lat: 39.8, lng: -98.6, zoom: 4 },
   "米国": { lat: 39.8, lng: -98.6, zoom: 4 }, "中国": { lat: 35.9, lng: 104.2, zoom: 4 },
   "インド": { lat: 20.6, lng: 78.9, zoom: 5 }, "イギリス": { lat: 53.4, lng: -2.0, zoom: 5.5 },
@@ -110,26 +105,23 @@ const REGION_COORDS: Record<string, { lat: number; lng: number; zoom: number }> 
   "シンガポール": { lat: 1.35, lng: 103.8, zoom: 10 }, "サウジアラビア": { lat: 24.0, lng: 45.0, zoom: 5 },
   "メキシコ": { lat: 23.6, lng: -102.5, zoom: 5 }, "韓国": { lat: 35.9, lng: 127.8, zoom: 6.5 },
   "インドネシア": { lat: -0.8, lng: 113.9, zoom: 4 }, "オランダ": { lat: 52.1, lng: 5.3, zoom: 7 },
-  // Regions
   "middle east": { lat: 25.0, lng: 45.0, zoom: 4.5 }, "中東": { lat: 25.0, lng: 45.0, zoom: 4.5 },
   "southeast asia": { lat: 5.0, lng: 110.0, zoom: 4 }, "東南アジア": { lat: 5.0, lng: 110.0, zoom: 4 },
   europe: { lat: 50.0, lng: 10.0, zoom: 4 }, "ヨーロッパ": { lat: 50.0, lng: 10.0, zoom: 4 },
   "欧州": { lat: 50.0, lng: 10.0, zoom: 4 }, asia: { lat: 30.0, lng: 100.0, zoom: 3 },
   "アジア": { lat: 30.0, lng: 100.0, zoom: 3 }, africa: { lat: 0.0, lng: 20.0, zoom: 3 },
   "アフリカ": { lat: 0.0, lng: 20.0, zoom: 3 },
-  // Cities
   tokyo: { lat: 35.7, lng: 139.7, zoom: 9 }, "東京": { lat: 35.7, lng: 139.7, zoom: 9 },
   "new york": { lat: 40.7, lng: -74.0, zoom: 9 }, "ニューヨーク": { lat: 40.7, lng: -74.0, zoom: 9 },
   london: { lat: 51.5, lng: -0.1, zoom: 9 }, "ロンドン": { lat: 51.5, lng: -0.1, zoom: 9 },
   dubai: { lat: 25.2, lng: 55.3, zoom: 9 }, "ドバイ": { lat: 25.2, lng: 55.3, zoom: 9 },
   sydney: { lat: -33.9, lng: 151.2, zoom: 9 }, "シドニー": { lat: -33.9, lng: 151.2, zoom: 9 },
   rotterdam: { lat: 51.9, lng: 4.5, zoom: 9 }, "ロッテルダム": { lat: 51.9, lng: 4.5, zoom: 9 },
-  kumamoto: { lat: 32.8, lng: 130.7, zoom: 9 }, "熊本": { lat: 32.8, lng: 130.7, zoom: 9 },
+  kumamoto: { lat: 32.8, lng: 130.7, zoom: 9 }, "熊本": { lat: 32.8, lng: 130.7, zoom: 9 }
 };
 
 function detectRegion(question: string, answer: string): { lat: number; lng: number; zoom: number } | null {
-  const text = `${question} ${answer}`.toLowerCase();
-  // Check longest keywords first to prefer "south korea" over "korea", "united states" over "usa"
+  const text = (question + " " + answer).toLowerCase();
   const sorted = Object.entries(REGION_COORDS).sort((a, b) => b[0].length - a[0].length);
   for (const [keyword, coords] of sorted) {
     if (text.includes(keyword.toLowerCase())) return coords;
@@ -142,6 +134,107 @@ type Message = {
   content: string;
   response?: HuginnResponse;
 };
+
+type RequestError = {
+  question: string;
+  webSearch: boolean;
+  message: string;
+};
+
+type ActionFailureCode =
+  | "unauthorized"
+  | "rate_limited"
+  | "internal"
+  | "provider_unavailable"
+  | "deadline_exceeded"
+  | "retrieval_unavailable"
+  | "aborted";
+
+const ACTION_FAILURE_CODES = [
+  "unauthorized",
+  "rate_limited",
+  "internal",
+  "provider_unavailable",
+  "deadline_exceeded",
+  "retrieval_unavailable",
+  "aborted"
+] as const satisfies readonly ActionFailureCode[];
+
+const SAFE_STATUS_MESSAGES: Record<ActionFailureCode, { en: string; ja: string }> = {
+  unauthorized: {
+    en: "Huginn needs an authorized organization session. Sign in and try again.",
+    ja: "Huginnを実行するには認証済みの組織セッションが必要です。サインインして再試行してください。"
+  },
+  rate_limited: {
+    en: "Huginn is temporarily rate-limited for this organization. Please retry shortly.",
+    ja: "この組織のHuginn利用は一時的に制限されています。少し待ってから再試行してください。"
+  },
+  internal: {
+    en: "Huginn could not safely complete this request. Please try again shortly.",
+    ja: "Huginnはこのリクエストを安全に完了できませんでした。しばらくしてから再試行してください。"
+  },
+  provider_unavailable: {
+    en: "Huginn's answer provider is temporarily unavailable. Please try again shortly.",
+    ja: "Huginnの回答サービスは一時的に利用できません。しばらくしてから再試行してください。"
+  },
+  deadline_exceeded: {
+    en: "Huginn could not verify this request before the deadline. Try a narrower question.",
+    ja: "Huginnは期限内にこのリクエストを検証できませんでした。質問を短くして再試行してください。"
+  },
+  retrieval_unavailable: {
+    en: "Huginn could not retrieve the source evidence needed for this request. Please try again.",
+    ja: "Huginnはこのリクエストに必要な根拠ソースを取得できませんでした。再試行してください。"
+  },
+  aborted: {
+    en: "Huginn stopped this request before verification completed. Please try again.",
+    ja: "Huginnは検証を完了する前にこのリクエストを停止しました。再試行してください。"
+  }
+};
+
+function isActionFailureCode(code: string | undefined): code is ActionFailureCode {
+  return Boolean(code && ACTION_FAILURE_CODES.includes(code as ActionFailureCode));
+}
+
+function safeStatusMessage(code: ActionFailureCode, locale: string) {
+  const messages = SAFE_STATUS_MESSAGES[code];
+  return locale === "ja" ? messages.ja : messages.en;
+}
+
+function safeTransportErrorMessage(locale: string) {
+  return locale === "ja"
+    ? "Huginnのリクエストを完了できませんでした。しばらくしてから再試行してください。"
+    : "Huginn could not complete this request. Please try again shortly.";
+}
+
+type InspectorSource = {
+  id: string;
+  title: string;
+  url?: string;
+};
+
+function relativeTime(timestamp: string): string {
+  const diff = Date.now() - new Date(timestamp).getTime();
+  const minutes = Math.max(0, Math.floor(diff / 60_000));
+  if (minutes < 60) return minutes + "m ago";
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return hours + "h ago";
+  return Math.floor(hours / 24) + "d ago";
+}
+
+function sourceRows(response: HuginnResponse | null): InspectorSource[] {
+  if (!response) return [];
+  const graphSources = response.evidenceGraph?.paths.flatMap((path) =>
+    path.sources.map((source) => ({
+      id: source.sourceId,
+      title: source.title || source.sourceId,
+      url: source.url || undefined
+    }))
+  ) ?? [];
+  const values = graphSources.length
+    ? graphSources
+    : response.sources.map((source) => ({ id: source, title: source }));
+  return values.filter((source, index) => values.findIndex((candidate) => candidate.id === source.id) === index);
+}
 
 export function HuginnConsole({
   defaultOrgId,
@@ -161,718 +254,651 @@ export function HuginnConsole({
   action
 }: Readonly<Props>) {
   const router = useRouter();
-  const activePresets = useHuginnTemplates((s) => s.allPresets)();
+  const activePresets = useHuginnTemplates((state) => state.allPresets)();
+  const { entries: historyEntries, addEntry, clearHistory } = useQueryHistory();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
-  const [expandedTrace, setExpandedTrace] = useState<number | null>(null);
+  const [requestError, setRequestError] = useState<RequestError | null>(null);
+  const [inspectorOpen, setInspectorOpen] = useState(false);
   const [webSearch, setWebSearch] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const [inputPrefill, setInputPrefill] = useState("");
+  const [draftQuestion, setDraftQuestion] = useState("");
   const [variableForm, setVariableForm] = useState<{ presetId: string; values: Record<string, string> } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { entries: historyEntries, addEntry, clearHistory } = useQueryHistory();
 
-  const latestResponse = [...messages].reverse().find((m: Message) => m.role === "assistant")?.response ?? null;
+  let lastAssistantIdx = -1;
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (messages[index].role === "assistant") {
+      lastAssistantIdx = index;
+      break;
+    }
+  }
+
+  const latestResponse = lastAssistantIdx >= 0 ? messages[lastAssistantIdx].response ?? null : null;
+  const latestQuestion = lastAssistantIdx > 0 ? messages[lastAssistantIdx - 1]?.content ?? "" : "";
+  const mapFilter = latestResponse ? detectMapFilter(latestQuestion, latestResponse.answer) : null;
+  const mapRegion = latestResponse ? detectRegion(latestQuestion, latestResponse.answer) : null;
   const layers = latestResponse ? (latestResponse.retrieval_layers_used as Array<keyof typeof cascadeLayers>) : [];
-  const totalMemory: number = latestResponse ? Object.values(latestResponse.munin.counts).reduce<number>((sum, v) => sum + v, 0) : 0;
+  const totalMemory = latestResponse
+    ? Object.values(latestResponse.munin.counts).reduce<number>((sum, value) => sum + value, 0)
+    : 0;
+  const inspectorSources = useMemo(() => sourceRows(latestResponse), [latestResponse]);
+  const primaryPath = latestResponse?.evidenceGraph?.paths[0];
+
+  const mapHref = useMemo(() => {
+    if (!mapFilter) return undefined;
+    const params = new URLSearchParams({ filter: mapFilter });
+    if (mapRegion) {
+      params.set("lat", String(mapRegion.lat));
+      params.set("lng", String(mapRegion.lng));
+      params.set("zoom", String(mapRegion.zoom));
+    }
+    return "/map?" + params.toString();
+  }, [mapFilter, mapRegion]);
+
+  const evidenceSteps = useMemo<EvidenceThreadStep[]>(() => {
+    if (!latestResponse) return [];
+    return [
+      {
+        id: "source",
+        label: panelLabels.sources,
+        detail: inspectorSources.length + " cited source" + (inspectorSources.length === 1 ? "" : "s"),
+        href: inspectorSources[0]?.url,
+        verified: inspectorSources.length > 0
+      },
+      {
+        id: "entity",
+        label: "Entity context",
+        detail: primaryPath?.title ?? "No graph path returned",
+        verified: Boolean(primaryPath)
+      },
+      {
+        id: "answer",
+        label: "Grounded answer",
+        detail: Math.round(latestResponse.confidence * 100) + "% confidence",
+        verified: latestResponse.confidence > 0
+      },
+      {
+        id: "action",
+        label: mapHref ? showOnMapLabel : "Review cited evidence",
+        detail: mapHref ? "Open the related reality layer" : "Inspect sources and trace",
+        href: mapHref
+      }
+    ];
+  }, [inspectorSources, latestResponse, mapHref, panelLabels.sources, primaryPath, showOnMapLabel]);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages, loading, requestError]);
 
-  async function handleSubmit(question: string) {
-    setMessages((prev) => [...prev, { role: "user", content: question }]);
+  async function runQuestion(question: string, appendQuestion: boolean, useWebSearch: boolean) {
+    const trimmedQuestion = question.trim();
+    if (!trimmedQuestion || loading) return;
+
+    if (appendQuestion) {
+      setMessages((previous) => [...previous, { role: "user", content: trimmedQuestion }]);
+    }
+    setRequestError(null);
     setLoading(true);
+
     try {
-      const data = await action(question, defaultOrgId, webSearch || undefined);
-      setMessages((prev) => [...prev, { role: "assistant", content: data.answer, response: data }]);
+      const data = await action(trimmedQuestion, defaultOrgId, useWebSearch || undefined);
+      const statusCode = data.status?.code;
+      if (isActionFailureCode(statusCode)) {
+        setRequestError({
+          question: trimmedQuestion,
+          webSearch: useWebSearch,
+          message: safeStatusMessage(statusCode, locale)
+        });
+        return;
+      }
+      setMessages((previous) => [...previous, { role: "assistant", content: data.answer, response: data }]);
       addEntry({
-        question,
+        question: trimmedQuestion,
         timestamp: new Date().toISOString(),
         confidence: typeof data.confidence === "number" ? data.confidence : null
       });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Request failed";
-      setMessages((prev) => [...prev, { role: "assistant", content: `Error: ${message}` }]);
+      setInspectorOpen(true);
+    } catch {
+      setRequestError({
+        question: trimmedQuestion,
+        webSearch: useWebSearch,
+        message: safeTransportErrorMessage(locale)
+      });
     } finally {
       setLoading(false);
     }
   }
 
+  function handleSubmit(question: string) {
+    void runQuestion(question, true, webSearch);
+  }
+
   function applyPreset(presetId: string) {
-    const preset = activePresets.find((p) => p.id === presetId);
+    const preset = activePresets.find((item) => item.id === presetId);
     if (!preset) return;
     const template = locale === "ja" ? preset.templateJa : preset.template;
     if (preset.variables?.length) {
-      const initial: Record<string, string> = {};
-      for (const v of preset.variables) initial[v] = "";
-      setVariableForm({ presetId, values: initial });
-    } else {
-      setInputPrefill(template);
+      const values: Record<string, string> = {};
+      for (const variable of preset.variables) values[variable] = "";
+      setVariableForm({ presetId, values });
+      return;
     }
+    setInputPrefill(template);
+    setDraftQuestion(template);
   }
 
   function submitVariableForm() {
     if (!variableForm) return;
-    const preset = activePresets.find((p) => p.id === variableForm.presetId);
+    const preset = activePresets.find((item) => item.id === variableForm.presetId);
     if (!preset) return;
     const template = locale === "ja" ? preset.templateJa : preset.template;
     let filled = template;
     for (const [key, value] of Object.entries(variableForm.values)) {
-      filled = filled.replaceAll(`{${key}}`, value || `[${key}]`);
+      filled = filled.replaceAll("{" + key + "}", value || "[" + key + "]");
     }
     setInputPrefill(filled);
+    setDraftQuestion(filled);
     setVariableForm(null);
   }
 
-  function formatRelativeTime(timestamp: string): string {
-    const diff = Date.now() - new Date(timestamp).getTime();
-    const mins = Math.floor(diff / 60_000);
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    return `${Math.floor(hrs / 24)}d ago`;
+  function openMap() {
+    if (mapHref) router.push(mapHref);
   }
 
-  let lastAssistantIdx = -1;
-  for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i].role === "assistant") { lastAssistantIdx = i; break; }
-  }
-  const mapFilter = lastAssistantIdx >= 0
-    ? detectMapFilter(
-        messages[lastAssistantIdx - 1]?.content ?? "",
-        messages[lastAssistantIdx]?.content ?? ""
-      )
-    : null;
-  const mapRegion = lastAssistantIdx >= 0
-    ? detectRegion(
-        messages[lastAssistantIdx - 1]?.content ?? "",
-        messages[lastAssistantIdx]?.content ?? ""
-      )
-    : null;
+  const assistantMessages = messages.filter((message) => message.role === "assistant");
+  const previousAssistant = assistantMessages[assistantMessages.length - 2] ?? null;
+  const currentAssistant = assistantMessages[assistantMessages.length - 1] ?? null;
 
   return (
-    <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_320px]">
-      {/* Main conversation area */}
-      <div className="flex min-h-[calc(100vh-120px)] flex-col">
-        {/* Messages */}
+    <section
+      aria-label={panelLabels.dialogue}
+      className="grid h-[calc(100dvh-10.5rem)] min-h-[400px] overflow-hidden border bg-[var(--field)] xl:h-[calc(100dvh-7rem)] xl:grid-cols-[minmax(0,1fr)_22rem]"
+      data-testid="huginn-workspace"
+      style={{ borderColor: "var(--line-soft)" }}
+    >
+      <main className="order-1 flex min-h-0 flex-col" aria-label={panelLabels.dialogue}>
         <div
           ref={scrollRef}
-          className="flex-1 overflow-y-auto"
-          style={{ maxHeight: "calc(100vh - 200px)" }}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+          data-testid="huginn-conversation"
+          tabIndex={-1}
         >
-          {messages.length === 0 && (
-            <div className="flex min-h-[400px] items-center justify-center">
-              <div className="max-w-md text-center">
-                <div className="mx-auto mb-5 flex w-14 items-center justify-center">
-                  <HuginnIcon size={48} />
-                </div>
-                <div
-                  className="text-[14px] leading-relaxed"
-                  style={{ color: "var(--text-secondary)" }}
-                >
+          {messages.length === 0 ? (
+            <div className="flex min-h-full items-center px-5 py-8 sm:px-8" data-testid="huginn-empty">
+              <div className="max-w-xl border-l-2 pl-4" style={{ borderColor: "var(--evidence)" }}>
+                <Search aria-hidden="true" size={20} style={{ color: "var(--evidence)" }} />
+                <p className="mt-4 text-[15px] leading-7 text-[var(--text-primary)]">
                   {emptyStateText}
-                </div>
-                <div className="mt-5 flex flex-wrap justify-center gap-2">
+                </p>
+                <p className="mt-2 text-[12px] leading-6 text-[var(--text-secondary)]">
+                  Start with one of these grounded lines of inquiry.
+                </p>
+                <div className="mt-5 grid border-t" style={{ borderColor: "var(--line-soft)" }}>
                   {activePresets.slice(0, 3).map((preset) => (
                     <button
+                      className="flex min-h-11 items-center justify-between border-b px-3 text-left text-[12px] transition-colors duration-[var(--motion-micro)] hover:bg-[var(--surface-hover)] motion-reduce:transition-none"
                       key={preset.id}
-                      type="button"
                       onClick={() => applyPreset(preset.id)}
-                      className="mono rounded-full px-3 py-1.5 text-[11px] tracking-[0.04em] transition-all duration-[var(--dur-fast)] hover:bg-[var(--rune-wash)]"
-                      style={{
-                        background: "var(--ink-800)",
-                        border: "1px solid var(--line-faint)",
-                        color: "var(--text-secondary)"
-                      }}
+                      type="button"
+                      style={{ borderColor: "var(--line-soft)", color: "var(--text-primary)" }}
                     >
-                      {locale === "ja" ? preset.labelJa : preset.label}
+                      <span>{locale === "ja" ? preset.labelJa : preset.label}</span>
+                      <span aria-hidden="true" className="text-[16px]" style={{ color: "var(--text-tertiary)" }}>→</span>
                     </button>
                   ))}
                 </div>
               </div>
             </div>
-          )}
-
-          {/* Compare mode: side-by-side last two assistant responses */}
-          {compareMode && (() => {
-            const assistantMsgs = messages.filter((m) => m.role === "assistant");
-            const prev = assistantMsgs[assistantMsgs.length - 2] ?? null;
-            const curr = assistantMsgs[assistantMsgs.length - 1] ?? null;
-            if (!curr) return null;
-            return (
-              <div className="grid grid-cols-2 gap-3 px-4 py-4" style={{ maxHeight: "calc(100vh - 200px)", overflow: "auto" }}>
-                {/* Previous */}
-                <div
-                  className="rounded-[var(--radius-md)] p-4"
-                  style={{ background: "var(--ink-850)", border: "1px solid var(--line-faint)" }}
-                >
-                  <div className="mono mb-2 text-[9px] uppercase tracking-[0.14em]" style={{ color: "var(--text-tertiary)" }}>
-                    Previous
-                    {prev?.response && (
-                      <span className="ml-2" style={{ color: "var(--rune-dim)" }}>
-                        {Math.round((prev.response.confidence ?? 0) * 100)}% conf.
-                      </span>
-                    )}
-                  </div>
-                  {prev ? (
-                    <div className="huginn-prose text-[13px] leading-[1.7]" style={{ color: "var(--text-secondary)" }}>
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{prev.content}</ReactMarkdown>
-                    </div>
-                  ) : (
-                    <div className="text-[12px]" style={{ color: "var(--text-tertiary)" }}>No previous response</div>
-                  )}
+          ) : compareMode && currentAssistant ? (
+            <div className="grid min-h-full grid-cols-1 divide-y p-5 sm:grid-cols-2 sm:divide-x sm:divide-y-0 sm:p-6" style={{ borderColor: "var(--line-soft)" }}>
+              <article className="min-w-0 py-4 sm:px-5 sm:py-0">
+                <div className="mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+                  Previous answer
                 </div>
-                {/* Current */}
-                <div
-                  className="rounded-[var(--radius-md)] p-4"
-                  style={{ background: "var(--ink-800)", border: "1px solid rgba(201,169,97,0.18)" }}
-                >
-                  <div className="mono mb-2 text-[9px] uppercase tracking-[0.14em]" style={{ color: "var(--rune-dim)" }}>
-                    Current
-                    {curr.response && (
-                      <span className="ml-2" style={{ color: "var(--rune)" }}>
-                        {Math.round((curr.response.confidence ?? 0) * 100)}% conf.
-                        {prev?.response && (() => {
-                          const delta = (curr.response?.confidence ?? 0) - (prev.response?.confidence ?? 0);
-                          if (Math.abs(delta) < 0.01) return null;
-                          return (
-                            <span style={{ color: delta > 0 ? "var(--positive, #22c55e)" : "var(--critical)" }}>
-                              {` ${delta > 0 ? "+" : ""}${Math.round(delta * 100)}%`}
-                            </span>
-                          );
-                        })()}
-                      </span>
-                    )}
+                {previousAssistant?.response ? (
+                  <div className="mt-2 text-[12px] text-[var(--text-secondary)]">
+                    {Math.round(previousAssistant.response.confidence * 100)}% confidence
                   </div>
-                  <div className="huginn-prose text-[13px] leading-[1.7]" style={{ color: "var(--text-primary)" }}>
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{curr.content}</ReactMarkdown>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
-
-          <div className={`mx-auto max-w-2xl space-y-6 px-4 py-6 ${compareMode ? "hidden" : ""}`}>
-            {messages.map((msg, idx) => (
-              <div key={`${idx}-${msg.role}`}>
-                {msg.role === "user" ? (
-                  /* User message */
-                  <div className="flex justify-end">
-                    <div
-                      className="max-w-[85%] rounded-2xl rounded-br-md px-4 py-3 text-[14px] leading-relaxed"
-                      style={{
-                        background: "var(--ink-700)",
-                        color: "var(--text-primary)"
-                      }}
-                    >
-                      {msg.content}
-                    </div>
+                ) : null}
+                {previousAssistant ? (
+                  <div className="huginn-prose mt-5 text-[14px] leading-7 text-[var(--text-secondary)]">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{previousAssistant.content}</ReactMarkdown>
                   </div>
                 ) : (
-                  /* Assistant message */
-                  <div className="space-y-3">
-                    <div className="huginn-prose text-[14px] leading-[1.7]" style={{ color: "var(--text-primary)" }}>
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {msg.content}
-                      </ReactMarkdown>
-                    </div>
-
-                    {/* Reasoning trace — collapsible */}
-                    {msg.response?.reasoningTrace?.length ? (
-                      <div
-                        className="mt-3 rounded-[var(--radius-md)] overflow-hidden"
-                        style={{ border: "1px solid var(--line-faint)" }}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => setExpandedTrace(expandedTrace === idx ? null : idx)}
-                          className="flex w-full items-center justify-between px-3 py-2 text-left transition-colors duration-[var(--dur-fast)] hover:bg-[var(--ink-750)]"
-                          style={{ background: "var(--ink-850)" }}
-                        >
-                          <span
-                            className="mono text-[10px] font-medium uppercase tracking-[0.13em]"
-                            style={{ color: "var(--rune-dim)" }}
-                          >
-                            reasoning trace · {msg.response.reasoningTrace.length} steps
-                          </span>
-                          <svg
-                            width="12" height="12" viewBox="0 0 24 24" fill="none"
-                            stroke="var(--text-tertiary)" strokeWidth="2"
-                            className={`transition-transform duration-[var(--dur-fast)] ${expandedTrace === idx ? "rotate-180" : ""}`}
-                          >
-                            <path d="M6 9l6 6 6-6" />
-                          </svg>
-                        </button>
-                        {expandedTrace === idx && (
-                          <div className="px-3 py-2 space-y-2" style={{ background: "var(--ink-900)" }}>
-                            {msg.response.reasoningTrace.map((step) => (
-                              <div
-                                className="py-2"
-                                style={{ borderBottom: "1px solid var(--line-faint)" }}
-                                key={`${step.step}:${step.summary}`}
-                              >
-                                <div
-                                  className="mono text-[10px] font-medium uppercase tracking-[0.12em]"
-                                  style={{ color: "var(--rune-dim)" }}
-                                >
-                                  {step.step}
-                                </div>
-                                <div className="mt-1 text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                                  {step.summary}
-                                </div>
-                                {step.sources?.length ? (
-                                  <div
-                                    className="mono mt-1 text-[10px] tracking-[0.1em]"
-                                    style={{ color: "var(--text-tertiary)" }}
-                                  >
-                                    {step.sources.join(" · ")}
-                                  </div>
-                                ) : null}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ) : null}
-
-                    {/* Show on Map */}
-                    {idx === lastAssistantIdx && mapFilter && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const params = new URLSearchParams({ filter: mapFilter! });
-                          if (mapRegion) {
-                            params.set("lat", String(mapRegion.lat));
-                            params.set("lng", String(mapRegion.lng));
-                            params.set("zoom", String(mapRegion.zoom));
-                          }
-                          router.push(`/map?${params.toString()}`);
-                        }}
-                        className="mono mt-2 flex items-center gap-2 rounded-full px-4 py-2 text-[11px] uppercase tracking-[0.1em] transition-all hover:brightness-110"
-                        style={{
-                          background: "var(--rune-wash)",
-                          border: "1px solid rgba(201,169,97,0.20)",
-                          color: "var(--rune)"
-                        }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z" />
-                          <path d="M8 2v16" />
-                          <path d="M16 6v16" />
-                        </svg>
-                        {showOnMapLabel}
-                      </button>
-                    )}
-                  </div>
+                  <p className="mt-5 text-[13px] text-[var(--text-tertiary)]">No previous response yet.</p>
                 )}
-              </div>
-            ))}
-
-            {/* Loading indicator */}
-            {loading && (
-              <div className="flex gap-1.5 py-4">
-                <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--rune-dim)]" style={{ animationDelay: "0ms" }} />
-                <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--rune-dim)]" style={{ animationDelay: "150ms" }} />
-                <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--rune-dim)]" style={{ animationDelay: "300ms" }} />
-              </div>
-            )}
-          </div>
+              </article>
+              <article className="min-w-0 py-4 sm:px-5 sm:py-0">
+                <div className="mono text-[11px] uppercase tracking-[0.08em] text-[var(--signal)]">
+                  Current answer
+                </div>
+                {currentAssistant.response ? (
+                  <div className="mt-2 text-[12px] text-[var(--text-secondary)]">
+                    {Math.round(currentAssistant.response.confidence * 100)}% confidence
+                  </div>
+                ) : null}
+                <div className="huginn-prose mt-5 text-[14px] leading-7 text-[var(--text-primary)]">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentAssistant.content}</ReactMarkdown>
+                </div>
+              </article>
+            </div>
+          ) : (
+            <div className="mx-auto max-w-3xl space-y-8 px-5 py-7 sm:px-8">
+              {messages.map((message, index) => (
+                <article
+                  className={message.role === "user" ? "border-l-2 pl-4" : "border-t pt-6"}
+                  key={index + "-" + message.role}
+                  style={{
+                    borderColor: message.role === "user" ? "var(--signal)" : "var(--line-soft)"
+                  }}
+                >
+                  {message.role === "user" ? (
+                    <>
+                      <p className="mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+                        Question
+                      </p>
+                      <p className="mt-2 whitespace-pre-wrap text-[14px] leading-7 text-[var(--text-primary)]">
+                        {message.content}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="mono text-[11px] uppercase tracking-[0.08em] text-[var(--evidence)]">
+                          Grounded answer
+                        </p>
+                        {message.response ? (
+                          <span className="text-[12px] text-[var(--text-secondary)]">
+                            {Math.round(message.response.confidence * 100)}% confidence · {message.response.sources.length} cited
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="huginn-prose mt-4 text-[14px] leading-7 text-[var(--text-primary)]">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                      </div>
+                      {index === lastAssistantIdx && mapHref ? (
+                        <button
+                          className="odim-control mt-5 min-h-11 px-3 text-[12px] transition-[background-color,color,border-color] duration-[var(--motion-state)] hover:bg-[var(--surface-hover)] motion-reduce:transition-none"
+                          onClick={openMap}
+                          type="button"
+                        >
+                          <Map aria-hidden="true" size={15} />
+                          {showOnMapLabel}
+                        </button>
+                      ) : null}
+                    </>
+                  )}
+                </article>
+              ))}
+              {loading ? (
+                <HuginnThinking />
+              ) : null}
+            </div>
+          )}
         </div>
 
-        {/* Input area — fixed at bottom */}
         <div
-          className="shrink-0 px-4 py-4"
-          style={{ borderTop: "1px solid var(--line-faint)" }}
+          className="sticky bottom-0 shrink-0 border-t bg-[var(--field)] px-4 py-3 sm:px-6"
+          data-testid="huginn-composer-zone"
+          style={{ borderColor: "var(--line-soft)" }}
         >
-          <div className="mx-auto max-w-2xl">
-            {/* Variable form (shown inline when a preset with variables is selected) */}
-            {variableForm && (() => {
-              const preset = activePresets.find((p) => p.id === variableForm.presetId);
+          <div className="mx-auto max-w-3xl">
+            {requestError ? (
+              <div
+                aria-live="assertive"
+                className="mb-3 flex min-h-11 items-center justify-between gap-3 border-l-2 px-3 py-2 text-[12px] leading-5"
+                data-testid="huginn-request-error"
+                role="alert"
+                style={{ borderColor: "var(--critical)", background: "var(--surface)" }}
+              >
+                <span>{requestError.message}</span>
+                <button
+                  className="odim-control min-h-11 shrink-0 px-3 text-[12px]"
+                  onClick={() => void runQuestion(requestError.question, false, requestError.webSearch)}
+                  type="button"
+                >
+                  <RefreshCw aria-hidden="true" size={14} />
+                  Retry
+                </button>
+              </div>
+            ) : null}
+
+            {variableForm ? (() => {
+              const preset = activePresets.find((item) => item.id === variableForm.presetId);
               if (!preset) return null;
               return (
-                <div
-                  className="mb-3 rounded-[var(--radius-md)] p-3"
-                  style={{ background: "var(--ink-800)", border: "1px solid var(--line-faint)" }}
-                >
-                  <div
-                    className="mono mb-2 text-[10px] uppercase tracking-[0.1em]"
-                    style={{ color: "var(--rune-dim)" }}
-                  >
+                <div className="mb-3 border-l-2 py-2 pl-3" style={{ borderColor: "var(--signal)" }}>
+                  <p className="mono text-[11px] uppercase tracking-[0.08em] text-[var(--signal)]">
                     {locale === "ja" ? preset.labelJa : preset.label}
-                  </div>
-                  <div className="grid gap-2">
+                  </p>
+                  <div className="mt-3 grid gap-2">
                     {preset.variables?.map((variable) => (
-                      <div key={variable} className="flex items-center gap-2">
-                        <span
-                          className="mono w-24 shrink-0 text-[10px]"
-                          style={{ color: "var(--text-secondary)" }}
-                        >
-                          {variable}
-                        </span>
+                      <label className="grid gap-1 text-[12px] text-[var(--text-secondary)]" key={variable}>
+                        <span>{variable}</span>
                         <input
-                          type="text"
-                          value={variableForm.values[variable] ?? ""}
-                          onChange={(e) =>
-                            setVariableForm((prev) =>
-                              prev
-                                ? { ...prev, values: { ...prev.values, [variable]: e.target.value } }
+                          className="min-h-11 border bg-[var(--field)] px-3 text-[14px] text-[var(--text-primary)] outline-none transition-[border-color] duration-[var(--motion-micro)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--signal)] motion-reduce:transition-none"
+                          onChange={(event) =>
+                            setVariableForm((previous) =>
+                              previous
+                                ? {
+                                    ...previous,
+                                    values: { ...previous.values, [variable]: event.target.value }
+                                  }
                                 : null
                             )
                           }
-                          onKeyDown={(e) => { if (e.key === "Enter") submitVariableForm(); }}
-                          className="flex-1 rounded px-2 py-1 text-[12px] outline-none"
-                          style={{
-                            background: "var(--ink-900)",
-                            border: "1px solid var(--line-faint)",
-                            color: "var(--text-primary)"
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") submitVariableForm();
                           }}
+                          style={{ borderColor: "var(--line-soft)" }}
+                          type="text"
+                          value={variableForm.values[variable] ?? ""}
                         />
-                      </div>
+                      </label>
                     ))}
                   </div>
-                  <div className="mt-2 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={submitVariableForm}
-                      className="mono rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.1em] transition-colors"
-                      style={{ background: "var(--rune)", color: "var(--ink-950)" }}
-                    >
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button className="odim-control min-h-11 px-3 text-[12px]" onClick={submitVariableForm} type="button">
                       Apply
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setVariableForm(null)}
-                      className="mono rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.1em] transition-colors"
-                      style={{ background: "var(--ink-700)", color: "var(--text-tertiary)" }}
-                    >
+                    <button className="odim-control min-h-11 px-3 text-[12px]" onClick={() => setVariableForm(null)} type="button">
                       Cancel
                     </button>
                   </div>
                 </div>
               );
-            })()}
+            })() : null}
 
-            {/* PRIMARY: Input box — dominant element */}
             <HuginnInput
+              action={action}
               defaultOrgId={defaultOrgId}
               labels={inputLabels}
-              action={action}
-              onSubmit={handleSubmit}
               loading={loading}
+              onDraftChange={setDraftQuestion}
+              onSubmit={handleSubmit}
               prefillValue={inputPrefill}
             />
 
-            {/* SECONDARY TOOLBAR: Analysis modes + Quick presets — one compact row */}
-            <div
-              className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5"
-            >
-              {/* Analysis mode toggles — grouped left */}
-              <div className="flex items-center gap-1" style={{ paddingRight: 10, borderRight: "1px solid var(--line-faint)" }}>
-                <button
-                  type="button"
-                  onClick={() => setCompareMode((v) => !v)}
-                  className="mono flex items-center gap-1.5 rounded px-2.5 py-1 text-[10px] tracking-[0.07em] transition-all duration-[var(--dur-fast)]"
-                  style={{
-                    background: compareMode ? "rgba(59,130,246,0.12)" : "transparent",
-                    border: compareMode ? "1px solid rgba(59,130,246,0.3)" : "1px solid transparent",
-                    color: compareMode ? "#60a5fa" : "var(--text-tertiary)"
-                  }}
-                  title="Compare last two responses side-by-side"
-                >
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="3" width="7" height="18" rx="1" />
-                    <rect x="14" y="3" width="7" height="18" rx="1" />
-                  </svg>
-                  Compare
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWebSearch((v) => !v)}
-                  className="mono flex items-center gap-1.5 rounded px-2.5 py-1 text-[10px] tracking-[0.07em] transition-all duration-[var(--dur-fast)]"
-                  style={{
-                    background: webSearch ? "var(--rune-wash)" : "transparent",
-                    border: webSearch ? "1px solid rgba(201,169,97,0.25)" : "1px solid transparent",
-                    color: webSearch ? "var(--rune)" : "var(--text-tertiary)"
-                  }}
-                  title={webSearchLabel}
-                >
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="2" y1="12" x2="22" y2="12" />
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z" />
-                  </svg>
-                  {webSearchLabel}
-                  {webSearch && (
-                    <span
-                      className="inline-block h-[5px] w-[5px] rounded-full"
-                      style={{ background: "var(--positive)" }}
-                    />
-                  )}
-                </button>
-              </div>
-
-              {/* Quick presets — scrollable, right of analysis modes */}
-              <span
-                className="mono shrink-0 text-[9px] uppercase tracking-[0.12em]"
-                style={{ color: "var(--text-tertiary)" }}
+            <div className="mt-2 flex min-h-11 flex-wrap items-center gap-1.5">
+              <button
+                aria-pressed={compareMode}
+                className="odim-control min-h-11 px-3 text-[12px] transition-[background-color,color,border-color] duration-[var(--motion-micro)] motion-reduce:transition-none"
+                onClick={() => setCompareMode((value) => !value)}
+                title="Compare the latest two answers"
+                type="button"
               >
-                {presetsLabel}
-              </span>
-              {activePresets.map((preset) => (
-                <button
-                  key={preset.id}
-                  type="button"
-                  title={locale === "ja" ? preset.labelJa : preset.label}
-                  onClick={() => applyPreset(preset.id)}
-                  className="mono flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] tracking-[0.06em] transition-all duration-[var(--dur-fast)] hover:bg-[var(--rune-wash)] hover:border-[rgba(201,169,97,0.2)]"
-                  style={{
-                    background: "transparent",
-                    border: "1px solid var(--line-faint)",
-                    color: "var(--text-secondary)"
-                  }}
-                >
-                  {locale === "ja" ? preset.labelJa : preset.label}
-                </button>
-              ))}
+                Compare
+              </button>
+              <button
+                aria-pressed={webSearch}
+                className="odim-control min-h-11 px-3 text-[12px] transition-[background-color,color,border-color] duration-[var(--motion-micro)] motion-reduce:transition-none"
+                onClick={() => setWebSearch((value) => !value)}
+                title={webSearchLabel}
+                type="button"
+              >
+                <Globe aria-hidden="true" size={14} />
+                {webSearchLabel}
+              </button>
+              <span className="ml-1 text-[11px] text-[var(--text-tertiary)]">{presetsLabel}</span>
+              <div className="flex min-h-11 max-w-full items-center gap-1 overflow-x-auto">
+                {activePresets.map((preset) => (
+                  <button
+                    className="odim-control min-h-11 shrink-0 px-3 text-[12px] transition-[background-color,color,border-color] duration-[var(--motion-micro)] hover:bg-[var(--surface-hover)] motion-reduce:transition-none"
+                    key={preset.id}
+                    onClick={() => applyPreset(preset.id)}
+                    title={locale === "ja" ? preset.labelJa : preset.label}
+                    type="button"
+                  >
+                    {locale === "ja" ? preset.labelJa : preset.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* TERTIARY: Saved searches */}
-            <div className="mt-2">
-              <SavedSearchBar
-                type="huginn"
-                currentQuery={inputPrefill}
-                currentFilters={{ webSearch: String(webSearch) }}
-                onApply={(entry) => {
-                  setInputPrefill(entry.query);
-                  setWebSearch(entry.filters.webSearch === "true");
-                }}
-              />
-            </div>
+            <SavedSearchBar
+              currentFilters={{ webSearch: String(webSearch) }}
+              currentQuery={draftQuestion}
+              onApply={(entry) => {
+                setInputPrefill(entry.query);
+                setDraftQuestion(entry.query);
+                setWebSearch(entry.filters.webSearch === "true");
+              }}
+              type="huginn"
+            />
           </div>
         </div>
-      </div>
+        {/* HuginnThinking owns the live status; backend labels such as "Retrieving source context" and "Building grounded answer" are not announced while document.hidden. */}
+      </main>
 
-      {/* Right sidebar panels */}
-      <div className="grid gap-5 self-start">
-        {/* Recent Queries */}
-        {historyEntries.length > 0 && (
-          <Panel title={historyLabels.recentQueries}>
-            <div className="grid gap-1.5">
-              {historyEntries.slice(0, 8).map((entry) => (
-                <button
-                  key={entry.id}
-                  type="button"
-                  onClick={() => setInputPrefill(entry.question)}
-                  className="w-full rounded-[var(--radius-sm)] px-2 py-2 text-left transition-colors hover:bg-[var(--ink-750)]"
-                  style={{ background: "var(--ink-850)" }}
-                >
-                  <div
-                    className="truncate text-[12px]"
-                    style={{ color: "var(--text-primary)" }}
-                  >
-                    {entry.question.length > 60 ? `${entry.question.slice(0, 60)}…` : entry.question}
-                  </div>
-                  <div className="mt-0.5 flex items-center justify-between">
-                    <span
-                      className="mono text-[9px] uppercase tracking-[0.1em]"
-                      style={{ color: "var(--text-quaternary)" }}
-                    >
-                      {formatRelativeTime(entry.timestamp)}
-                    </span>
-                    {entry.confidence !== null && (
-                      <span
-                        className="mono text-[9px]"
-                        style={{ color: "var(--rune-dim)" }}
-                      >
-                        {Math.round(entry.confidence * 100)}%
-                      </span>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={clearHistory}
-              className="mono mt-3 w-full text-center text-[10px] uppercase tracking-[0.1em] transition-colors hover:text-[var(--critical)]"
-              style={{ color: "var(--text-quaternary)" }}
-            >
-              {historyLabels.clearHistory}
-            </button>
-          </Panel>
-        )}
-
-        {/* Trace Layers */}
-        <Panel title={panelLabels.trace}>
-          <div className="grid gap-2">
-            <div className="mb-1 text-[12px]" style={{ color: "var(--text-secondary)" }}>
-              {traceNote}
-            </div>
-            {layers.map((layer) => (
-              <div
-                className="flex items-center justify-between py-2"
-                style={{ borderBottom: "1px solid var(--line-faint)" }}
-                key={layer}
-              >
-                <span className="text-[12px]" style={{ color: "var(--text-primary)" }}>
-                  {cascadeLayers[layer] ?? layer}
-                </span>
-                <span
-                  className="mono rounded-[var(--radius-xs)] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.1em]"
-                  style={{
-                    color: "var(--rune)",
-                    background: "var(--rune-wash)",
-                    border: "1px solid rgba(201,169,97,0.12)"
-                  }}
-                >
-                  used
-                </span>
-              </div>
-            ))}
-          </div>
-        </Panel>
-
-        {/* Evidence Graph */}
-        {latestResponse?.evidenceGraph && (
-          <Panel title={panelLabels.evidence ?? "Evidence Paths"}>
-            <div className="mb-3 grid grid-cols-2 gap-2">
-              <div
-                className="rounded-[var(--radius-sm)] px-2 py-1.5"
-                style={{ background: "var(--ink-850)", border: "1px solid var(--line-faint)" }}
-              >
-                <div className="mono text-[8px] uppercase tracking-[0.1em]" style={{ color: "var(--text-quaternary)" }}>
-                  citations
-                </div>
-                <div className="mono mt-0.5 text-[14px] tabular-nums" style={{ color: "var(--rune)" }}>
-                  {Math.round(latestResponse.evidenceGraph.metrics.citationCoverage * 100)}%
-                </div>
-              </div>
-              <div
-                className="rounded-[var(--radius-sm)] px-2 py-1.5"
-                style={{ background: "var(--ink-850)", border: "1px solid var(--line-faint)" }}
-              >
-                <div className="mono text-[8px] uppercase tracking-[0.1em]" style={{ color: "var(--text-quaternary)" }}>
-                  trace
-                </div>
-                <div className="mono mt-0.5 text-[14px] tabular-nums" style={{ color: "var(--rune)" }}>
-                  {Math.round(latestResponse.evidenceGraph.metrics.traceCompleteness * 100)}%
-                </div>
-              </div>
-            </div>
-            <div className="grid gap-2">
-              {latestResponse.evidenceGraph.paths.slice(0, 3).map((path) => (
-                <div
-                  key={path.id}
-                  className="rounded-[var(--radius-sm)] px-2.5 py-2"
-                  style={{ background: "var(--ink-850)", border: "1px solid var(--line-faint)" }}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-[12px]" style={{ color: "var(--text-primary)" }}>
-                      {path.title}
-                    </span>
-                    <span className="mono shrink-0 text-[9px] tabular-nums" style={{ color: "var(--rune)" }}>
-                      {Math.round(path.confidence * 100)}%
-                    </span>
-                  </div>
-                  <div className="mt-1 line-clamp-2 text-[11px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                    {path.rationale}
-                  </div>
-                  <div className="mt-1.5 flex flex-wrap gap-1">
-                    {path.sources.slice(0, 3).map((source) => (
-                      <span
-                        key={`${path.id}:${source.sourceId}`}
-                        className="mono max-w-[110px] truncate rounded-[3px] px-1.5 py-0.5 text-[8px] uppercase tracking-[0.06em]"
-                        style={{ background: "rgba(201,169,97,0.08)", border: "1px solid rgba(201,169,97,0.14)", color: "var(--rune-dim)" }}
-                      >
-                        {source.sourceId}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Panel>
-        )}
-
-        {/* Munin */}
-        <Panel title={panelLabels.munin}>
-          <div className="flex items-baseline gap-3">
-            <span className="mono text-2xl font-medium" style={{ color: "var(--rune)" }}>
-              {totalMemory}
+      <aside
+        aria-label="Sources and execution trace"
+        className="order-2 min-h-0 border-t bg-[var(--surface)] xl:border-l xl:border-t-0"
+        style={{ borderColor: "var(--line-soft)" }}
+      >
+        <button
+          aria-controls="huginn-inspector"
+          aria-expanded={inspectorOpen}
+          className="flex min-h-11 w-full items-center justify-between gap-3 px-4 text-left transition-[background-color,color] duration-[var(--motion-micro)] hover:bg-[var(--surface-hover)] motion-reduce:transition-none"
+          data-testid="huginn-inspector-toggle"
+          onClick={() => setInspectorOpen((value) => !value)}
+          type="button"
+        >
+          <span>
+            <span className="block text-[13px] font-medium text-[var(--text-primary)]">
+              {panelLabels.sources} &amp; {panelLabels.trace}
             </span>
-            <span className="text-[12px]" style={{ color: "var(--text-tertiary)" }}>
-              {memoryRecords}
+            <span className="mt-0.5 block text-[11px] text-[var(--text-tertiary)]">
+              {inspectorSources.length} sources · {latestResponse?.reasoningTrace.length ?? 0} execution steps
             </span>
-          </div>
-          {latestResponse && (
-            <div className="mt-4">
-              <Confidence value={latestResponse.confidence} />
-            </div>
-          )}
-        </Panel>
+          </span>
+          <ChevronDown
+            aria-hidden="true"
+            className={inspectorOpen ? "rotate-180" : ""}
+            size={16}
+            style={{ color: "var(--text-secondary)", transition: "transform var(--motion-state) var(--ease-out)" }}
+          />
+        </button>
 
-        {/* Sources */}
-        {latestResponse && (
-          <Panel title={panelLabels.sources}>
-            <div className="grid gap-2.5">
-              {latestResponse.sources.map((source: string) => (
-                <div
-                  className="flex items-center justify-between gap-2 pb-2.5"
-                  style={{ borderBottom: "1px solid var(--line-faint)" }}
-                  key={source}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "var(--positive, #22c55e)" }} />
-                    <span className="truncate text-[12px]" style={{ color: "var(--text-primary)" }}>
-                      {source}
+        {inspectorOpen ? (
+          <div
+            className="max-h-[38dvh] overflow-y-auto border-t transition-[opacity] duration-[var(--motion-surface)] motion-reduce:transition-none xl:max-h-none xl:h-[calc(100%-44px)]"
+            data-testid="huginn-inspector"
+            id="huginn-inspector"
+            style={{ borderColor: "var(--line-soft)" }}
+          >
+            {latestResponse ? (
+              <>
+                <section className="px-4 py-4" aria-labelledby="huginn-evidence-path">
+                  <h2 className="mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]" id="huginn-evidence-path">
+                    Evidence path
+                  </h2>
+                  <EvidenceThread
+                    activeId="answer"
+                    className="mt-4"
+                    label="Source to entity to answer to action"
+                    orientation="vertical"
+                    steps={evidenceSteps}
+                  />
+                </section>
+
+                <section className="border-t px-4 py-4" aria-labelledby="huginn-sources" style={{ borderColor: "var(--line-soft)" }}>
+                  <div className="flex items-center justify-between gap-3">
+                    <h2 className="mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]" id="huginn-sources">
+                      {panelLabels.sources}
+                    </h2>
+                    <span className="text-[11px] text-[var(--text-secondary)]">
+                      {latestResponse.evidenceGraph?.source === "fallback" ? "Fallback evidence" : "Repository evidence"}
                     </span>
                   </div>
-                  <span
-                    className="mono shrink-0 rounded-full px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.06em]"
-                    style={{
-                      color: "var(--positive, #22c55e)",
-                      background: "rgba(34,197,94,0.08)",
-                      border: "1px solid rgba(34,197,94,0.15)"
-                    }}
-                  >
-                    {badgeLabels.reality}
-                  </span>
-                </div>
-              ))}
-              {latestResponse.narrativeContrast.map((item: { title: string }) => (
-                <div
-                  className="flex items-center justify-between pb-2.5"
-                  style={{ borderBottom: "1px solid var(--line-faint)" }}
-                  key={item.title}
-                >
-                  <span className="truncate text-[12px]" style={{ color: "var(--text-secondary)" }}>
-                    {item.title}
-                  </span>
-                  <span
-                    className="mono shrink-0 rounded-[var(--radius-sm)] px-2 py-0.5 text-[10px]"
-                    style={{
-                      color: "var(--text-tertiary)",
-                      border: "1px solid var(--line-faint)"
-                    }}
-                  >
-                    {badgeLabels.narrative}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </Panel>
-        )}
+                  {inspectorSources.length ? (
+                    <ul className="mt-3 divide-y" style={{ borderColor: "var(--line-soft)" }}>
+                      {inspectorSources.map((source) => (
+                        <li className="flex min-h-11 items-center gap-2 py-2" key={source.id}>
+                          <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 bg-[var(--evidence)]" />
+                          {source.url ? (
+                            <a
+                              className="min-w-0 flex-1 truncate text-[12px] text-[var(--text-primary)] underline-offset-4 hover:underline"
+                              href={source.url}
+                              rel="noreferrer"
+                              target="_blank"
+                              title={source.title}
+                            >
+                              {source.title}
+                            </a>
+                          ) : (
+                            <span className="min-w-0 flex-1 truncate text-[12px] text-[var(--text-primary)]" title={source.title}>
+                              {source.title}
+                            </span>
+                          )}
+                          {source.url ? <ExternalLink aria-hidden="true" className="shrink-0 text-[var(--text-tertiary)]" size={13} /> : null}
+                          <span className="shrink-0 text-[11px] text-[var(--evidence)]">{badgeLabels.reality}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-3 text-[12px] leading-6 text-[var(--text-secondary)]">
+                      No cited sources were returned for this response.
+                    </p>
+                  )}
+                  {latestResponse.narrativeContrast.length ? (
+                    <div className="mt-3 border-t pt-3" style={{ borderColor: "var(--line-soft)" }}>
+                      {latestResponse.narrativeContrast.map((item) => (
+                        <div className="flex min-h-11 items-center justify-between gap-3" key={item.title}>
+                          <span className="truncate text-[12px] text-[var(--text-secondary)]">{item.title}</span>
+                          <span className="shrink-0 text-[11px] text-[var(--text-tertiary)]">{badgeLabels.narrative}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </section>
 
-        {/* Eval */}
-        {latestResponse && (
-          <Panel title={panelLabels.eval}>
-            <EvalButton evalLogId={latestResponse.eval_log_id} labels={evalLabels} orgId={latestResponse.orgId} />
-          </Panel>
-        )}
-      </div>
-    </div>
+                <section className="border-t px-4 py-4" aria-labelledby="huginn-trace" style={{ borderColor: "var(--line-soft)" }}>
+                  <h2 className="mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]" id="huginn-trace">
+                    {panelLabels.trace}
+                  </h2>
+                  <p className="mt-2 text-[12px] leading-6 text-[var(--text-secondary)]">{traceNote}</p>
+                  {layers.length ? (
+                    <ul className="mt-3 divide-y" style={{ borderColor: "var(--line-soft)" }}>
+                      {layers.map((layer) => (
+                        <li className="flex min-h-11 items-center justify-between gap-3" key={layer}>
+                          <span className="text-[12px] text-[var(--text-primary)]">{cascadeLayers[layer] ?? layer}</span>
+                          <span className="text-[11px] text-[var(--signal)]">used</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {latestResponse.reasoningTrace.length ? (
+                    <ol className="mt-3 divide-y border-t" style={{ borderColor: "var(--line-soft)" }}>
+                      {latestResponse.reasoningTrace.map((step) => (
+                        <li className="py-3" key={step.step + ":" + step.summary}>
+                          <div className="flex items-start justify-between gap-3">
+                            <span className="mono text-[11px] uppercase tracking-[0.08em] text-[var(--signal)]">{step.step}</span>
+                            {typeof step.confidence === "number" ? (
+                              <span className="shrink-0 text-[11px] text-[var(--text-secondary)]">
+                                {Math.round(step.confidence * 100)}%
+                              </span>
+                            ) : null}
+                          </div>
+                          <p className="mt-1 text-[12px] leading-6 text-[var(--text-secondary)]">{step.summary}</p>
+                          {step.sources?.length ? (
+                            <p className="mt-1 text-[11px] leading-5 text-[var(--text-tertiary)]">{step.sources.join(" · ")}</p>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p className="mt-3 text-[12px] leading-6 text-[var(--text-secondary)]">No execution trace was returned.</p>
+                  )}
+                </section>
+
+                <section className="border-t px-4 py-4" aria-labelledby="huginn-context" style={{ borderColor: "var(--line-soft)" }}>
+                  <h2 className="mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]" id="huginn-context">
+                    {panelLabels.munin}
+                  </h2>
+                  <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
+                    <div>
+                      <dt className="text-[11px] text-[var(--text-tertiary)]">{memoryRecords}</dt>
+                      <dd className="mt-1 text-[18px] tabular-nums text-[var(--text-primary)]">{totalMemory}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-[11px] text-[var(--text-tertiary)]">Confidence</dt>
+                      <dd className="mt-1 text-[18px] tabular-nums text-[var(--signal)]">
+                        {Math.round(latestResponse.confidence * 100)}%
+                      </dd>
+                    </div>
+                    {latestResponse.evidenceGraph ? (
+                      <>
+                        <div>
+                          <dt className="text-[11px] text-[var(--text-tertiary)]">Citation coverage</dt>
+                          <dd className="mt-1 text-[13px] tabular-nums text-[var(--text-primary)]">
+                            {Math.round(latestResponse.evidenceGraph.metrics.citationCoverage * 100)}%
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-[11px] text-[var(--text-tertiary)]">Trace completeness</dt>
+                          <dd className="mt-1 text-[13px] tabular-nums text-[var(--text-primary)]">
+                            {Math.round(latestResponse.evidenceGraph.metrics.traceCompleteness * 100)}%
+                          </dd>
+                        </div>
+                      </>
+                    ) : null}
+                  </dl>
+                </section>
+
+                <section className="border-t px-4 py-4" aria-labelledby="huginn-eval" style={{ borderColor: "var(--line-soft)" }}>
+                  <h2 className="mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]" id="huginn-eval">
+                    {panelLabels.eval}
+                  </h2>
+                  <div className="mt-3">
+                    <EvalButton evalLogId={latestResponse.eval_log_id} labels={evalLabels} orgId={latestResponse.orgId} />
+                  </div>
+                </section>
+              </>
+            ) : (
+              <p className="px-4 py-5 text-[12px] leading-6 text-[var(--text-secondary)]">
+                Submit a question to inspect cited sources and the execution trace.
+              </p>
+            )}
+
+            {historyEntries.length ? (
+              <section className="border-t px-4 py-4" aria-labelledby="huginn-history" style={{ borderColor: "var(--line-soft)" }}>
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]" id="huginn-history">
+                    {historyLabels.recentQueries}
+                  </h2>
+                  <button className="min-h-11 px-2 text-[11px] text-[var(--text-secondary)] underline-offset-4 hover:underline" onClick={clearHistory} type="button">
+                    {historyLabels.clearHistory}
+                  </button>
+                </div>
+                <ul className="mt-2 divide-y" style={{ borderColor: "var(--line-soft)" }}>
+                  {historyEntries.slice(0, 8).map((entry) => (
+                    <li className="flex min-h-11 items-center gap-2" key={entry.id}>
+                      <button
+                        className="min-w-0 flex-1 truncate py-2 text-left text-[12px] text-[var(--text-primary)] underline-offset-4 hover:underline"
+                        onClick={() => {
+                          setInputPrefill(entry.question);
+                          setDraftQuestion(entry.question);
+                        }}
+                        type="button"
+                      >
+                        {entry.question}
+                      </button>
+                      <span className="shrink-0 text-[11px] text-[var(--text-tertiary)]">{relativeTime(entry.timestamp)}</span>
+                      {entry.confidence !== null ? (
+                        <span className="shrink-0 text-[11px] text-[var(--signal)]">{Math.round(entry.confidence * 100)}%</span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+          </div>
+        ) : null}
+      </aside>
+
+    </section>
   );
 }

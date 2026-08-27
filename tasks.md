@@ -1,6 +1,28 @@
 # tasks.md
 
-## Active Task: PMZ-001 — Align the project operating layer with pm-zero v12.1
+## Completed Task: PUX-001 — Rebuild the product experience around a continuous evidence workspace
+
+- Owner: main agent (coordination, decisions, integration); implementation delegated by disjoint write scope
+- Depends On: `DESIGN.md`, D-029–D-032
+- Write Scope: dashboard/public presentation layer, shared design tokens/primitives, targeted UI tests, SEC Form D ingestion path, and completion ledgers. Domain repositories, organization scope, Server Action/API contracts, and persisted client schemas remain unchanged unless separately recorded.
+- Acceptance: the black/gold and panel-grid presentation is replaced by the six-color operational system in `DESIGN.md`; all five dashboard routes and public/auth surfaces form coherent continuous workspaces; global push interruption is removed; map is dark and usable on mobile; interaction/focus/reduced-motion states are intentional; SEC Form D is a tested, honest live source; desktop/mobile browser review and `pnpm verify` pass.
+- Verification: DONE — `pnpm verify` (252/252 tests), `pnpm release:audit` (91 checks), `pnpm browser:smoke`, dry-run ingestion, and desktop/mobile Chrome performance checks passed.
+
+### PUX-001 work breakdown
+
+1. `PUX-001A` Research and strategy — DONE: repository/browser baseline, target/JTBD, six competitors plus review mining, UX, architecture, Palantir/Blueprint, and live-source audits integrated into `DESIGN.md`, D-029, and D-030.
+2. `PUX-001B` Design foundation — DONE: six-color tokens, typography, geometry, shared interaction states, and reduced-motion support.
+3. `PUX-001C` App frame — DONE: labeled desktop rail, fixed mobile navigation, route continuity, command palette, and contextual notifications.
+4. `PUX-001D` Reality Map — DONE: dark map, integrated controls, responsive inspector/daily changes, focus restoration, and explicit load failure.
+5. `PUX-001E` Entities — DONE: continuous index/object/evidence workspace, mobile progression, focused comparison, and empty-state recovery.
+6. `PUX-001F` Alerts — DONE: evidence-first queue/case workspace, progressive Watchtower detail, local feedback, and opt-in notifications.
+7. `PUX-001G` Huginn — DONE: grounded conversation canvas, source/trace inspector, bounded runtime, and accessible Thinking/error states.
+8. `PUX-001H` Settings and Custom — DONE: grouped settings workspace, truthful source health, Munin review queue, and coherent custom builder.
+9. `PUX-001I` Public/auth — DONE: editorial landing, focused CTA, and coherent auth/docs/legal surfaces without panel grids.
+10. `PUX-001J` SEC Form D — DONE: official live fetch, conservative candidate signal, deterministic fixture, and provenance tests.
+11. `PUX-001K` Integrated QA — DONE: fresh-context review, desktop/mobile browser smoke, performance traces, and standard verification.
+
+## Completed Task: PMZ-001 — Align the project operating layer with pm-zero v12.1
 
 - Owner: main agent
 - Depends On: `pm-zero/pm-zero-knowledge-v12.1.md` (2026-08-21)

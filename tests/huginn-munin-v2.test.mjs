@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { cascadeSearch } from "../lib/huginn/cascade.ts";
 import { realityGapfillSearch } from "../lib/huginn/gapfill.ts";
@@ -111,4 +112,66 @@ test("Sleep-time precompute cache hit skips cascade and writeGate invalidates ov
     if (previous === undefined) delete process.env.SLEEP_COMPUTE_ENABLED;
     else process.env.SLEEP_COMPUTE_ENABLED = previous;
   }
+});
+
+test("Sleep-time precompute rejects cache rows computed or observed after the as-of boundary", async () => {
+  const previous = process.env.SLEEP_COMPUTE_ENABLED;
+  process.env.SLEEP_COMPUTE_ENABLED = "true";
+  try {
+    const orgId = `sleep-as-of-${Date.now()}`;
+    const future = "2099-01-01T00:00:00.000Z";
+    await seedPrecomputedAnswer({
+      orgId,
+      questionPattern: "future evidence boundary",
+      answer: "must not be visible",
+      evidenceSnapshot: [{ sourceId: "future", title: "future", url: "https://example.test/future", observedAt: future }],
+      confidence: 0.9,
+      computedAt: future,
+      expiresAt: "2100-01-01T00:00:00.000Z",
+      status: "active"
+    });
+    assert.equal(await findPrecomputedAnswer({ orgId, question: "future evidence boundary", now: new Date("2026-08-24T00:00:00.000Z") }), undefined);
+  } finally {
+    if (previous === undefined) delete process.env.SLEEP_COMPUTE_ENABLED;
+    else process.env.SLEEP_COMPUTE_ENABLED = previous;
+  }
+});
+
+test("production precompute fails closed instead of reading the local fixture cache", async () => {
+  const keys = [
+    "ENVIRONMENT",
+    "ODIM_RUNTIME_ENV",
+    "VERCEL_ENV",
+    "SLEEP_COMPUTE_ENABLED",
+    "NEXT_PUBLIC_SUPABASE_PRODUCTION_URL",
+    "SUPABASE_PRODUCTION_URL",
+    "SUPABASE_PRODUCTION_SERVICE_ROLE_KEY",
+    "SUPABASE_PRODUCTION_ANON_KEY",
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "SUPABASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY"
+  ];
+  const previous = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
+  for (const key of keys) delete process.env[key];
+  process.env.ENVIRONMENT = "production";
+  process.env.SLEEP_COMPUTE_ENABLED = "true";
+  try {
+    await assert.rejects(
+      findPrecomputedAnswer({ orgId: "production-no-db", question: "fixture cache", now: new Date("2026-08-24T00:00:00.000Z") }),
+      /precomputed answer store unavailable/i
+    );
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+});
+
+test("cascade bounds Odim cache and evidence paths by as-of before model context", () => {
+  const source = readFileSync(new URL("../lib/huginn/cascade.ts", import.meta.url), "utf8");
+  assert.match(source, /searchLayer2OdimCache\(input\.orgId, asOf\)/);
+  assert.match(source, /graph\.paths\.filter\(\(path\) => evidencePathIsObservedBy\(path, asOf\)\)/);
+  assert.match(source, /Date\.parse\(ref\.observedAt\) <= asOfMs/);
 });

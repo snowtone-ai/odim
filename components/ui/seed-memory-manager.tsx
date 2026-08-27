@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useRef, useState } from "react";
 
 const ACCEPTED_SEEDS = ".txt,.md,.json,.csv,.ts,.tsx,.js,.jsx,.py,.yaml,.yml,.toml";
 const MAX_SEED_BYTES = 100 * 1024;
@@ -25,6 +25,12 @@ type SeedLabels = {
   error: string;
 };
 
+const fieldStyle = {
+  background: "var(--field)",
+  border: "1px solid var(--line-soft)",
+  color: "var(--text-primary)"
+} as const;
+
 export function SeedMemoryManager({
   initialSeeds,
   labels,
@@ -43,17 +49,17 @@ export function SeedMemoryManager({
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+  function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
     if (!file) return;
     if (file.size > MAX_SEED_BYTES) {
-      setError(`File too large (max ${MAX_SEED_BYTES / 1024} KB)`);
+      setError("File too large (max " + MAX_SEED_BYTES / 1024 + " KB)");
       return;
     }
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      const text = (ev.target?.result as string) ?? "";
-      setNewContent((prev) => (prev ? `${prev}\n\n` : "") + text);
+    reader.onload = (loadEvent) => {
+      const text = (loadEvent.target?.result as string) ?? "";
+      setNewContent((previous) => (previous ? previous + "\n\n" : "") + text);
     };
     reader.readAsText(file);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -105,155 +111,60 @@ export function SeedMemoryManager({
   }
 
   async function retireSeed(id: string) {
-    const payload = await requestSeedMemory(`/api/seed-memory?orgId=${encodeURIComponent(orgId)}&id=${encodeURIComponent(id)}`, {
-      method: "DELETE"
-    });
+    const payload = await requestSeedMemory("/api/seed-memory?orgId=" + encodeURIComponent(orgId) + "&id=" + encodeURIComponent(id), { method: "DELETE" });
     if (payload) setSeeds((current) => current.filter((seed) => seed.id !== id));
   }
 
   return (
-    <div className="grid gap-4">
-      <div
-        className="grid gap-3 rounded-[var(--radius-md)] p-3.5"
-        style={{
-          background: "var(--ink-850)",
-          border: "1px solid var(--line-faint)",
-          boxShadow: "var(--shadow-inset)"
-        }}
-      >
-        <textarea
-          className="min-h-20 rounded-[var(--radius-md)] bg-[var(--ink-900)] p-3 text-sm text-[var(--text-primary)] outline-none transition-all duration-[var(--dur-fast)] placeholder:text-[var(--text-quaternary)] focus:shadow-[0_0_0_1px_var(--rune-dim)]"
-          style={{
-            border: "1px solid var(--line-faint)",
-            boxShadow: "inset 0 1px 0 rgba(0,0,0,0.2)"
-          }}
-          onChange={(event) => setNewContent(event.target.value)}
-          placeholder={labels.content}
-          value={newContent}
-        />
-        <div className="flex flex-wrap items-center gap-2">
-          {(["fact", "opinion"] as const).map((kind) => (
-            <button
-              className={`rounded-[var(--radius-sm)] px-3 py-1.5 text-[11px] transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] ${
-                newKind === kind
-                  ? "text-[var(--rune)] shadow-[0_0_6px_rgba(201,169,97,0.1)]"
-                  : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
-              }`}
-              style={{
-                background: newKind === kind ? "var(--rune-wash)" : "var(--ink-750)",
-                border: newKind === kind ? "1px solid rgba(201,169,97,0.15)" : "1px solid var(--line-faint)",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)"
-              }}
-              key={kind}
-              onClick={() => setNewKind(kind)}
-              type="button"
-            >
-              {kind === "opinion" ? labels.opinion : labels.fact}
-            </button>
-          ))}
-          {/* File upload */}
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1.5 rounded-[var(--radius-sm)] px-3 py-1.5 text-[11px] transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:text-[var(--text-secondary)]"
-            style={{
-              background: "var(--ink-750)",
-              border: "1px solid var(--line-faint)",
-              color: "var(--text-tertiary)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)"
-            }}
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-            </svg>
-            Attach file
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            accept={ACCEPTED_SEEDS}
-            onChange={handleFileUpload}
-          />
-          <button
-            className="rounded-[var(--radius-sm)] px-3 py-1.5 text-[11px] font-medium text-[var(--text-primary)] transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] disabled:opacity-40"
-            style={{
-              background: "linear-gradient(180deg, var(--ink-700) 0%, var(--ink-750) 100%)",
-              border: "1px solid var(--line-soft)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), var(--shadow-sm)"
-            }}
-            disabled={pending || !newContent.trim()}
-            onClick={createSeed}
-            type="button"
-          >
-            {labels.create}
-          </button>
+    <div className="min-w-0">
+      <div className="border-y" style={{ borderColor: "var(--line-soft)" }}>
+        <label className="block border-b p-3" style={{ borderColor: "var(--line-faint)" }}>
+          <span className="mono mb-2 block text-[11px] uppercase tracking-[0.12em]" style={{ color: "var(--text-tertiary)" }}>{labels.content}</span>
+          <textarea className="min-h-28 w-full resize-y border p-3 text-[13px] leading-relaxed outline-none focus-visible:border-[var(--signal)]" onChange={(event) => setNewContent(event.target.value)} placeholder={labels.content} value={newContent} style={fieldStyle} />
+        </label>
+        <div className="flex flex-wrap items-center gap-2 p-3">
+          <div className="flex min-h-11 items-center gap-1 border p-1" role="group" aria-label="Knowledge type" style={{ borderColor: "var(--line-soft)" }}>
+            {(["fact", "opinion"] as const).map((kind) => {
+              const selected = newKind === kind;
+              return <button key={kind} type="button" aria-pressed={selected} onClick={() => setNewKind(kind)} className="min-h-11 px-3 text-[12px] transition-colors duration-[120ms] focus-visible:outline-2 focus-visible:outline-[var(--signal)] motion-reduce:transition-none" style={{ background: selected ? "var(--evidence-wash)" : "transparent", color: selected ? "var(--evidence)" : "var(--text-tertiary)" }}>{kind === "opinion" ? labels.opinion : labels.fact}</button>;
+            })}
+          </div>
+          <button type="button" onClick={() => fileInputRef.current?.click()} className="min-h-11 border px-3 text-[12px] transition-colors duration-[120ms] hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-[var(--signal)] motion-reduce:transition-none" style={{ borderColor: "var(--line-soft)", color: "var(--text-secondary)" }}>Attach file</button>
+          <input ref={fileInputRef} type="file" className="hidden" accept={ACCEPTED_SEEDS} onChange={handleFileUpload} />
+          <button type="button" disabled={pending || !newContent.trim()} onClick={createSeed} className="min-h-11 border px-4 text-[12px] transition-colors duration-[120ms] hover:bg-[var(--signal-wash)] focus-visible:outline-2 focus-visible:outline-[var(--signal)] disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none" style={{ background: "var(--signal-wash)", borderColor: "var(--signal)", color: "var(--signal)" }}>{labels.create}</button>
         </div>
       </div>
 
-      {error ? <div className="text-xs text-[var(--negative)]">{error}</div> : null}
-      {seeds.length ? (
-        <div className="grid gap-3">
-          {seeds.map((seed) => (
-            <div
-              className="pb-3.5 text-sm"
-              style={{ borderBottom: "1px solid var(--line-faint)" }}
-              key={seed.id}
-            >
+      {error ? <div className="mt-3 mono text-[12px] uppercase tracking-[0.1em]" aria-live="assertive" style={{ color: "var(--critical)" }}>{error}</div> : null}
+      <div className="mt-5 border-y" style={{ borderColor: "var(--line-soft)" }}>
+        {seeds.length ? seeds.map((seed) => (
+          <div className="border-b px-3 py-4 last:border-b-0" style={{ borderColor: "var(--line-faint)" }} key={seed.id}>
+            {editingId === seed.id ? (
+              <textarea className="min-h-28 w-full resize-y border p-3 text-[13px] leading-relaxed outline-none focus-visible:border-[var(--signal)]" onChange={(event) => setEditingContent(event.target.value)} value={editingContent} style={fieldStyle} />
+            ) : (
+              <div className="whitespace-pre-wrap text-[13px] leading-relaxed" style={{ color: "var(--text-primary)" }}>{seed.content}</div>
+            )}
+            <div className="mono mt-2 text-[11px] uppercase tracking-[0.12em]" style={{ color: seed.kind === "opinion" ? "var(--evidence)" : "var(--text-tertiary)" }}>{seed.kind === "opinion" ? labels.opinion : labels.fact} / MVCC</div>
+            <div className="mt-3 flex flex-wrap gap-2">
               {editingId === seed.id ? (
-                <textarea
-                  className="min-h-20 w-full rounded-[var(--radius-md)] bg-[var(--ink-900)] p-3 text-sm text-[var(--text-primary)] outline-none transition-all duration-[var(--dur-fast)] focus:shadow-[0_0_0_1px_var(--rune-dim)]"
-                  style={{
-                    border: "1px solid var(--line-faint)",
-                    boxShadow: "inset 0 1px 0 rgba(0,0,0,0.2)"
-                  }}
-                  onChange={(event) => setEditingContent(event.target.value)}
-                  value={editingContent}
-                />
+                <>
+                  <SeedButton disabled={pending} onClick={() => updateSeed(seed.id)} label={labels.save} primary />
+                  <SeedButton disabled={pending} onClick={() => { setEditingId(null); setEditingContent(""); }} label={labels.cancel} />
+                </>
               ) : (
-                <div className="text-[13px] leading-relaxed">{seed.content}</div>
+                <>
+                  <SeedButton disabled={pending} onClick={() => { setEditingId(seed.id); setEditingContent(seed.content); }} label={labels.edit} />
+                  <SeedButton disabled={pending} onClick={() => retireSeed(seed.id)} label={labels.delete} danger />
+                </>
               )}
-              <div className="mono mt-2 text-[10px] uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
-                {seed.kind === "opinion" ? labels.opinion : labels.fact} / MVCC
-              </div>
-              <div className="mt-3 flex gap-2">
-                {editingId === seed.id ? (
-                  <>
-                    <SeedButton disabled={pending} onClick={() => updateSeed(seed.id)} label={labels.save} />
-                    <SeedButton disabled={pending} onClick={() => { setEditingId(null); setEditingContent(""); }} label={labels.cancel} />
-                  </>
-                ) : (
-                  <>
-                    <SeedButton disabled={pending} onClick={() => { setEditingId(seed.id); setEditingContent(seed.content); }} label={labels.edit} />
-                    <SeedButton disabled={pending} onClick={() => retireSeed(seed.id)} label={labels.delete} />
-                  </>
-                )}
-              </div>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-[13px] text-[var(--text-tertiary)]">{labels.empty}</div>
-      )}
+          </div>
+        )) : <div className="px-3 py-6 text-[13px]" aria-live="polite" style={{ color: "var(--text-secondary)" }}>{labels.empty}</div>}
+      </div>
     </div>
   );
 }
 
-function SeedButton({ disabled, onClick, label }: Readonly<{ disabled: boolean; onClick: () => void; label: string }>) {
-  return (
-    <button
-      className="rounded-[var(--radius-sm)] px-3 py-1.5 text-[11px] text-[var(--text-secondary)] transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] disabled:opacity-40 hover:text-[var(--text-primary)]"
-      style={{
-        background: "var(--ink-750)",
-        border: "1px solid var(--line-faint)",
-        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)"
-      }}
-      disabled={disabled}
-      onClick={onClick}
-      type="button"
-    >
-      {label}
-    </button>
-  );
+function SeedButton({ disabled, onClick, label, primary = false, danger = false }: Readonly<{ disabled: boolean; onClick: () => void; label: string; primary?: boolean; danger?: boolean }>) {
+  return <button type="button" disabled={disabled} onClick={onClick} className="min-h-11 border px-3 text-[12px] transition-colors duration-[120ms] hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-[var(--signal)] disabled:opacity-45 motion-reduce:transition-none" style={{ background: primary ? "var(--signal-wash)" : "transparent", borderColor: primary ? "var(--signal)" : "var(--line-soft)", color: danger ? "var(--critical)" : primary ? "var(--signal)" : "var(--text-secondary)" }}>{label}</button>;
 }

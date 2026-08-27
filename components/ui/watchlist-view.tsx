@@ -75,17 +75,16 @@ function CategorySection({
       <div className="mb-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Icon size={13} strokeWidth={1.5} className="text-[var(--text-quaternary)]" />
-          <span className="mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+          <span className="mono text-[11px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
             {label}
           </span>
         </div>
         <button
           onClick={() => setShowPresets(!showPresets)}
-          className="flex h-6 w-6 items-center justify-center rounded-[var(--radius-sm)] transition-all duration-[var(--dur-fast)] ease-[var(--ease-out-expo)] hover:bg-[var(--ink-700)]"
+          className="flex h-6 w-6 items-center justify-center rounded-[var(--radius-sm)] transition-[background-color,transform] duration-[var(--dur-fast)] ease-[var(--ease-primary)] hover:bg-[var(--surface-hover)]"
           style={{
-            background: showPresets ? "var(--ink-700)" : "var(--ink-750)",
-            border: "1px solid var(--line-faint)",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)"
+            background: showPresets ? "var(--surface-raised)" : "var(--surface-inset)",
+            border: "1px solid var(--line-faint)"
           }}
           type="button"
         >
@@ -97,9 +96,8 @@ function CategorySection({
         <div
           className="animate-fade-in mb-3 grid gap-0.5 rounded-[var(--radius-md)] p-1.5"
           style={{
-            background: "var(--ink-850)",
-            border: "1px solid var(--line-faint)",
-            boxShadow: "var(--shadow-sm)"
+            background: "var(--surface-inset)",
+            border: "1px solid var(--line-faint)"
           }}
         >
           {presets.filter((p) => !activeIds.has(p.id)).map((preset) => (
@@ -108,7 +106,7 @@ function CategorySection({
               onClick={() => {
                 onAdd({ id: preset.id, category, label: preset.label });
               }}
-              className="rounded-[var(--radius-sm)] px-2.5 py-1.5 text-left text-[12px] text-[var(--text-secondary)] transition-all duration-[var(--dur-fast)] hover:bg-[var(--ink-700)] hover:text-[var(--text-primary)]"
+              className="rounded-[var(--radius-sm)] px-2.5 py-1.5 text-left text-[12px] text-[var(--text-secondary)] transition-[background-color,color] duration-[var(--dur-fast)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
               type="button"
             >
               {preset.label}
@@ -122,10 +120,9 @@ function CategorySection({
           {items.map((item) => (
             <div
               key={item.id}
-              className="flex items-center justify-between rounded-[var(--radius-sm)] px-3 py-2 transition-colors duration-[var(--dur-fast)] hover:bg-[var(--ink-750)]"
+              className="flex items-center justify-between rounded-[var(--radius-sm)] px-3 py-2 transition-colors duration-[var(--dur-fast)] hover:bg-[var(--surface-hover)]"
               style={{
-                border: "1px solid var(--line-faint)",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)"
+                border: "1px solid var(--line-faint)"
               }}
             >
               <div className="flex items-center gap-2">
@@ -133,12 +130,12 @@ function CategorySection({
                 <span className="text-[13px]">{item.label}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="mono text-[9px] uppercase tracking-[0.12em] text-[var(--text-quaternary)]">
+                <span className="mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-quaternary)]">
                   {tracked}
                 </span>
                 <button
                   onClick={() => onRemove(item.id)}
-                  className="flex h-5 w-5 items-center justify-center rounded-[var(--radius-xs)] text-[var(--text-quaternary)] transition-all duration-[var(--dur-fast)] hover:bg-[rgba(199,93,93,0.1)] hover:text-[var(--negative)]"
+                  className="flex h-5 w-5 items-center justify-center rounded-[var(--radius-xs)] text-[var(--text-quaternary)] transition-[background-color,color] duration-[var(--dur-fast)] hover:bg-[var(--critical-wash)] hover:text-[var(--critical)]"
                   type="button"
                 >
                   <X size={11} strokeWidth={2} />

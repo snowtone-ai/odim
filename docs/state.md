@@ -1,16 +1,16 @@
 # state.md
 
 ## Current
-- Branch: chore/apply-pm-zero-knowledge
-- Active task: PMZ-001 — align the project operating layer with pm-zero v12.1
-- Current executor: main agent
+- Branch: feat/product-experience-upgrade
+- Active task: none — PUX-001 complete
+- Current executor: none
 - Write lock: none
 - Coordinator: main agent
-- Latest verification pointer: PMZ-001 complete; setup, standard verify, release audit, diff check, and gitleaks passed. Browser smoke was attempted but the local Supabase endpoint returned fetch failures/HTTP 500 for `/api/watchtower/runs`; no product/UI behavior changed.
-- Verification mode: standard deterministic verification; browser smoke is an external-environment follow-up because this task changed only the operating layer
+- Latest verification pointer: `pnpm verify` passed with 252/252 tests and production build; `pnpm release:audit` passed 91/91; `pnpm browser:smoke` passed all six main routes, API checks, desktop dialog focus, and 390px overflow checks. Chrome traces recorded landing LCP 178ms and Map LCP 395ms with CLS 0.00.
+- Release state: PUX-001 is ready for production with migration `0015_huginn_muninn_v3.sql`; deployment and smoke verification are the final release operation.
 - Human gates outstanding: none.
 - Legal pages (`/terms`, `/privacy`, `/security`): substantive content complete (Japan/Tokyo governing law, APPI/GDPR, processor list, support-channel contact). Formal legal review deferred — practice product.
-- Supabase: project `xyvioekqwmbgrwlinzxe` restored by operator; migrations 0001–0014 applied 2026-07-06.
+- Supabase: project `xyvioekqwmbgrwlinzxe` restored by operator; migrations 0001–0014 applied 2026-07-06; migration 0015 is the PUX-001 production release migration.
 - Settings page fix (2026-07-06): migration `0014_service_role_grants.sql` grants service_role/authenticated on org_billing/billing_events/org_invites (0012/0013 omitted them → "permission denied for table org_billing"); `scripts/seed-default-org.mjs` seeds the DEFAULT_ORG_ID org so `getAdminSettings` resolves it. Applied to production; `/settings` returns 200 clean. verify/typecheck/lint/test (143/143) green.
 
 ## Completed after v3.0

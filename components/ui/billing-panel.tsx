@@ -62,29 +62,20 @@ export function BillingPanel({
 
   return (
     <div>
-      <div className="grid gap-2.5">
-        <div className="flex items-center justify-between text-[13px]">
+      <div className="border-y" style={{ borderColor: "var(--line-soft)" }}>
+        <div className="flex min-h-11 items-center justify-between gap-4 border-b px-3 text-[13px]" style={{ borderColor: "var(--line-faint)" }}>
           <span style={{ color: "var(--text-secondary)" }}>{labels.currentPlan}</span>
-          <span className="mono" style={{ color: "var(--rune)" }}>{labels.planNames[plan]}</span>
+          <span className="mono" style={{ color: "var(--signal)" }}>{labels.planNames[plan]}</span>
         </div>
-        <div className="flex items-center justify-between text-[13px]">
+        <div className="flex min-h-11 items-center justify-between gap-4 border-b px-3 text-[13px]" style={{ borderColor: "var(--line-faint)" }}>
           <span style={{ color: "var(--text-secondary)" }}>{labels.status}</span>
           <span className="flex items-center gap-2">
-            <span
-              className="inline-block rounded-full"
-              style={{
-                width: 8,
-                height: 8,
-                background: healthy ? "var(--positive, #22c55e)" : "var(--critical)"
-              }}
-            />
-            <span className="mono text-[12px]" style={{ color: "var(--text-primary)" }}>
-              {labels.statusNames[statusLabelKey[status]]}
-            </span>
+            <span className="inline-block h-2 w-2" aria-hidden="true" style={{ background: healthy ? "var(--positive)" : "var(--critical)" }} />
+            <span className="mono text-[12px]" style={{ color: healthy ? "var(--positive)" : "var(--critical)" }}>{labels.statusNames[statusLabelKey[status]]}</span>
           </span>
         </div>
         {periodEnd ? (
-          <div className="flex items-center justify-between text-[13px]">
+          <div className="flex min-h-11 items-center justify-between gap-4 px-3 text-[13px]">
             <span style={{ color: "var(--text-secondary)" }}>{labels.periodEnd}</span>
             <span className="mono text-[12px]" style={{ color: "var(--text-primary)" }}>{periodEnd.slice(0, 10)}</span>
           </div>
@@ -92,47 +83,21 @@ export function BillingPanel({
       </div>
 
       {billingEnabled ? (
-        <div className="mt-4 flex flex-wrap items-center gap-3">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           {plan !== "pro" && plan !== "enterprise" ? (
-            <button
-              type="button"
-              onClick={() => startCheckout("pro")}
-              disabled={pendingPlan !== null}
-              className="mono text-[10px] uppercase tracking-[0.1em] px-3 py-1.5 rounded transition-colors hover:brightness-110"
-              style={{
-                background: "rgba(201,169,97,0.1)",
-                border: "1px solid rgba(201,169,97,0.25)",
-                color: "var(--rune)"
-              }}
-            >
+            <button type="button" onClick={() => startCheckout("pro")} disabled={pendingPlan !== null} className="mono min-h-11 border px-3 text-[12px] uppercase tracking-[0.1em] transition-colors duration-[120ms] hover:bg-[var(--signal-wash)] focus-visible:outline-2 focus-visible:outline-[var(--signal)] disabled:opacity-45 motion-reduce:transition-none" style={{ background: "var(--signal-wash)", borderColor: "var(--signal)", color: "var(--signal)" }}>
               {pendingPlan === "pro" ? "…" : labels.upgradePro}
             </button>
           ) : null}
           {plan !== "enterprise" ? (
-            <button
-              type="button"
-              onClick={() => startCheckout("enterprise")}
-              disabled={pendingPlan !== null}
-              className="mono text-[10px] uppercase tracking-[0.1em] px-3 py-1.5 rounded transition-colors hover:brightness-110"
-              style={{
-                background: "rgba(201,169,97,0.1)",
-                border: "1px solid rgba(201,169,97,0.25)",
-                color: "var(--rune)"
-              }}
-            >
+            <button type="button" onClick={() => startCheckout("enterprise")} disabled={pendingPlan !== null} className="mono min-h-11 border px-3 text-[12px] uppercase tracking-[0.1em] transition-colors duration-[120ms] hover:bg-[var(--signal-wash)] focus-visible:outline-2 focus-visible:outline-[var(--signal)] disabled:opacity-45 motion-reduce:transition-none" style={{ background: "transparent", borderColor: "var(--line-soft)", color: "var(--text-secondary)" }}>
               {pendingPlan === "enterprise" ? "…" : labels.upgradeEnterprise}
             </button>
           ) : null}
-          {failed ? (
-            <span className="mono text-[10px] uppercase tracking-[0.1em]" style={{ color: "var(--critical)" }}>
-              {labels.checkoutFailed}
-            </span>
-          ) : null}
+          {failed ? <span className="mono text-[12px] uppercase tracking-[0.1em]" aria-live="assertive" style={{ color: "var(--critical)" }}>{labels.checkoutFailed}</span> : null}
         </div>
       ) : (
-        <div className="mono mt-4 text-[10px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
-          {labels.notEnabled}
-        </div>
+        <div className="mono mt-4 text-[11px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>{labels.notEnabled}</div>
       )}
     </div>
   );

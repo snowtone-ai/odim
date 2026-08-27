@@ -34,6 +34,7 @@ import { fetchForm4SignalsBatch } from "./sec-edgar-form4.ts";
 import { fetch8KSignalsBatch } from "./sec-edgar-8k.ts";
 import { fetch13DGSignals } from "./sec-edgar-13dg.ts";
 import { fetch13FHoldings } from "./sec-edgar-13f.ts";
+import { fetchSecFormDSignals } from "./sec-form-d.ts";
 import { checkFreshness } from "../lib/pipeline/freshness.ts";
 import { broadcastPushAlert } from "../lib/notifications/push.ts";
 import { fetchOpenSanctionsSignals } from "./opensanctions.ts";
@@ -334,6 +335,13 @@ export async function collectLiveSignals(options: ScrapeOptions) {
   const signals: RawSignal[] = [];
   const sourceReport: SourceReport[] = [];
   const limit = options.sourceLimit;
+  signals.push(...(await runSource(sourceReport, "sec-form-d", options, () =>
+    fetchSecFormDSignals({
+      indexLookbackDays: options.mode === "backfill" ? Math.min(31, Math.max(7, options.maxPages)) : 7,
+      limit,
+      userAgent: process.env.SEC_EDGAR_USER_AGENT
+    })
+  )));
   // SEC_EDGAR_CIKS env var overrides the seed file (useful for targeted testing)
   const overrideCiks = envList("SEC_EDGAR_CIKS");
   const seedCiks = loadSeedCiks();
