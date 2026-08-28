@@ -183,7 +183,7 @@ const SAFE_STATUS_MESSAGES: Record<ActionFailureCode, { en: string; ja: string }
   },
   retrieval_unavailable: {
     en: "Huginn could not retrieve the source evidence needed for this request. Please try again.",
-    ja: "Huginnはこのリクエストに必要な根拠ソースを取得できませんでした。再試行してください。"
+    ja: "Huginnはこの質問に必要な出典を取得できませんでした。再試行してください。"
   },
   aborted: {
     en: "Huginn stopped this request before verification completed. Please try again.",
@@ -212,14 +212,96 @@ type InspectorSource = {
   url?: string;
 };
 
-function relativeTime(timestamp: string): string {
+function relativeTime(timestamp: string, locale: string): string {
   const diff = Date.now() - new Date(timestamp).getTime();
   const minutes = Math.max(0, Math.floor(diff / 60_000));
+  if (locale === "ja") {
+    if (minutes < 1) return "たった今";
+    if (minutes < 60) return minutes + "分前";
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return hours + "時間前";
+    return Math.floor(hours / 24) + "日前";
+  }
   if (minutes < 60) return minutes + "m ago";
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return hours + "h ago";
   return Math.floor(hours / 24) + "d ago";
 }
+
+const HUGINN_COPY = {
+  en: {
+    newChat: "New chat",
+    conversationHistory: "Conversation history",
+    noHistory: "No recent questions.",
+    startGrounded: "Start with one of these grounded lines of inquiry.",
+    previousAnswer: "Previous answer",
+    currentAnswer: "Current answer",
+    noPreviousResponse: "No previous response yet.",
+    question: "Question",
+    groundedAnswer: "Grounded answer",
+    confidence: "confidence",
+    citedSource: "cited source",
+    citedSources: "cited sources",
+    retry: "Retry",
+    compare: "Compare",
+    compareTitle: "Compare the latest two answers",
+    sourcesTrace: "Sources and execution trace",
+    forLatestAnswer: "For the latest answer",
+    sources: "sources",
+    executionSteps: "execution steps",
+    evidencePath: "Evidence path",
+    evidencePathLabel: "Source to entity to answer to action",
+    reviewCitedEvidence: "Review cited evidence",
+    openRealityLayer: "Open the related reality layer",
+    inspectSourcesTrace: "Inspect sources and trace",
+    fallbackEvidence: "Fallback evidence",
+    repositoryEvidence: "Repository evidence",
+    noCitedSources: "No cited sources were returned for this response.",
+    used: "used",
+    noExecutionTrace: "No execution trace was returned.",
+    contextConfidence: "Confidence",
+    citationCoverage: "Citation coverage",
+    traceCompleteness: "Trace completeness",
+    inspectPrompt: "Submit a question to inspect cited sources and the execution trace.",
+    composerPrompt: "Question for Huginn"
+  },
+  ja: {
+    newChat: "新しいチャット",
+    conversationHistory: "会話履歴",
+    noHistory: "最近の質問はありません。",
+    startGrounded: "根拠に基づく調査を始める質問を選択してください。",
+    previousAnswer: "前の回答",
+    currentAnswer: "現在の回答",
+    noPreviousResponse: "前の回答はまだありません。",
+    question: "質問",
+    groundedAnswer: "根拠付き回答",
+    confidence: "信頼度",
+    citedSource: "出典",
+    citedSources: "出典",
+    retry: "再試行",
+    compare: "比較",
+    compareTitle: "最新2件の回答を比較",
+    sourcesTrace: "出典と処理記録",
+    forLatestAnswer: "最新の回答に対応",
+    sources: "出典",
+    executionSteps: "処理ステップ",
+    evidencePath: "根拠のつながり",
+    evidencePathLabel: "出典 → 対象 → 回答 → 行動",
+    reviewCitedEvidence: "引用された根拠を確認",
+    openRealityLayer: "関連する地図を開く",
+    inspectSourcesTrace: "出典と処理記録を確認",
+    fallbackEvidence: "代替データの根拠",
+    repositoryEvidence: "保存データの根拠",
+    noCitedSources: "この回答には引用された出典がありません。",
+    used: "使用済み",
+    noExecutionTrace: "処理記録は返されませんでした。",
+    contextConfidence: "信頼度",
+    citationCoverage: "出典の網羅率",
+    traceCompleteness: "処理記録の完全性",
+    inspectPrompt: "質問を送信すると、引用された出典と処理記録を確認できます。",
+    composerPrompt: "Huginnへの質問"
+  }
+} as const;
 
 function sourceRows(response: HuginnResponse | null): InspectorSource[] {
   if (!response) return [];
@@ -256,6 +338,7 @@ export function HuginnConsole({
   const router = useRouter();
   const activePresets = useHuginnTemplates((state) => state.allPresets)();
   const { entries: historyEntries, addEntry, clearHistory } = useQueryHistory();
+  const copy = HUGINN_COPY[locale === "ja" ? "ja" : "en"];
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [requestError, setRequestError] = useState<RequestError | null>(null);
@@ -265,6 +348,7 @@ export function HuginnConsole({
   const [inputPrefill, setInputPrefill] = useState("");
   const [draftQuestion, setDraftQuestion] = useState("");
   const [variableForm, setVariableForm] = useState<{ presetId: string; values: Record<string, string> } | null>(null);
+  const [composerKey, setComposerKey] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   let lastAssistantIdx = -1;
@@ -303,30 +387,30 @@ export function HuginnConsole({
       {
         id: "source",
         label: panelLabels.sources,
-        detail: inspectorSources.length + " cited source" + (inspectorSources.length === 1 ? "" : "s"),
+        detail: inspectorSources.length + " " + (inspectorSources.length === 1 ? copy.citedSource : copy.citedSources),
         href: inspectorSources[0]?.url,
         verified: inspectorSources.length > 0
       },
       {
         id: "entity",
-        label: "Entity context",
-        detail: primaryPath?.title ?? "No graph path returned",
+        label: locale === "ja" ? "対象の背景" : "Entity context",
+        detail: primaryPath?.title ?? (locale === "ja" ? "根拠までの経路はありません" : "No graph path returned"),
         verified: Boolean(primaryPath)
       },
       {
         id: "answer",
-        label: "Grounded answer",
-        detail: Math.round(latestResponse.confidence * 100) + "% confidence",
+        label: copy.groundedAnswer,
+        detail: Math.round(latestResponse.confidence * 100) + "% " + copy.confidence,
         verified: latestResponse.confidence > 0
       },
       {
         id: "action",
-        label: mapHref ? showOnMapLabel : "Review cited evidence",
-        detail: mapHref ? "Open the related reality layer" : "Inspect sources and trace",
+        label: mapHref ? showOnMapLabel : copy.reviewCitedEvidence,
+        detail: mapHref ? copy.openRealityLayer : copy.inspectSourcesTrace,
         href: mapHref
       }
     ];
-  }, [inspectorSources, latestResponse, mapHref, panelLabels.sources, primaryPath, showOnMapLabel]);
+  }, [copy, inspectorSources, latestResponse, locale, mapHref, panelLabels.sources, primaryPath, showOnMapLabel]);
 
   useEffect(() => {
     if (!scrollRef.current) return;
@@ -408,18 +492,102 @@ export function HuginnConsole({
     if (mapHref) router.push(mapHref);
   }
 
+  function startNewChat() {
+    setMessages([]);
+    setRequestError(null);
+    setInspectorOpen(false);
+    setCompareMode(false);
+    setInputPrefill("");
+    setDraftQuestion("");
+    setVariableForm(null);
+    setComposerKey((value) => value + 1);
+  }
+
   const assistantMessages = messages.filter((message) => message.role === "assistant");
   const previousAssistant = assistantMessages[assistantMessages.length - 2] ?? null;
   const currentAssistant = assistantMessages[assistantMessages.length - 1] ?? null;
+  function renderHistoryContent(surface: "desktop" | "mobile") {
+    return (
+    <div className="max-h-40 overflow-y-auto xl:h-full xl:max-h-none">
+      <div className="border-b p-3" style={{ borderColor: "var(--line-soft)" }}>
+        <button
+          className="odim-control flex min-h-11 w-full items-center justify-center px-3 text-[12px] transition-[background-color,color,border-color] duration-[var(--motion-micro)] hover:bg-[var(--surface-hover)] motion-reduce:transition-none"
+          data-testid={surface === "desktop" ? "huginn-new-chat" : "huginn-new-chat-mobile"}
+          onClick={startNewChat}
+          type="button"
+        >
+          {copy.newChat}
+        </button>
+      </div>
+      <section className="px-3 py-3" aria-label={historyLabels.recentQueries}>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+            {historyLabels.recentQueries}
+          </h2>
+          {historyEntries.length ? (
+            <button
+              className="min-h-11 px-2 text-[11px] text-[var(--text-secondary)] underline-offset-4 hover:underline"
+              onClick={clearHistory}
+              type="button"
+            >
+              {historyLabels.clearHistory}
+            </button>
+          ) : null}
+        </div>
+        {historyEntries.length ? (
+          <ul className="mt-2 divide-y" style={{ borderColor: "var(--line-soft)" }}>
+            {historyEntries.slice(0, 8).map((entry) => (
+              <li className="flex min-h-11 items-center gap-2" key={entry.id}>
+                <button
+                  className="min-w-0 flex-1 truncate py-2 text-left text-[12px] text-[var(--text-primary)] underline-offset-4 hover:underline"
+                  onClick={() => {
+                    setInputPrefill(entry.question);
+                    setDraftQuestion(entry.question);
+                  }}
+                  type="button"
+                >
+                  {entry.question}
+                </button>
+                <span className="shrink-0 text-[11px] text-[var(--text-tertiary)]">{relativeTime(entry.timestamp, locale)}</span>
+                {entry.confidence !== null ? (
+                  <span className="shrink-0 text-[11px] text-[var(--signal)]">{Math.round(entry.confidence * 100)}%</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-3 text-[12px] leading-6 text-[var(--text-secondary)]">{copy.noHistory}</p>
+        )}
+      </section>
+    </div>
+    );
+  }
 
   return (
     <section
       aria-label={panelLabels.dialogue}
-      className="grid h-[calc(100dvh-10.5rem)] min-h-[400px] overflow-hidden border bg-[var(--field)] xl:h-[calc(100dvh-7rem)] xl:grid-cols-[minmax(0,1fr)_22rem]"
+      className="grid h-[calc(100dvh-10.5rem)] min-h-[400px] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden border bg-[var(--field)] xl:h-[calc(100dvh-7rem)] xl:grid-cols-[15rem_minmax(0,1fr)_22rem] xl:grid-rows-1"
       data-testid="huginn-workspace"
       style={{ borderColor: "var(--line-soft)" }}
     >
-      <main className="order-1 flex min-h-0 flex-col" aria-label={panelLabels.dialogue}>
+      <aside
+        aria-label={copy.conversationHistory}
+        className="order-1 hidden min-h-0 border-b bg-[var(--surface)] xl:block xl:border-b-0 xl:border-r"
+        data-testid="huginn-sidebar"
+        style={{ borderColor: "var(--line-soft)" }}
+      >
+        {renderHistoryContent("desktop")}
+      </aside>
+
+      <details className="order-1 border-b bg-[var(--surface)] xl:hidden" style={{ borderColor: "var(--line-soft)" }}>
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-4 text-[12px] text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--signal)]">
+          {copy.conversationHistory}
+          <span aria-hidden="true" className="text-[var(--text-tertiary)]">⌄</span>
+        </summary>
+        {renderHistoryContent("mobile")}
+      </details>
+
+      <main className="order-2 flex min-h-0 flex-col" aria-label={panelLabels.dialogue}>
         <div
           ref={scrollRef}
           className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
@@ -434,7 +602,7 @@ export function HuginnConsole({
                   {emptyStateText}
                 </p>
                 <p className="mt-2 text-[12px] leading-6 text-[var(--text-secondary)]">
-                  Start with one of these grounded lines of inquiry.
+                  {copy.startGrounded}
                 </p>
                 <div className="mt-5 grid border-t" style={{ borderColor: "var(--line-soft)" }}>
                   {activePresets.slice(0, 3).map((preset) => (
@@ -456,11 +624,11 @@ export function HuginnConsole({
             <div className="grid min-h-full grid-cols-1 divide-y p-5 sm:grid-cols-2 sm:divide-x sm:divide-y-0 sm:p-6" style={{ borderColor: "var(--line-soft)" }}>
               <article className="min-w-0 py-4 sm:px-5 sm:py-0">
                 <div className="mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
-                  Previous answer
+                  {copy.previousAnswer}
                 </div>
                 {previousAssistant?.response ? (
                   <div className="mt-2 text-[12px] text-[var(--text-secondary)]">
-                    {Math.round(previousAssistant.response.confidence * 100)}% confidence
+                    {Math.round(previousAssistant.response.confidence * 100)}% {copy.confidence}
                   </div>
                 ) : null}
                 {previousAssistant ? (
@@ -468,16 +636,16 @@ export function HuginnConsole({
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{previousAssistant.content}</ReactMarkdown>
                   </div>
                 ) : (
-                  <p className="mt-5 text-[13px] text-[var(--text-tertiary)]">No previous response yet.</p>
+                  <p className="mt-5 text-[13px] text-[var(--text-tertiary)]">{copy.noPreviousResponse}</p>
                 )}
               </article>
               <article className="min-w-0 py-4 sm:px-5 sm:py-0">
                 <div className="mono text-[11px] uppercase tracking-[0.08em] text-[var(--signal)]">
-                  Current answer
+                  {copy.currentAnswer}
                 </div>
                 {currentAssistant.response ? (
                   <div className="mt-2 text-[12px] text-[var(--text-secondary)]">
-                    {Math.round(currentAssistant.response.confidence * 100)}% confidence
+                    {Math.round(currentAssistant.response.confidence * 100)}% {copy.confidence}
                   </div>
                 ) : null}
                 <div className="huginn-prose mt-5 text-[14px] leading-7 text-[var(--text-primary)]">
@@ -498,7 +666,7 @@ export function HuginnConsole({
                   {message.role === "user" ? (
                     <>
                       <p className="mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
-                        Question
+                        {copy.question}
                       </p>
                       <p className="mt-2 whitespace-pre-wrap text-[14px] leading-7 text-[var(--text-primary)]">
                         {message.content}
@@ -508,11 +676,11 @@ export function HuginnConsole({
                     <>
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <p className="mono text-[11px] uppercase tracking-[0.08em] text-[var(--evidence)]">
-                          Grounded answer
+                          {copy.groundedAnswer}
                         </p>
                         {message.response ? (
                           <span className="text-[12px] text-[var(--text-secondary)]">
-                            {Math.round(message.response.confidence * 100)}% confidence · {message.response.sources.length} cited
+                            {Math.round(message.response.confidence * 100)}% {copy.confidence} · {message.response.sources.length} {message.response.sources.length === 1 ? copy.citedSource : copy.citedSources}
                           </span>
                         ) : null}
                       </div>
@@ -534,7 +702,7 @@ export function HuginnConsole({
                 </article>
               ))}
               {loading ? (
-                <HuginnThinking />
+                <HuginnThinking locale={locale} />
               ) : null}
             </div>
           )}
@@ -561,7 +729,7 @@ export function HuginnConsole({
                   type="button"
                 >
                   <RefreshCw aria-hidden="true" size={14} />
-                  Retry
+                  {copy.retry}
                 </button>
               </div>
             ) : null}
@@ -602,10 +770,10 @@ export function HuginnConsole({
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button className="odim-control min-h-11 px-3 text-[12px]" onClick={submitVariableForm} type="button">
-                      Apply
+                      {locale === "ja" ? "反映" : "Apply"}
                     </button>
                     <button className="odim-control min-h-11 px-3 text-[12px]" onClick={() => setVariableForm(null)} type="button">
-                      Cancel
+                      {locale === "ja" ? "キャンセル" : "Cancel"}
                     </button>
                   </div>
                 </div>
@@ -615,8 +783,10 @@ export function HuginnConsole({
             <HuginnInput
               action={action}
               defaultOrgId={defaultOrgId}
-              labels={inputLabels}
+              key={composerKey}
+              labels={{ ...inputLabels, prompt: inputLabels.prompt || copy.composerPrompt }}
               loading={loading}
+              locale={locale}
               onDraftChange={setDraftQuestion}
               onSubmit={handleSubmit}
               prefillValue={inputPrefill}
@@ -627,10 +797,10 @@ export function HuginnConsole({
                 aria-pressed={compareMode}
                 className="odim-control min-h-11 px-3 text-[12px] transition-[background-color,color,border-color] duration-[var(--motion-micro)] motion-reduce:transition-none"
                 onClick={() => setCompareMode((value) => !value)}
-                title="Compare the latest two answers"
+                title={copy.compareTitle}
                 type="button"
               >
-                Compare
+                {copy.compare}
               </button>
               <button
                 aria-pressed={webSearch}
@@ -674,8 +844,9 @@ export function HuginnConsole({
       </main>
 
       <aside
-        aria-label="Sources and execution trace"
-        className="order-2 min-h-0 border-t bg-[var(--surface)] xl:border-l xl:border-t-0"
+        aria-label={copy.sourcesTrace}
+        className="order-3 min-h-0 border-t bg-[var(--surface)] xl:border-l xl:border-t-0"
+        data-testid="huginn-answer-inspector"
         style={{ borderColor: "var(--line-soft)" }}
       >
         <button
@@ -691,7 +862,7 @@ export function HuginnConsole({
               {panelLabels.sources} &amp; {panelLabels.trace}
             </span>
             <span className="mt-0.5 block text-[11px] text-[var(--text-tertiary)]">
-              {inspectorSources.length} sources · {latestResponse?.reasoningTrace.length ?? 0} execution steps
+              {latestResponse ? copy.forLatestAnswer + " · " : ""}{inspectorSources.length} {copy.sources} · {latestResponse?.reasoningTrace.length ?? 0} {copy.executionSteps}
             </span>
           </span>
           <ChevronDown
@@ -713,12 +884,12 @@ export function HuginnConsole({
               <>
                 <section className="px-4 py-4" aria-labelledby="huginn-evidence-path">
                   <h2 className="mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]" id="huginn-evidence-path">
-                    Evidence path
+                    {copy.evidencePath}
                   </h2>
                   <EvidenceThread
                     activeId="answer"
                     className="mt-4"
-                    label="Source to entity to answer to action"
+                    label={copy.evidencePathLabel}
                     orientation="vertical"
                     steps={evidenceSteps}
                   />
@@ -730,7 +901,7 @@ export function HuginnConsole({
                       {panelLabels.sources}
                     </h2>
                     <span className="text-[11px] text-[var(--text-secondary)]">
-                      {latestResponse.evidenceGraph?.source === "fallback" ? "Fallback evidence" : "Repository evidence"}
+                      {latestResponse.evidenceGraph?.source === "fallback" ? copy.fallbackEvidence : copy.repositoryEvidence}
                     </span>
                   </div>
                   {inspectorSources.length ? (
@@ -760,7 +931,7 @@ export function HuginnConsole({
                     </ul>
                   ) : (
                     <p className="mt-3 text-[12px] leading-6 text-[var(--text-secondary)]">
-                      No cited sources were returned for this response.
+                      {copy.noCitedSources}
                     </p>
                   )}
                   {latestResponse.narrativeContrast.length ? (
@@ -785,7 +956,7 @@ export function HuginnConsole({
                       {layers.map((layer) => (
                         <li className="flex min-h-11 items-center justify-between gap-3" key={layer}>
                           <span className="text-[12px] text-[var(--text-primary)]">{cascadeLayers[layer] ?? layer}</span>
-                          <span className="text-[11px] text-[var(--signal)]">used</span>
+                          <span className="text-[11px] text-[var(--signal)]">{copy.used}</span>
                         </li>
                       ))}
                     </ul>
@@ -810,7 +981,7 @@ export function HuginnConsole({
                       ))}
                     </ol>
                   ) : (
-                    <p className="mt-3 text-[12px] leading-6 text-[var(--text-secondary)]">No execution trace was returned.</p>
+                    <p className="mt-3 text-[12px] leading-6 text-[var(--text-secondary)]">{copy.noExecutionTrace}</p>
                   )}
                 </section>
 
@@ -824,7 +995,7 @@ export function HuginnConsole({
                       <dd className="mt-1 text-[18px] tabular-nums text-[var(--text-primary)]">{totalMemory}</dd>
                     </div>
                     <div>
-                      <dt className="text-[11px] text-[var(--text-tertiary)]">Confidence</dt>
+                      <dt className="text-[11px] text-[var(--text-tertiary)]">{copy.contextConfidence}</dt>
                       <dd className="mt-1 text-[18px] tabular-nums text-[var(--signal)]">
                         {Math.round(latestResponse.confidence * 100)}%
                       </dd>
@@ -832,13 +1003,13 @@ export function HuginnConsole({
                     {latestResponse.evidenceGraph ? (
                       <>
                         <div>
-                          <dt className="text-[11px] text-[var(--text-tertiary)]">Citation coverage</dt>
+                          <dt className="text-[11px] text-[var(--text-tertiary)]">{copy.citationCoverage}</dt>
                           <dd className="mt-1 text-[13px] tabular-nums text-[var(--text-primary)]">
                             {Math.round(latestResponse.evidenceGraph.metrics.citationCoverage * 100)}%
                           </dd>
                         </div>
                         <div>
-                          <dt className="text-[11px] text-[var(--text-tertiary)]">Trace completeness</dt>
+                          <dt className="text-[11px] text-[var(--text-tertiary)]">{copy.traceCompleteness}</dt>
                           <dd className="mt-1 text-[13px] tabular-nums text-[var(--text-primary)]">
                             {Math.round(latestResponse.evidenceGraph.metrics.traceCompleteness * 100)}%
                           </dd>
@@ -859,42 +1030,10 @@ export function HuginnConsole({
               </>
             ) : (
               <p className="px-4 py-5 text-[12px] leading-6 text-[var(--text-secondary)]">
-                Submit a question to inspect cited sources and the execution trace.
+                {copy.inspectPrompt}
               </p>
             )}
 
-            {historyEntries.length ? (
-              <section className="border-t px-4 py-4" aria-labelledby="huginn-history" style={{ borderColor: "var(--line-soft)" }}>
-                <div className="flex items-center justify-between gap-3">
-                  <h2 className="mono text-[11px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]" id="huginn-history">
-                    {historyLabels.recentQueries}
-                  </h2>
-                  <button className="min-h-11 px-2 text-[11px] text-[var(--text-secondary)] underline-offset-4 hover:underline" onClick={clearHistory} type="button">
-                    {historyLabels.clearHistory}
-                  </button>
-                </div>
-                <ul className="mt-2 divide-y" style={{ borderColor: "var(--line-soft)" }}>
-                  {historyEntries.slice(0, 8).map((entry) => (
-                    <li className="flex min-h-11 items-center gap-2" key={entry.id}>
-                      <button
-                        className="min-w-0 flex-1 truncate py-2 text-left text-[12px] text-[var(--text-primary)] underline-offset-4 hover:underline"
-                        onClick={() => {
-                          setInputPrefill(entry.question);
-                          setDraftQuestion(entry.question);
-                        }}
-                        type="button"
-                      >
-                        {entry.question}
-                      </button>
-                      <span className="shrink-0 text-[11px] text-[var(--text-tertiary)]">{relativeTime(entry.timestamp)}</span>
-                      {entry.confidence !== null ? (
-                        <span className="shrink-0 text-[11px] text-[var(--signal)]">{Math.round(entry.confidence * 100)}%</span>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
           </div>
         ) : null}
       </aside>

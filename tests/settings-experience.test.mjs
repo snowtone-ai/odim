@@ -22,12 +22,11 @@ const surfaces = [
 
 test("settings is an index plus one active work surface", () => {
   assert.match(shell, /Settings categories/);
-  assert.match(shell, /Workspace controls/);
+  assert.match(shell, /interfaceLabels\.categories/);
   assert.match(shell, /role="tabpanel"/);
   assert.match(shell, /role="tablist"/);
   assert.match(shell, /settings-section-select/);
-  assert.match(shell, /Categories/);
-  assert.match(shell, /← Categories/);
+  assert.match(shell, /ui\.back/);
   assert.match(shell, /aria-live="polite"/);
   assert.match(shell, /min-h-11/);
   assert.doesNotMatch(shell, /from ["']@\/components\/ui\/panel["']/);

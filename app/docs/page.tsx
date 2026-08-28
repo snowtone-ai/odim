@@ -3,12 +3,19 @@ import path from "node:path";
 import type { Metadata } from "next";
 import { PublicShell } from "@/components/ui/public-shell";
 import { parseMarkdown, type InlineSegment } from "@/lib/docs/markdown";
+import { getLocale } from "@/lib/i18n/locale";
 
-export const metadata: Metadata = {
-  title: "API Documentation",
-  description:
-    "Odim public REST API v1 reference — authentication, key scopes, endpoints, pagination, and response shape."
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return (await getLocale()) === "ja"
+    ? {
+        title: "APIリファレンス",
+        description: "Odim公開REST API v1のリファレンス — 認証、キーの権限、エンドポイント、ページネーション、レスポンス形式。"
+      }
+    : {
+        title: "API Documentation",
+        description: "Odim public REST API v1 reference — authentication, key scopes, endpoints, pagination, and response shape."
+      };
+}
 
 function Inline({ segments }: { segments: InlineSegment[] }) {
   return (
@@ -30,17 +37,22 @@ function Inline({ segments }: { segments: InlineSegment[] }) {
   );
 }
 
-export default function ApiDocsPage() {
-  // docs/api-reference.md is repo-controlled trusted content, read at build time
-  // (static route) and rendered as React elements — no raw HTML injection.
-  const markdown = readFileSync(path.join(process.cwd(), "docs", "api-reference.md"), "utf8");
+export default async function ApiDocsPage() {
+  // The locale-specific API reference is repo-controlled trusted content and is
+  // rendered as React elements — no raw HTML injection.
+  const locale = await getLocale();
+  const markdown = readFileSync(
+    path.join(process.cwd(), "docs", locale === "ja" ? "api-reference.ja.md" : "api-reference.md"),
+    "utf8"
+  );
   const blocks = parseMarkdown(markdown);
 
   return (
     <PublicShell title="API Reference">
         <p className="mt-5 max-w-2xl text-[14px] leading-7" style={{ color: "color-mix(in srgb, var(--text) 72%, transparent)" }}>
-        Programmatic access to entities, signals, alerts, source health, and Huginn queries.
-        API keys are issued per organization from Settings and carry explicit read scopes.
+        {locale === "ja"
+          ? "対象、兆候、通知、情報源の状態、Huginnへの質問をプログラムから利用できます。APIキーは組織ごとに設定画面から発行し、明示した読み取り権限を持たせます。"
+          : "Programmatic access to entities, signals, alerts, source health, and Huginn queries. API keys are issued per organization from Settings and carry explicit read scopes."}
       </p>
 
       {blocks.map((block, index) => {

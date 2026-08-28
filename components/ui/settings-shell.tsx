@@ -10,22 +10,39 @@ export type SettingsSection = Readonly<{
   content: React.ReactNode;
 }>;
 
-type CategoryKey = "gettingStarted" | "signals" | "data" | "access" | "audit";
+type CategoryKey = "general" | "notifications" | "intelligence" | "data" | "workspace" | "audit";
 type CategoryLabels = Readonly<Record<CategoryKey, string>>;
+type InterfaceLabels = Readonly<{
+  navigation: string;
+  categories: string;
+  section: string;
+  empty: string;
+  back: string;
+}>;
 
 const DEFAULT_CATEGORY_LABELS: CategoryLabels = {
-  gettingStarted: "Getting started",
-  signals: "Signals & workflows",
-  data: "Data & knowledge",
-  access: "Access & workspace",
+  general: "General",
+  notifications: "Notifications",
+  intelligence: "AI & memory",
+  data: "Data sources",
+  workspace: "Workspace & access",
   audit: "Audit"
 };
 
+const DEFAULT_INTERFACE_LABELS: InterfaceLabels = {
+  navigation: "Settings navigation",
+  categories: "Settings categories",
+  section: "Settings section",
+  empty: "No settings are available.",
+  back: "Back to settings"
+};
+
 function categoryFor(id: string): CategoryKey {
-  if (id === "gettingStarted") return "gettingStarted";
-  if (["alertRules", "watchtower", "webhook"].includes(id)) return "signals";
-  if (["customKnowledge", "muninReview", "huginnTemplates", "ingestion", "sourceHealth", "ontology"].includes(id)) return "data";
-  if (["apiKeys", "permissions", "billing", "language"].includes(id)) return "access";
+  if (id === "language") return "general";
+  if (["alertRules", "webhook"].includes(id)) return "notifications";
+  if (["watchtower", "customKnowledge", "muninReview", "huginnTemplates"].includes(id)) return "intelligence";
+  if (["ingestion", "sourceHealth"].includes(id)) return "data";
+  if (["apiKeys", "permissions", "billing"].includes(id)) return "workspace";
   return "audit";
 }
 
@@ -98,6 +115,7 @@ function CategoryIndex({
   sections,
   activeId,
   labels,
+  interfaceLabels,
   onSelect,
   mobile = false,
   surfacePrefix
@@ -105,6 +123,7 @@ function CategoryIndex({
   sections: readonly SettingsSection[];
   activeId: string;
   labels: CategoryLabels;
+  interfaceLabels: InterfaceLabels;
   onSelect: (id: string) => void;
   mobile?: boolean;
   surfacePrefix: string;
@@ -121,9 +140,9 @@ function CategoryIndex({
   }, [sections]);
 
   return (
-    <nav aria-label="Settings categories" className={mobile ? "" : "sticky top-4"}>
+    <nav aria-label={interfaceLabels.navigation} className={mobile ? "" : "sticky top-4"}>
       <div className="mono mb-2 px-3 text-[11px] uppercase tracking-[0.14em]" style={{ color: "var(--text-tertiary)" }}>
-        {mobile ? "Categories" : "Workspace controls"}
+        {interfaceLabels.categories}
       </div>
       <div role="tablist" aria-orientation="vertical" className="border-y" style={{ borderColor: "var(--line-soft)" }}>
         {groups.map(([category, entries]) => (
@@ -141,11 +160,11 @@ function CategoryIndex({
   );
 }
 
-function Surface({ section, surfacePrefix }: Readonly<{ section?: SettingsSection; surfacePrefix: string }>) {
+function Surface({ section, surfacePrefix, emptyLabel }: Readonly<{ section?: SettingsSection; surfacePrefix: string; emptyLabel: string }>) {
   if (!section) {
     return (
       <div className="border-y px-4 py-8 text-sm" style={{ borderColor: "var(--line-soft)", color: "var(--text-secondary)" }}>
-        No settings surface is available.
+        {emptyLabel}
       </div>
     );
   }
@@ -168,12 +187,15 @@ function Surface({ section, surfacePrefix }: Readonly<{ section?: SettingsSectio
 
 export function SettingsShell({
   sections,
-  categoryLabels = DEFAULT_CATEGORY_LABELS
+  categoryLabels = DEFAULT_CATEGORY_LABELS,
+  interfaceLabels = DEFAULT_INTERFACE_LABELS
 }: Readonly<{
   sections: readonly SettingsSection[];
   categoryLabels?: Partial<CategoryLabels>;
+  interfaceLabels?: Partial<InterfaceLabels>;
 }>) {
   const labels = useMemo<CategoryLabels>(() => ({ ...DEFAULT_CATEGORY_LABELS, ...categoryLabels }), [categoryLabels]);
+  const ui = useMemo<InterfaceLabels>(() => ({ ...DEFAULT_INTERFACE_LABELS, ...interfaceLabels }), [interfaceLabels]);
   const [activeId, setActiveId] = useState(sections[0]?.id ?? "");
   const [mobileOpen, setMobileOpen] = useState(false);
   const active = sections.find((section) => section.id === activeId) ?? sections[0];
@@ -208,8 +230,8 @@ export function SettingsShell({
   return (
     <div className="min-w-0">
       <div className="hidden gap-6 lg:grid lg:grid-cols-[232px_minmax(0,1fr)]">
-        <CategoryIndex sections={sections} activeId={activeId} labels={labels} onSelect={(id) => selectSection(id)} surfacePrefix="desktop" />
-        <Surface section={active} surfacePrefix="desktop" />
+        <CategoryIndex sections={sections} activeId={activeId} labels={labels} interfaceLabels={ui} onSelect={(id) => selectSection(id)} surfacePrefix="desktop" />
+        <Surface section={active} surfacePrefix="desktop" emptyLabel={ui.empty} />
       </div>
 
       <div className="lg:hidden">
@@ -221,10 +243,10 @@ export function SettingsShell({
               className="min-h-11 shrink-0 px-2 text-[12px] focus-visible:outline-2 focus-visible:outline-[var(--signal)]"
               style={{ color: "var(--signal)" }}
             >
-              ← Categories
+              ← {ui.back}
             </button>
           ) : null}
-          <label className="sr-only" htmlFor="settings-section-select">Settings section</label>
+          <label className="sr-only" htmlFor="settings-section-select">{ui.section}</label>
           <select
             id="settings-section-select"
             value={activeId}
@@ -236,9 +258,9 @@ export function SettingsShell({
           </select>
         </div>
         {mobileOpen ? (
-          <Surface section={active} surfacePrefix="mobile" />
+          <Surface section={active} surfacePrefix="mobile" emptyLabel={ui.empty} />
         ) : (
-          <CategoryIndex sections={sections} activeId={activeId} labels={labels} onSelect={(id) => selectSection(id, true)} mobile surfacePrefix="mobile" />
+          <CategoryIndex sections={sections} activeId={activeId} labels={labels} interfaceLabels={ui} onSelect={(id) => selectSection(id, true)} mobile surfacePrefix="mobile" />
         )}
       </div>
     </div>

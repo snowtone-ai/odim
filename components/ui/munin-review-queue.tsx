@@ -39,14 +39,14 @@ export function MuninReviewQueue({
 
   const copy = locale === "ja"
     ? {
-        title: "Munin レビューキュー",
+        title: "Munin の確認待ち",
         pending: "承認待ち",
-        empty: "レビュー待ちの提案はありません。",
-        error: "レビューキューを読み込めませんでした。",
+        empty: "確認待ちの提案はありません。",
+        error: "確認待ちの提案を読み込めませんでした。",
         retry: "再試行",
         refresh: "更新",
         relevance: "関連度",
-        reviewGate: "レビューゲート",
+        reviewGate: "確認工程",
         source: "出典",
         asOf: "基準時点",
         pendingReview: "承認待ち",

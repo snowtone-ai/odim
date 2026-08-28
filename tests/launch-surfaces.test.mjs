@@ -109,7 +109,7 @@ test("docs route renders the real API reference without raw HTML injection", () 
 test("legal pages exist with real content, metadata, and shared public shell", () => {
   for (const route of ["terms", "privacy", "security"]) {
     const source = readFileSync(`app/${route}/page.tsx`, "utf8");
-    assert.match(source, /export const metadata/, route);
+    assert.match(source, /export (?:const metadata|async function generateMetadata)/, route);
     assert.match(source, /PublicShell/, route);
     assert.match(source, /Last updated/, route);
     assert.doesNotMatch(source, /TODO|lorem|placeholder|FIXME/i, route);
@@ -178,6 +178,6 @@ test("every page exports a per-page title", () => {
     "app/privacy/page.tsx",
     "app/security/page.tsx"
   ]) {
-    assert.match(readFileSync(page, "utf8"), /export const metadata/, page);
+    assert.match(readFileSync(page, "utf8"), /export (?:const metadata|async function generateMetadata)/, page);
   }
 });

@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Settings" };
-
 export const dynamic = "force-dynamic";
 
 import { Screen } from "@/components/ui/screen";
@@ -37,13 +35,37 @@ import { MuninReviewQueue } from "@/components/ui/munin-review-queue";
 import { getMuninReviewContext } from "@/lib/munin/review-auth";
 import sourcesConfig from "../../../config/sources.json" with { type: "json" };
 
-function shortDate(value?: string) {
-  if (!value) return "not recorded";
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getLocale()) === "ja" ? "設定" : "Settings" };
+}
+
+function shortDate(value: string | undefined, locale: "en" | "ja") {
+  if (!value) return locale === "ja" ? "記録なし" : "Not recorded";
   return value.slice(0, 10) + " UTC";
 }
 
 function isStuckRunning(startedAt: string): boolean {
   return Date.now() - new Date(startedAt).getTime() > 2 * 60 * 60 * 1000;
+}
+
+function ingestionModeLabel(mode: IngestionRun["mode"], locale: "en" | "ja") {
+  if (locale !== "ja") return mode;
+  return { daily: "定期収集", backfill: "過去データ補完", "dry-run": "試行" }[mode];
+}
+
+function ingestionStatusLabel(status: IngestionRun["status"], locale: "en" | "ja") {
+  if (locale !== "ja") return status;
+  return { running: "実行中", succeeded: "完了", failed: "失敗" }[status];
+}
+
+function auditEventLabel(event: string, locale: "en" | "ja") {
+  if (locale !== "ja") return event;
+  return ({
+    raw_signal_ingested: "情報を取得",
+    ontology_object_upserted: "対象情報を更新",
+    ontology_link_upserted: "関連情報を更新",
+    alert_created: "アラートを作成"
+  } as Record<string, string>)[event] ?? "システム操作";
 }
 
 const configuredSources = sourcesConfig.sources.map((source) => ({ id: source.id, enabled: source.enabled }));
@@ -56,13 +78,42 @@ export default async function SettingsPage() {
   const locale = await getLocale();
   const messages = getMessages(locale);
   const screen = messages.screens.settings;
+  const ui = locale === "ja"
+    ? {
+        runSource: "収集状況",
+        sampleSource: "サンプルデータ",
+        scheduledStatus: "定期収集と過去データ補完の実行状況",
+        noRuns: "実行履歴はまだありません。収集を実行済みの場合は、データベースの権限を確認してください。",
+        noWatermarks: "情報源ごとの更新記録はまだありません。",
+        signals: "件取得",
+        alerts: "件のアラート",
+        sourceLimit: "対象上限",
+        stuck: "長時間実行中",
+        calibration: "信頼度の精度",
+        auditActor: "実行者",
+        auditSource: "情報源"
+      }
+    : {
+        runSource: "Collection status",
+        sampleSource: "Sample data",
+        scheduledStatus: "Scheduled collection and backfill activity",
+        noRuns: "No runs have been recorded. If collection already ran, check the database permissions.",
+        noWatermarks: "No per-source update records have been recorded.",
+        signals: "signals",
+        alerts: "alerts",
+        sourceLimit: "source limit",
+        stuck: "running too long",
+        calibration: "Confidence calibration",
+        auditActor: "Actor",
+        auditSource: "Source"
+      };
   const reviewContext = await getMuninReviewContext().catch((error: unknown) => {
     console.error("[settings] Munin review context failed:", error instanceof Error ? error.message : error);
     return null;
   });
   if (!reviewContext) {
     return (
-      <Screen title="Settings">
+      <Screen title={screen.title}>
         <div className="flex flex-col gap-3 p-8">
           <p className="mono text-[13px]" style={{ color: "var(--critical)" }}>
             {locale === "ja"
@@ -81,7 +132,7 @@ export default async function SettingsPage() {
           console.error("[settings] listPendingMemoryProposals failed:", error instanceof Error ? error.message : error);
           return {
             proposals: [],
-            error: locale === "ja" ? "レビューキューを読み込めませんでした。" : "The review queue could not be loaded."
+            error: locale === "ja" ? "確認待ちの提案を読み込めませんでした。" : "The review queue could not be loaded."
           };
         })
     : Promise.resolve({
@@ -107,7 +158,7 @@ export default async function SettingsPage() {
 
   if (!settings) {
     return (
-      <Screen title="Settings">
+      <Screen title={screen.title}>
         <div className="flex flex-col gap-3 p-8">
           <p className="mono text-[13px]" style={{ color: "var(--critical)" }}>
             {locale === "ja"
@@ -126,63 +177,13 @@ export default async function SettingsPage() {
 
   const orgLabel = settings.org
     ? `${settings.org.name} / ${settings.org.tier}`
-    : locale === "ja" ? "組織未設定 / フォールバック" : "org not configured / fallback";
+    : locale === "ja" ? "ワークスペース未設定 / サンプルデータ" : "Workspace not configured / sample data";
   const calibration = buildCalibrationReport(
     buildCalibrationObservations(sourceBackedPlan.rawSignals, sourceBackedPlan.alerts)
   );
   const attribution = computeSourceAttribution(sourceBackedPlan.rawSignals, sourceBackedPlan.alerts);
 
-  const onboardingSteps = [
-    { label: screen.gettingStarted.stepApiKey, done: settings.apiKeys.length > 0 },
-    { label: screen.gettingStarted.stepInvite, done: settings.members.length > 1 || invites.length > 0 },
-    { label: screen.gettingStarted.stepAlertRule, done: settings.alertRules.length > 0 },
-    { label: screen.gettingStarted.stepHuginn, done: false, href: "/huginn" }
-  ];
-
   const sections: SettingsSection[] = [
-    {
-      id: "gettingStarted",
-      title: screen.panels.gettingStarted,
-      description: screen.copy.gettingStarted,
-      icon: SETTINGS_ICONS.customKnowledge,
-      content: (
-        <div className="grid gap-2.5">
-          {onboardingSteps.map((step) => (
-            <div
-              className="flex items-center justify-between gap-3 pb-2.5 text-[13px]"
-              style={{ borderBottom: "1px solid var(--line-faint)" }}
-              key={step.label}
-            >
-              <span className="flex items-center gap-2.5" style={{ color: "var(--text-primary)" }}>
-                <span
-                  className="mono inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[11px]"
-                  style={{
-                    border: `1px solid ${step.done ? "var(--signal)" : "var(--line-soft)"}`,
-                    color: step.done ? "var(--signal)" : "var(--text-tertiary)"
-                  }}
-                >
-                  {step.done ? "✓" : ""}
-                </span>
-                {step.label}
-              </span>
-              {step.done ? (
-                <span className="mono shrink-0 text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--signal)" }}>
-                  {screen.gettingStarted.done}
-                </span>
-              ) : step.href ? (
-                <a
-                  href={step.href}
-                  className="mono inline-flex min-h-11 items-center text-[12px] uppercase tracking-[0.1em] underline-offset-2 focus-visible:outline-2 focus-visible:outline-[var(--signal)]"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  {screen.gettingStarted.open} →
-                </a>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      )
-    },
     {
       id: "alertRules",
       title: screen.panels.alertRules,
@@ -212,6 +213,7 @@ export default async function SettingsPage() {
           initialRuns={watchtower.runs}
           playbooks={listWatchtowerPlaybooks()}
           labels={screen.watchtower}
+          locale={locale}
         />
       )
     },
@@ -298,9 +300,9 @@ export default async function SettingsPage() {
     },
     {
       id: "muninReview",
-      title: locale === "ja" ? "Muninレビュー" : "Munin review",
+      title: locale === "ja" ? "Muninの確認" : "Munin review",
       description: locale === "ja"
-        ? "AIが提案した記憶を、出典と基準時点を確認してから明示的に承認します。"
+        ? "AIが記憶への追加を提案した情報を、出典と基準時点を確かめてから承認します。"
         : "Review AI-proposed memory with its source and as-of time before explicit approval.",
       icon: SETTINGS_ICONS.customKnowledge,
       content: (
@@ -314,24 +316,24 @@ export default async function SettingsPage() {
     {
       id: "huginnTemplates",
       title: screen.huginnTemplates.title,
-      description: locale === "ja" ? "Huginnのクイックテンプレートを管理・カスタマイズします。" : "Manage and customize Huginn quick templates.",
+      description: locale === "ja" ? "Huginnですぐ使える質問例を管理します。" : "Manage and customize Huginn quick templates.",
       icon: SETTINGS_ICONS.customKnowledge,
-      content: <HuginnTemplateEditor messages={screen.huginnTemplates} />
+      content: <HuginnTemplateEditor messages={screen.huginnTemplates} locale={locale} />
     },
     {
       id: "ingestion",
-      title: locale === "ja" ? "取込オペレーション" : "Ingestion Operations",
+      title: locale === "ja" ? "情報収集" : "Data collection",
       description: screen.copy.ingestion,
       icon: SETTINGS_ICONS.ingestion,
       content: (
         <>
           <div className="mono text-[11px] uppercase tracking-[0.12em]" style={{ color: "var(--text-tertiary)" }}>
-            {settings.source} · scheduled scrape / backfill observability
+            {settings.source === "supabase" ? "Supabase" : ui.sampleSource} · {ui.scheduledStatus}
           </div>
           <div className="mt-4 grid gap-3">
             {settings.source === "supabase" && settings.ingestionRuns.length === 0 ? (
               <div className="mono text-[11px]" style={{ color: "var(--text-secondary)" }}>
-                no runs recorded — if scrape has run, verify service_role permissions on ingestion_runs
+                {ui.noRuns}
               </div>
             ) : null}
             {settings.ingestionRuns.map((run) => {
@@ -345,18 +347,18 @@ export default async function SettingsPage() {
                 >
                   <div className="flex items-center justify-between gap-3 text-[13px]">
                     <span className="mono uppercase" style={{ color: "var(--text-primary)" }}>
-                      {run.mode} / {run.status}{stuck ? " ⚠ stuck" : ""}
+                      {ingestionModeLabel(run.mode, locale)} / {ingestionStatusLabel(run.status, locale)}{stuck ? ` ⚠ ${ui.stuck}` : ""}
                     </span>
                     <span className="mono shrink-0" style={{ color: statusColor }}>
-                      {run.rawSignalCount} signals
+                      {run.rawSignalCount} {ui.signals}
                     </span>
                   </div>
                   <div className="mono mt-1 text-[11px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
-                    {shortDate(run.startedAt)} · limit {run.sourceLimit} · {run.alertCount} alerts
+                    {shortDate(run.startedAt, locale)} · {ui.sourceLimit} {run.sourceLimit} · {run.alertCount} {ui.alerts}
                   </div>
                   {run.error ? (
                     <div className="mt-2 text-[12px]" style={{ color: "var(--critical)" }}>
-                      {run.error}
+                      {locale === "ja" ? "収集中に問題が発生しました。詳細は監査記録を確認してください。" : run.error}
                     </div>
                   ) : null}
                 </div>
@@ -366,7 +368,7 @@ export default async function SettingsPage() {
           <div className="mt-4 grid gap-2">
             {settings.source === "supabase" && settings.sourceWatermarks.length === 0 ? (
               <div className="mono text-[11px]" style={{ color: "var(--text-secondary)" }}>
-                no watermarks recorded
+                {ui.noWatermarks}
               </div>
             ) : null}
             {settings.sourceWatermarks.map((watermark) => (
@@ -376,7 +378,7 @@ export default async function SettingsPage() {
                 key={watermark.sourceId}
               >
                 <span className="truncate" style={{ color: "var(--text-primary)" }}>{watermark.sourceId}</span>
-                <span className="mono" style={{ color: "var(--text-secondary)" }}>{shortDate(watermark.lastObservedAt)}</span>
+                <span className="mono" style={{ color: "var(--text-secondary)" }}>{shortDate(watermark.lastObservedAt, locale)}</span>
                 <span className="mono" style={{ color: "var(--signal)" }}>{watermark.rawSignalCount}</span>
               </div>
             ))}
@@ -391,7 +393,7 @@ export default async function SettingsPage() {
       icon: SETTINGS_ICONS.auditLog,
       content: (
         <>
-          <AuditExportControls />
+          <AuditExportControls locale={locale} />
           <div className="mt-4 max-h-[420px] overflow-y-auto">
             {auditEvents.map((event) => (
               <div
@@ -399,7 +401,7 @@ export default async function SettingsPage() {
                 style={{ borderBottom: "1px solid var(--line-faint)" }}
                 key={event.id}
               >
-                <span className="mono truncate text-[12px]" style={{ color: "var(--text-primary)" }}>{event.event}</span>
+                <span className="mono truncate text-[12px]" style={{ color: "var(--text-primary)" }}>{auditEventLabel(event.event, locale)}</span>
                 <span className="truncate" style={{ color: "var(--text-secondary)" }}>{event.actor}</span>
                 <span className="mono truncate text-[12px]" style={{ color: "var(--text-secondary)" }}>{event.source}</span>
                 <span className="mono text-right text-[12px]" style={{ color: "var(--signal)" }}>{event.confidence}</span>
@@ -410,30 +412,9 @@ export default async function SettingsPage() {
       )
     },
     {
-      id: "ontology",
-      title: screen.panels.ontology,
-      description: screen.copy.ontology,
-      icon: SETTINGS_ICONS.ontology,
-      content: (
-        <>
-          <div className="mono text-[11px] uppercase tracking-[0.12em]" style={{ color: "var(--text-tertiary)" }}>
-            {locale === "ja" ? "公開・組織別分離" : "public-or-org isolation"}
-          </div>
-          <div className="mt-3 text-[13px]" style={{ color: "var(--text-secondary)" }}>
-            {locale === "ja"
-              ? "オントロジー・アラート・監査・APIキー・Muninのデータパスは、org_idまたは公開可視性でスコープ管理されています。"
-              : "Ontology, alert, audit, API key, and Munin data paths are scoped by org_id or public visibility."}
-          </div>
-          <div className="mono mt-4 text-[11px] uppercase tracking-[0.11em]" style={{ color: "var(--text-tertiary)" }}>
-            {locale === "ja" ? "出典バックドコントロール / RLS適用" : "source-backed control / rls-backed"}
-          </div>
-        </>
-      )
-    },
-    {
       id: "sourceHealth",
       title: screen.sourceHealth.title,
-      description: locale === "ja" ? "データソースの状態・最終成功時刻・シグナル数を表示します。" : "Data source status, last success time, and signal counts.",
+      description: locale === "ja" ? "情報源の状態、最終取得時刻、取得件数を確認します。" : "Data source status, last success time, and signal counts.",
       icon: SETTINGS_ICONS.ingestion,
       content: (
         <div className="grid gap-5">
@@ -441,10 +422,11 @@ export default async function SettingsPage() {
             sources={buildHealthEntries(settings.ingestionRuns, settings.sourceWatermarks, settings.source === "fallback")}
             messages={screen.sourceHealth}
             attribution={attribution}
+            locale={locale}
           />
           <div>
             <div className="mono mb-2 text-[11px] uppercase tracking-[0.12em]" style={{ color: "var(--text-tertiary)" }}>
-              {locale === "ja" ? "信頼度較正" : "Confidence calibration"}
+              {ui.calibration}
             </div>
             <div className="grid gap-2">
               {calibration.buckets.filter((bucket) => bucket.count > 0).slice(0, 6).map((bucket) => (
@@ -471,7 +453,7 @@ export default async function SettingsPage() {
     {
       id: "webhook",
       title: screen.webhook.title,
-      description: locale === "ja" ? "Slack通知Webhookの状態確認とテスト送信です。" : "Slack notification webhook status and test.",
+      description: locale === "ja" ? "Slackへの通知が届くか確認し、通知する最低優先度を設定します。" : "Check Slack delivery and set the minimum priority to notify.",
       icon: SETTINGS_ICONS.alertRules,
       content: (
         <WebhookSettings
@@ -496,17 +478,30 @@ export default async function SettingsPage() {
     }
   ];
 
+  const order = ["language", "alertRules", "webhook", "watchtower", "huginnTemplates", "customKnowledge", "muninReview", "sourceHealth", "ingestion", "permissions", "apiKeys", "billing", "auditLog"];
+  const orderedSections = [...sections].sort((left, right) => order.indexOf(left.id) - order.indexOf(right.id));
+
   return (
     <Screen title={screen.title}>
       <SettingsShell
-        sections={sections}
+        sections={orderedSections}
         categoryLabels={locale === "ja"
           ? {
-              gettingStarted: "はじめに",
-              signals: "シグナルとワークフロー",
-              data: "データとナレッジ",
-              access: "アクセスとワークスペース",
-              audit: "監査"
+              general: "基本設定",
+              notifications: "通知",
+              intelligence: "分析と記憶",
+              data: "情報源",
+              workspace: "メンバーとアクセス",
+              audit: "監査記録"
+            }
+          : undefined}
+        interfaceLabels={locale === "ja"
+          ? {
+              navigation: "設定項目",
+              categories: "設定",
+              section: "設定項目",
+              empty: "利用できる設定はありません。",
+              back: "設定一覧"
             }
           : undefined}
       />

@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-
-export const metadata: Metadata = { title: "Huginn" };
-
 import { Screen } from "@/components/ui/screen";
 import { HuginnConsole } from "@/components/ui/huginn-console";
 import { submitHuginnQuestion } from "@/app/actions/huginn";
 import { getMessages } from "@/lib/i18n/messages";
 import { getLocale } from "@/lib/i18n/locale";
+
+export const metadata: Metadata = { title: "Huginn" };
 
 export const dynamic = "force-dynamic";
 

@@ -3,11 +3,10 @@
 import { useEffect, useState } from "react";
 import { HuginnIcon } from "@/components/ui/huginn-icon";
 
-const THINKING_PHASES = [
-  "Preparing analysis",
-  "Tracing evidence",
-  "Checking support"
-] as const;
+const THINKING_PHASES = {
+  en: ["Preparing analysis", "Tracing evidence", "Checking support"],
+  ja: ["分析を準備しています", "根拠を追跡しています", "根拠を確認しています"]
+} as const;
 
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 
@@ -26,9 +25,10 @@ function useReducedMotionPreference() {
   return reducedMotion;
 }
 
-export function HuginnThinking() {
+export function HuginnThinking({ locale = "en" }: Readonly<{ locale?: string }>) {
   const reducedMotion = useReducedMotionPreference();
   const [phaseIndex, setPhaseIndex] = useState(0);
+  const phases = locale === "ja" ? THINKING_PHASES.ja : THINKING_PHASES.en;
 
   useEffect(() => {
     if (reducedMotion) {
@@ -37,13 +37,13 @@ export function HuginnThinking() {
     }
 
     const phaseTimer = window.setInterval(() => {
-      setPhaseIndex((current) => (current + 1) % THINKING_PHASES.length);
+      setPhaseIndex((current) => (current + 1) % phases.length);
     }, 1600);
 
     return () => window.clearInterval(phaseTimer);
-  }, [reducedMotion]);
+  }, [phases.length, reducedMotion]);
 
-  const phase = reducedMotion ? THINKING_PHASES[0] : THINKING_PHASES[phaseIndex];
+  const phase = reducedMotion ? phases[0] : phases[phaseIndex];
 
   return (
     <div
@@ -52,7 +52,7 @@ export function HuginnThinking() {
       style={{ borderColor: "var(--evidence)" }}
     >
       <span className="sr-only" role="status" aria-live="polite">
-        Huginn is working.
+        {locale === "ja" ? "Huginnが処理中です。" : "Huginn is working."}
       </span>
       <HuginnIcon className="shrink-0" size={20} />
       {/* MIT-licensed svg-spinners 3-dots-fade adaptation; attribution is in THIRD_PARTY_NOTICES.md. */}

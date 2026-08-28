@@ -9,6 +9,7 @@ export type InviteAcceptLabels = {
   failed: string;
   successTitle: string;
   successBody: string;
+  successEyebrow?: string;
   openConsole: string;
   missingToken: string;
 };
@@ -58,7 +59,7 @@ export function InviteAcceptForm({ token, labels }: Readonly<{ token: string; la
     return (
       <div className="border-l pl-4" style={{ borderColor: "var(--evidence)" }} aria-live="polite">
         <p className="mono text-[11px] tracking-[0.14em]" style={{ color: "var(--evidence)" }}>
-          ACCESS GRANTED
+          {labels.successEyebrow ?? "ACCESS GRANTED"}
         </p>
         <h2 className="mt-4 text-base font-medium" style={{ color: "var(--text)" }}>{labels.successTitle}</h2>
         <p className="mt-2 text-[14px] leading-6" style={{ color: "color-mix(in srgb, var(--text) 68%, transparent)" }}>{labels.successBody}</p>

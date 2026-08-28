@@ -28,6 +28,50 @@ type Alert = {
   evidence: EvidenceRef[];
 };
 
+const JA_ALERT_TEXT: Record<string, readonly [string, string]> = {
+  "Large-load power interconnection crossed 1GW": [
+    "大口電力接続の申請が1GWを超過",
+    "Entergy Louisiana, LLCがER26-2042で2,200MW分の電力接続資料を提出しました。"
+  ],
+  "Potential SPV-linked construction permit": [
+    "特別目的会社との関連が疑われる建築許可",
+    "Laidley LLCが、出典で確認できる土地関連の申請に記載されました。"
+  ],
+  "Compute region expansion signal": [
+    "計算拠点の拡張を示す兆候",
+    "Microsoftが計算拠点の拡張を示す資料を公開しました。"
+  ],
+  "Large industrial water request detected": [
+    "大規模な産業用水の申請を検知",
+    "Laidley LLCが水道当局に日量4,800,000ガロンの供給を申請しました。"
+  ],
+  "Narrative divergence trigger": [
+    "報道・言説との乖離を検知",
+    "報道資料が現実の兆候と食い違う可能性があります。事実ではなく、確認のきっかけとして扱ってください。"
+  ]
+};
+
+const JA_EVIDENCE_TITLES: Record<string, string> = {
+  "FERC docket ER26-2042": "FERC案件 ER26-2042",
+  "Richland Parish, LA building permit RP-DC-2026-0518": "米ルイジアナ州リッチランド郡の建築許可 RP-DC-2026-0518",
+  "Microsoft compute region US Southeast AI region": "Microsoftの米国南東部AI拠点",
+  "Richland Parish Water District water filing WTR-2026-0042": "米ルイジアナ州リッチランド郡水道当局の申請 WTR-2026-0042",
+  "Meta says no near-term Louisiana data center announcement is planned": "Metaはルイジアナ州のデータセンターについて近日中の発表予定はないと説明"
+};
+
+function localizeAlertJa(alert: Alert): Alert {
+  const localized = JA_ALERT_TEXT[alert.title];
+  return {
+    ...alert,
+    title: localized?.[0] ?? alert.title,
+    description: localized?.[1] ?? alert.description,
+    evidence: alert.evidence.map((evidence) => ({
+      ...evidence,
+      title: evidence.title ? (JA_EVIDENCE_TITLES[evidence.title] ?? evidence.title) : evidence.title
+    }))
+  };
+}
+
 type Messages = {
   title: string;
   panels: { queue: string; chain: string; watchtower?: string };
@@ -37,6 +81,7 @@ type Messages = {
   viewGrouped: string;
   watchtower: WatchtowerLabels;
   notifications?: PushNotificationPromptLabels;
+  locale?: "en" | "ja";
 };
 
 type AlertGroup = {
@@ -74,12 +119,17 @@ function priorityColor(priority: string) {
   return PRIORITY_COLOR[priority.toLowerCase()] ?? "var(--text-tertiary)";
 }
 
+function priorityLabel(priority: string, locale: "en" | "ja" = "en") {
+  if (locale !== "ja") return priority;
+  return ({ critical: "最重要", high: "高", medium: "中", low: "低" } as Record<string, string>)[priority.toLowerCase()] ?? priority;
+}
+
 function percent(value: number | undefined) {
   return Math.round(Math.max(0, Math.min(1, value ?? 0)) * 100) + "%";
 }
 
-function formatAsOf(value?: string) {
-  if (!value) return "Source observation";
+function formatAsOf(value?: string, locale: "en" | "ja" = "en") {
+  if (!value) return locale === "ja" ? "出典の観測" : "Source observation";
   return value.length > 10 ? value.slice(0, 10) : value;
 }
 
@@ -91,12 +141,12 @@ function extractEntityName(title: string): string {
   return entityWords.join(" ") || title.slice(0, 30);
 }
 
-function ConfidenceMeter({ value }: Readonly<{ value: number }>) {
+function ConfidenceMeter({ value, label = "Confidence" }: Readonly<{ value: number; label?: string }>) {
   const safeValue = Math.max(0, Math.min(1, value));
   return (
     <div className="min-w-0">
       <div className="mono mb-1 flex items-center justify-between text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>
-        <span>Confidence</span>
+        <span>{label}</span>
         <span style={{ color: "var(--evidence)" }}>{percent(safeValue)}</span>
       </div>
       <div className="h-[3px] w-full overflow-hidden" style={{ background: "var(--line-soft)" }}>
@@ -109,18 +159,19 @@ function ConfidenceMeter({ value }: Readonly<{ value: number }>) {
   );
 }
 
-function EvidenceThread({ alert }: Readonly<{ alert: Alert }>) {
+function EvidenceThread({ alert, locale = "en" }: Readonly<{ alert: Alert; locale?: "en" | "ja" }>) {
   const entity = extractEntityName(alert.title);
   const sourceTitle = alert.evidence[0]?.title ?? alert.source;
+  const isJa = locale === "ja";
   const steps = [
-    { label: "Source", value: sourceTitle, state: "verified" },
-    { label: "Entity", value: entity, state: "resolved" },
-    { label: "Signal", value: alert.title, state: "active" },
-    { label: "Action", value: "Review case file", state: "ready" }
+    { label: isJa ? "出典" : "Source", value: sourceTitle, state: isJa ? "確認済み" : "verified" },
+    { label: isJa ? "対象" : "Entity", value: entity, state: isJa ? "特定済み" : "resolved" },
+    { label: isJa ? "兆候" : "Signal", value: alert.title, state: isJa ? "発生中" : "active" },
+    { label: isJa ? "行動" : "Action", value: isJa ? "内容を確認" : "Review case file", state: isJa ? "準備完了" : "ready" }
   ];
 
   return (
-    <ol aria-label="Evidence thread" className="divide-y" style={{ borderColor: "var(--line-soft)" }}>
+    <ol aria-label={isJa ? "根拠の流れ" : "Evidence thread"} className="divide-y" style={{ borderColor: "var(--line-soft)" }}>
       {steps.map((step, index) => (
         <li
           key={step.label}
@@ -146,7 +197,7 @@ function EvidenceThread({ alert }: Readonly<{ alert: Alert }>) {
           </span>
           <span
             className="mono text-[11px] uppercase tracking-[0.08em]"
-            style={{ color: step.state === "active" ? "var(--signal)" : "var(--evidence)" }}
+            style={{ color: index === 2 ? "var(--signal)" : "var(--evidence)" }}
           >
             {step.state}
           </span>
@@ -194,6 +245,37 @@ export function AlertsWorkstation({
   loading?: boolean;
   error?: string;
 }>) {
+  const isJa = messages.locale === "ja";
+  const displayAlerts = useMemo(() => isJa ? alerts.map(localizeAlertJa) : alerts, [alerts, isJa]);
+  const ui = {
+    notifications: isJa ? "通知" : "Notifications",
+    triage: isJa ? "優先度確認 / 重要な変化" : "Triage / newest material changes",
+    total: isJa ? "合計" : "total",
+    loading: isJa ? "通知一覧を読み込み中…" : "Loading alert queue…",
+    selectSignal: isJa ? "兆候を選択して案件を開きます。" : "Select a signal to open its case file.",
+    queueView: isJa ? "一覧表示" : "Queue view",
+    noAlerts: isJa ? "現在、確認が必要な通知はありません。出典に基づく新しい変化がここに表示されます。" : "No active alerts. New source-backed changes will appear here.",
+    unread: isJa ? "未読" : "Unread",
+    markedRead: isJa ? "通知を既読にしました" : "Alert marked as read",
+    allMarkedRead: isJa ? "すべての通知を既読にしました" : "All alerts marked as read",
+    queue: isJa ? "一覧" : "Queue",
+    caseFile: isJa ? "案件" : "Case file",
+    signal: isJa ? "兆候" : "Signal",
+    openSource: isJa ? "出典を開く ↗" : "Open source ↗",
+    relevance: isJa ? "関連度" : "Relevance",
+    confidence: isJa ? "信頼度" : "Confidence",
+    source: isJa ? "出典" : "Source",
+    asOf: isJa ? "基準日" : "As of",
+    evidence: isJa ? "根拠" : "Evidence",
+    sourceBacked: isJa ? "出典に基づく" : "source-backed",
+    evidenceRecords: isJa ? "根拠記録" : "Evidence records",
+    view: isJa ? "表示" : "View",
+    noEvidence: isJa ? "このアラートには根拠記録がありません。" : "No evidence records attached to this alert.",
+    automationHint: isJa ? "承認制の自動処理です。根拠が整った場合のみ開始または再実行してください。" : "Approval-gated workflow trace. Start or rerun automation only when the evidence is ready.",
+    selectAlert: isJa ? "通知を選択して案件を確認します。" : "Select an alert to inspect its case file.",
+    backAria: isJa ? "通知一覧へ戻る" : "Back to alert queue",
+    detailAria: isJa ? "選択中の通知の詳細" : "Selected alert detail"
+  };
   const [selectedId, setSelectedId] = useState<string | null>(alerts[0]?.id ?? null);
   const [viewMode, setViewMode] = useState<"list" | "grouped">("list");
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
@@ -224,8 +306,8 @@ export function AlertsWorkstation({
   const readAlertSet = useMemo(() => new Set(readAlertIds), [readAlertIds]);
   const isUnread = (id: string) => !readAlertSet.has(id);
   const selectedAlert = useMemo(
-    () => alerts.find((alert) => alert.id === selectedId) ?? alerts[0],
-    [alerts, selectedId]
+    () => displayAlerts.find((alert) => alert.id === selectedId) ?? displayAlerts[0],
+    [displayAlerts, selectedId]
   );
   const allIds = useMemo(() => alerts.map((alert) => alert.id), [alerts]);
   const unreadCount = useMemo(
@@ -235,7 +317,7 @@ export function AlertsWorkstation({
 
   const groups = useMemo<AlertGroup[]>(() => {
     const grouped = new Map<string, Alert[]>();
-    for (const alert of alerts) {
+    for (const alert of displayAlerts) {
       const key = extractEntityName(alert.title);
       const existing = grouped.get(key);
       if (existing) existing.push(alert);
@@ -251,19 +333,19 @@ export function AlertsWorkstation({
         };
       })
       .sort((a, b) => priorityLevel(a.highestPriority) - priorityLevel(b.highestPriority));
-  }, [alerts]);
+  }, [displayAlerts]);
 
   function handleSelectAlert(id: string) {
     setSelectedId(id);
     markRead(id);
     setMobileDetailOpen(true);
     setDetailTab("case");
-    setFeedback("Alert marked as read");
+    setFeedback(ui.markedRead);
   }
 
   function handleMarkAllRead() {
     markAllRead(allIds);
-    setFeedback("All alerts marked as read");
+    setFeedback(ui.allMarkedRead);
   }
 
   function renderAlertRow(alert: Alert, nested = false) {
@@ -287,12 +369,12 @@ export function AlertsWorkstation({
       >
         <span className="flex min-w-0 items-center gap-2">
           {unread ? (
-            <span aria-label="Unread" className="h-2 w-2 shrink-0 rounded-full" style={{ background: "var(--signal)" }} />
+            <span aria-label={ui.unread} className="h-2 w-2 shrink-0 rounded-full" style={{ background: "var(--signal)" }} />
           ) : (
             <span className="h-2 w-2 shrink-0" aria-hidden="true" />
           )}
           <span className="mono text-[11px] font-medium uppercase tracking-[0.1em]" style={{ color: priorityColor(alert.priority) }}>
-            {alert.priority}
+            {priorityLabel(alert.priority, messages.locale)}
           </span>
           <span className="mono min-w-0 truncate text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-quaternary)" }}>
             {alert.source}
@@ -305,13 +387,18 @@ export function AlertsWorkstation({
           {alert.description}
         </span>
         <span className="mt-2.5 block">
-          <ConfidenceMeter value={alert.confidence} />
+          <ConfidenceMeter value={alert.confidence} label={ui.confidence} />
         </span>
       </button>
     );
   }
 
-  const notificationLabels = messages.notifications ?? DEFAULT_NOTIFICATION_LABELS;
+  const notificationLabels = messages.notifications ?? (isJa ? {
+    title: "重要なアラートのブラウザ通知を許可しますか？",
+    enable: "通知を有効化",
+    dismiss: "今はしない",
+    busy: "処理中…"
+  } : DEFAULT_NOTIFICATION_LABELS);
 
   return (
     <Screen
@@ -323,7 +410,7 @@ export function AlertsWorkstation({
           onClick={() => setNotificationOpen(true)}
           className="mono inline-flex items-center px-3 text-[11px] uppercase tracking-[0.08em]"
         >
-          Notifications
+          {ui.notifications}
         </WorkstationButton>
       }
     >
@@ -337,14 +424,14 @@ export function AlertsWorkstation({
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b pb-3" style={{ borderColor: "var(--line-soft)" }}>
           <div>
             <p className="mono text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>
-              Triage / newest material changes
+              {ui.triage}
             </p>
             <p className="mt-1 text-[13px]" style={{ color: "var(--text-secondary)" }}>
-              {unreadCount} {messages.unread.toLowerCase()} · {alerts.length} total
+              {unreadCount} {messages.unread} · {alerts.length} {ui.total}
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <ExportButton type="alerts" />
+            <ExportButton type="alerts" label={isJa ? "エクスポート" : "Export"} />
             <WorkstationButton
               type="button"
               onClick={handleMarkAllRead}
@@ -359,7 +446,7 @@ export function AlertsWorkstation({
         {loading ? (
           <div role="status" aria-live="polite" className="grid gap-3 border-y py-6" style={{ borderColor: "var(--line-soft)" }}>
             <span className="mono text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>
-              Loading alert queue…
+              {ui.loading}
             </span>
             <span className="block h-3 w-2/3 animate-pulse bg-[var(--line-soft)] motion-reduce:animate-none" />
             <span className="block h-3 w-1/2 animate-pulse bg-[var(--line-soft)] motion-reduce:animate-none" />
@@ -370,13 +457,13 @@ export function AlertsWorkstation({
               <div className="mb-3 flex items-end justify-between gap-3">
                 <div>
                   <h2 ref={queueHeadingRef} id="alert-queue-heading" tabIndex={-1} className="mono text-[12px] uppercase tracking-[0.1em] outline-none" style={{ color: "var(--text-primary)" }}>
-                    {messages.panels.queue}
+                    {isJa ? "通知一覧" : messages.panels.queue}
                   </h2>
                   <p className="mt-1 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
-                    Select a signal to open its case file.
+                    {ui.selectSignal}
                   </p>
                 </div>
-                <div role="tablist" aria-label="Queue view" className="flex border" style={{ borderColor: "var(--line-soft)" }}>
+                <div role="tablist" aria-label={ui.queueView} className="flex border" style={{ borderColor: "var(--line-soft)" }}>
                   {(["list", "grouped"] as const).map((mode) => (
                     <button
                       key={mode}
@@ -395,10 +482,10 @@ export function AlertsWorkstation({
 
               {alerts.length === 0 ? (
                 <div role="status" className="border-y px-3 py-8 text-center text-[13px]" style={{ borderColor: "var(--line-soft)", color: "var(--text-tertiary)" }}>
-                  No active alerts. New source-backed changes will appear here.
+                  {ui.noAlerts}
                 </div>
               ) : viewMode === "list" ? (
-                <div>{alerts.map((alert) => renderAlertRow(alert))}</div>
+                <div>{displayAlerts.map((alert) => renderAlertRow(alert))}</div>
               ) : (
                 <div>
                   {groups.map((group, groupIndex) => {
@@ -424,8 +511,8 @@ export function AlertsWorkstation({
                             <span className="truncate text-[13px]" style={{ color: "var(--text-primary)" }}>{group.entityName}</span>
                           </span>
                           <span className="flex shrink-0 items-center gap-2">
-                            <span className="mono text-[11px] uppercase tracking-[0.08em]" style={{ color: priorityColor(group.highestPriority) }}>{group.highestPriority}</span>
-                            <span className="mono text-[11px]" style={{ color: "var(--text-tertiary)" }}>{group.alerts.length}</span>
+                            <span className="mono text-[11px] uppercase tracking-[0.08em]" style={{ color: priorityColor(group.highestPriority) }}>{priorityLabel(group.highestPriority, messages.locale)}</span>
+                          <span className="mono text-[11px]" style={{ color: "var(--text-tertiary)" }}>{group.alerts.length}</span>
                             <span aria-hidden="true" className="mono text-[14px] transition-transform duration-[var(--motion-micro)] motion-reduce:transition-none" style={{ color: "var(--text-tertiary)", transform: expanded ? "rotate(90deg)" : "none" }}>›</span>
                           </span>
                         </button>
@@ -442,6 +529,7 @@ export function AlertsWorkstation({
 
             <section
               aria-labelledby="case-file-heading"
+              aria-label={ui.detailAria}
               className={"alerts-workstation-detail " + (mobileDetailOpen ? "block" : "hidden lg:block") + " min-h-[calc(100dvh-12rem)] border-y lg:min-h-0"}
               style={{ borderColor: "var(--line-soft)" }}
             >
@@ -449,19 +537,20 @@ export function AlertsWorkstation({
                 <WorkstationButton
                   type="button"
                   onClick={() => setMobileDetailOpen(false)}
+                  aria-label={ui.backAria}
                   className="mono border-0 px-2 text-[11px] uppercase tracking-[0.08em]"
                 >
-                  ← Queue
+                  ← {ui.queue}
                 </WorkstationButton>
-                <span className="mono text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>Case file</span>
+                <span className="mono text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>{ui.caseFile}</span>
               </div>
 
               {selectedAlert ? (
                 <div>
                   <header className="border-b px-4 py-4 sm:px-5" style={{ borderColor: "var(--line-soft)" }}>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                      <span className="mono text-[11px] uppercase tracking-[0.1em]" style={{ color: priorityColor(selectedAlert.priority) }}>{selectedAlert.priority}</span>
-                      <span className="mono text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-quaternary)" }}>Signal / {selectedAlert.source}</span>
+                      <span className="mono text-[11px] uppercase tracking-[0.1em]" style={{ color: priorityColor(selectedAlert.priority) }}>{priorityLabel(selectedAlert.priority, messages.locale)}</span>
+                      <span className="mono text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-quaternary)" }}>{ui.signal} / {selectedAlert.source}</span>
                     </div>
                     <h2 ref={caseHeadingRef} id="case-file-heading" tabIndex={-1} className="mt-3 max-w-3xl text-[20px] font-medium leading-tight tracking-[-0.02em] outline-none" style={{ color: "var(--text-primary)" }}>
                       {selectedAlert.title}
@@ -475,17 +564,17 @@ export function AlertsWorkstation({
                         className="mono mt-3 inline-flex min-h-11 items-center border px-3 text-[11px] uppercase tracking-[0.08em] transition-colors duration-[var(--motion-micro)] hover:bg-[var(--evidence-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--evidence)] motion-reduce:transition-none"
                         style={{ borderColor: "var(--evidence)", color: "var(--evidence)" }}
                       >
-                        Open source ↗
+                        {ui.openSource}
                       </a>
                     ) : null}
                   </header>
 
                   <dl className="grid grid-cols-2 border-b sm:grid-cols-4" style={{ borderColor: "var(--line-soft)" }}>
                     {[
-                      ["Relevance", percent(selectedAlert.relevance ?? selectedAlert.confidence), "var(--signal)"],
-                      ["Confidence", percent(selectedAlert.confidence), "var(--evidence)"],
-                      ["Source", selectedAlert.source, "var(--text-primary)"],
-                      ["As of", formatAsOf(selectedAlert.asOf ?? selectedAlert.createdAt ?? selectedAlert.evidence[0]?.observedAt), "var(--text-primary)"]
+                      [ui.relevance, percent(selectedAlert.relevance ?? selectedAlert.confidence), "var(--signal)"],
+                      [ui.confidence, percent(selectedAlert.confidence), "var(--evidence)"],
+                      [ui.source, selectedAlert.source, "var(--text-primary)"],
+                      [ui.asOf, formatAsOf(selectedAlert.asOf ?? selectedAlert.createdAt ?? selectedAlert.evidence[0]?.observedAt, messages.locale), "var(--text-primary)"]
                     ].map(([label, value, color]) => (
                       <div key={label} className="border-r px-3 py-3 last:border-r-0" style={{ borderColor: "var(--line-soft)" }}>
                         <dt className="mono text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-tertiary)" }}>{label}</dt>
@@ -495,7 +584,7 @@ export function AlertsWorkstation({
                   </dl>
 
                   {watchtower ? (
-                    <div role="tablist" aria-label="Selected alert detail" className="flex border-b px-4 sm:px-5" style={{ borderColor: "var(--line-soft)" }}>
+                    <div role="tablist" aria-label={ui.detailAria} className="flex border-b px-4 sm:px-5" style={{ borderColor: "var(--line-soft)" }}>
                       <button
                         type="button"
                         role="tab"
@@ -504,7 +593,7 @@ export function AlertsWorkstation({
                         className="mono min-h-11 border-b-2 px-1 text-[11px] uppercase tracking-[0.08em] transition-colors duration-[var(--motion-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)] motion-reduce:transition-none"
                         style={{ borderColor: detailTab === "case" ? "var(--signal)" : "transparent", color: detailTab === "case" ? "var(--signal)" : "var(--text-tertiary)" }}
                       >
-                        Evidence
+                        {ui.evidence}
                       </button>
                       <button
                         type="button"
@@ -514,30 +603,29 @@ export function AlertsWorkstation({
                         className="mono ml-5 min-h-11 border-b-2 px-1 text-[11px] uppercase tracking-[0.08em] transition-colors duration-[var(--motion-state)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)] motion-reduce:transition-none"
                         style={{ borderColor: detailTab === "automation" ? "var(--signal)" : "transparent", color: detailTab === "automation" ? "var(--signal)" : "var(--text-tertiary)" }}
                       >
-                        {messages.panels.watchtower ?? watchtower.labels.title}
+                        {isJa ? "Watchtower 自動処理" : messages.panels.watchtower ?? watchtower.labels.title}
                       </button>
                     </div>
                   ) : null}
 
                   {detailTab === "case" || !watchtower ? (
                     <div>
-                      <div className="px-4 py-4 sm:px-5">
-                        <div className="mb-2 flex items-center justify-between gap-3">
-                          <h3 className="mono text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--text-primary)" }}>{messages.panels.chain}</h3>
-                          <span className="mono text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--evidence)" }}>source-backed</span>
-                        </div>
-                        <EvidenceThread alert={selectedAlert} />
-                      </div>
+                      <details className="border-b px-4 py-3 sm:px-5">
+                        <summary className="min-h-11 cursor-pointer list-none py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)]">
+                          <span className="flex items-center justify-between gap-3"><span className="mono text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--text-primary)" }}>{isJa ? "兆候の流れ" : messages.panels.chain}</span><span className="mono text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--evidence)" }}>{ui.sourceBacked}</span></span>
+                        </summary>
+                        <div className="mt-3"><EvidenceThread alert={selectedAlert} locale={messages.locale} /></div>
+                      </details>
 
-                      <div className="border-t px-4 py-3 sm:px-5" style={{ borderColor: "var(--line-soft)" }}>
+                      <details className="px-4 py-3 sm:px-5" style={{ borderColor: "var(--line-soft)" }}>
+                        <summary className="min-h-11 cursor-pointer list-none py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)]"><span className="mono text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>{ui.evidenceRecords}</span></summary>
                         {selectedAlert.evidence.length ? (
                           <div>
-                            <p className="mono mb-2 text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>Evidence records</p>
                             <ul className="divide-y" style={{ borderColor: "var(--line-soft)" }}>
                               {selectedAlert.evidence.map((evidence, index) => (
                                 <li key={(evidence.sourceId ?? "source") + "-" + index} className="flex min-h-11 items-center justify-between gap-3 py-2">
                                   <span className="min-w-0">
-                                    <span className="block truncate text-[12px]" style={{ color: "var(--text-primary)" }}>{evidence.title ?? evidence.sourceId ?? "Source record"}</span>
+                                    <span className="block truncate text-[12px]" style={{ color: "var(--text-primary)" }}>{evidence.title ?? evidence.sourceId ?? (isJa ? "出典記録" : "Source record")}</span>
                                     <span className="mono mt-0.5 block truncate text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-quaternary)" }}>{evidence.sourceId ?? selectedAlert.source}</span>
                                   </span>
                                   {evidence.url ? (
@@ -545,11 +633,11 @@ export function AlertsWorkstation({
                                       href={evidence.url}
                                       target="_blank"
                                       rel="noreferrer"
-                                      aria-label={"Open " + (evidence.title ?? evidence.sourceId ?? "source")}
+                                      aria-label={(isJa ? "出典を開く: " : "Open: ") + (evidence.title ?? evidence.sourceId ?? (isJa ? "出典" : "source"))}
                                       className="mono flex min-h-11 shrink-0 items-center px-2 text-[11px] uppercase tracking-[0.08em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--evidence)]"
                                       style={{ color: "var(--evidence)" }}
                                     >
-                                      View
+                                      {ui.view}
                                     </a>
                                   ) : null}
                                 </li>
@@ -557,24 +645,22 @@ export function AlertsWorkstation({
                             </ul>
                           </div>
                         ) : (
-                          <p role="status" className="py-4 text-[12px]" style={{ color: "var(--text-tertiary)" }}>No evidence records attached to this alert.</p>
+                          <p role="status" className="py-4 text-[12px]" style={{ color: "var(--text-tertiary)" }}>{ui.noEvidence}</p>
                         )}
-                      </div>
+                      </details>
                     </div>
                   ) : null}
 
                   {detailTab === "automation" && watchtower ? (
                     <div className="border-t px-4 py-4 sm:px-5" style={{ borderColor: "var(--line-soft)" }}>
-                      <p className="mb-3 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
-                        Approval-gated workflow trace. Start or rerun automation only when the evidence is ready.
-                      </p>
+                      <p className="mb-3 text-[12px]" style={{ color: "var(--text-tertiary)" }}>{ui.automationHint}</p>
                       <WatchtowerWorkflows initialRuns={watchtower.runs} playbooks={watchtower.playbooks} labels={watchtower.labels} compact />
                     </div>
                   ) : null}
                 </div>
               ) : (
                 <div role="status" className="flex min-h-64 items-center justify-center px-4 text-center text-[13px]" style={{ color: "var(--text-tertiary)" }}>
-                  Select an alert to inspect its case file.
+                  {ui.selectAlert}
                 </div>
               )}
               <div aria-live="polite" className="sr-only">{feedback}</div>

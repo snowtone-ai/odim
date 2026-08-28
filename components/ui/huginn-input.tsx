@@ -19,6 +19,7 @@ type Props = {
   onDraftChange?: (value: string) => void;
   loading: boolean;
   prefillValue?: string;
+  locale?: string;
 };
 
 type AttachedFile = {
@@ -34,7 +35,8 @@ export function HuginnInput({
   onSubmit,
   onDraftChange,
   loading,
-  prefillValue
+  prefillValue,
+  locale = "en"
 }: Readonly<Props>) {
   const [question, setQuestion] = useState("");
   const [files, setFiles] = useState<AttachedFile[]>([]);
@@ -42,6 +44,19 @@ export function HuginnInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previousPrefillRef = useRef<string | undefined>(undefined);
+  const copy = locale === "ja"
+    ? {
+        attach: "ファイルを添付",
+        remove: "削除",
+        attachmentLimit: "は添付できる上限（150 KB）を超えています。",
+        fileReadError: "読み込めないファイルがあります。"
+      }
+    : {
+        attach: "Attach file",
+        remove: "Remove",
+        attachmentLimit: " exceeds the 150 KB attachment limit.",
+        fileReadError: "One or more files could not be read."
+      };
 
   const adjustHeight = useCallback(() => {
     const textarea = textareaRef.current;
@@ -108,9 +123,9 @@ export function HuginnInput({
     const accepted = results.filter(Boolean) as AttachedFile[];
     setFiles((previous) => [...previous, ...accepted]);
     if (rejected.length) {
-      setFileError(rejected.map((file) => file.name).join(", ") + " exceeds the 150 KB attachment limit.");
+      setFileError(rejected.map((file) => file.name).join(", ") + copy.attachmentLimit);
     } else if (eligible.length !== accepted.length) {
-      setFileError("One or more files could not be read.");
+      setFileError(copy.fileReadError);
     } else {
       setFileError("");
     }
@@ -132,10 +147,10 @@ export function HuginnInput({
               <FileText aria-hidden="true" className="shrink-0 text-[var(--text-tertiary)]" size={14} />
               <span className="min-w-0 flex-1 truncate text-[12px] text-[var(--text-secondary)]">{file.name}</span>
               <button
-                aria-label={"Remove " + file.name}
+                aria-label={copy.remove + " " + file.name}
                 className="odim-icon-control h-11 w-11 shrink-0"
                 onClick={() => removeFile(index)}
-                title={"Remove " + file.name}
+                title={copy.remove + " " + file.name}
                 type="button"
               >
                 <X aria-hidden="true" size={14} />
@@ -156,16 +171,17 @@ export function HuginnInput({
         style={{ borderColor: "var(--line-soft)" }}
       >
         <button
-          aria-label="Attach file"
+          aria-label={copy.attach}
           className="odim-icon-control h-11 w-11 shrink-0"
           onClick={() => fileInputRef.current?.click()}
-          title="Attach file"
+          title={copy.attach}
           type="button"
         >
           <Paperclip aria-hidden="true" size={16} />
         </button>
 
         <textarea
+          name="huginn-question"
           aria-label={labels.prompt}
           className="min-h-11 flex-1 resize-none bg-transparent py-2 text-[14px] leading-6 text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)]"
           onChange={(event) => {
@@ -199,6 +215,7 @@ export function HuginnInput({
         onChange={handleFileSelect}
         ref={fileInputRef}
         type="file"
+        name="huginn-attachments"
       />
     </form>
   );

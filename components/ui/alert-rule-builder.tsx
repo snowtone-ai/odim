@@ -2,23 +2,7 @@
 
 import { useState } from "react";
 
-const LAYER_OPTIONS = [
-  { value: "any", label: "Any" },
-  { value: "energy", label: "Energy" },
-  { value: "cash", label: "Capital" },
-  { value: "land", label: "Land" },
-  { value: "compute", label: "Compute" },
-  { value: "water", label: "Water" },
-  { value: "raw_materials", label: "Raw Materials" },
-  { value: "logistics", label: "Logistics" }
-];
-
 const PRIORITY_OPTIONS = ["CRITICAL", "HIGH", "MEDIUM", "LOW"] as const;
-const DESTINATION_OPTIONS = [
-  { value: "dashboard", label: "Dashboard" },
-  { value: "slack", label: "Slack" },
-  { value: "both", label: "Both" }
-] as const;
 
 type AlertRuleForm = {
   name: string;
@@ -41,6 +25,33 @@ type Messages = {
   labelDestination: string;
   labelEnabled: string;
   deleteRule: string;
+  empty: string;
+  layerAny: string;
+  layerEnergy: string;
+  layerCapital: string;
+  layerLand: string;
+  layerCompute: string;
+  layerWater: string;
+  layerRawMaterials: string;
+  layerLogistics: string;
+  destinationDashboard: string;
+  destinationSlack: string;
+  destinationBoth: string;
+  priorityCritical: string;
+  priorityHigh: string;
+  priorityMedium: string;
+  priorityLow: string;
+  stateOn: string;
+  stateOff: string;
+  nameRequired: string;
+  updated: string;
+  added: string;
+  deleted: string;
+  paused: string;
+  enabledFeedback: string;
+  saveFailed: string;
+  deleteFailed: string;
+  toggleFailed: string;
 };
 
 type ExistingRule = {
@@ -79,6 +90,29 @@ export function AlertRuleBuilder({
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState("");
+  const layerOptions = [
+    { value: "any", label: messages.layerAny },
+    { value: "energy", label: messages.layerEnergy },
+    { value: "cash", label: messages.layerCapital },
+    { value: "land", label: messages.layerLand },
+    { value: "compute", label: messages.layerCompute },
+    { value: "water", label: messages.layerWater },
+    { value: "raw_materials", label: messages.layerRawMaterials },
+    { value: "logistics", label: messages.layerLogistics }
+  ];
+  const destinationOptions = [
+    { value: "dashboard", label: messages.destinationDashboard },
+    { value: "slack", label: messages.destinationSlack },
+    { value: "both", label: messages.destinationBoth }
+  ];
+  const priorityLabels: Record<(typeof PRIORITY_OPTIONS)[number], string> = {
+    CRITICAL: messages.priorityCritical,
+    HIGH: messages.priorityHigh,
+    MEDIUM: messages.priorityMedium,
+    LOW: messages.priorityLow
+  };
+  const layerLabel = (value: string) => layerOptions.find((option) => option.value === value)?.label ?? value;
+  const destinationLabel = (value: string) => destinationOptions.find((option) => option.value === value)?.label ?? value;
 
   function openAdd() {
     setForm(EMPTY_FORM);
@@ -111,7 +145,7 @@ export function AlertRuleBuilder({
 
   async function handleSave() {
     if (!form.name.trim()) {
-      setError("Name is required");
+      setError(messages.nameRequired);
       return;
     }
     setSaving(true);
@@ -134,7 +168,7 @@ export function AlertRuleBuilder({
         });
         if (!res.ok) throw new Error(await res.text());
         setRules((prev) => prev.map((rule) => rule.id === editingId ? { ...rule, ...payload } : rule));
-        setFeedback("Rule updated");
+        setFeedback(messages.updated);
       } else {
         const res = await fetch("/api/alert-rules", {
           method: "POST",
@@ -144,11 +178,11 @@ export function AlertRuleBuilder({
         if (!res.ok) throw new Error(await res.text());
         const { rule } = await res.json() as { rule: ExistingRule };
         setRules((prev) => [rule, ...prev]);
-        setFeedback("Rule added");
+        setFeedback(messages.added);
       }
       closeForm();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Save failed");
+      setError(messages.saveFailed);
     } finally {
       setSaving(false);
     }
@@ -161,9 +195,9 @@ export function AlertRuleBuilder({
       const res = await fetch("/api/alert-rules?id=" + id, { method: "DELETE" });
       if (!res.ok) throw new Error(await res.text());
       setRules((prev) => prev.filter((rule) => rule.id !== id));
-      setFeedback("Rule deleted");
+      setFeedback(messages.deleted);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Delete failed");
+      setError(messages.deleteFailed);
     } finally {
       setPendingId(null);
     }
@@ -180,9 +214,9 @@ export function AlertRuleBuilder({
       });
       if (!res.ok) throw new Error(await res.text());
       setRules((prev) => prev.map((candidate) => candidate.id === rule.id ? { ...candidate, enabled: !candidate.enabled } : candidate));
-      setFeedback(rule.enabled ? "Rule paused" : "Rule enabled");
+      setFeedback(rule.enabled ? messages.paused : messages.enabledFeedback);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Toggle failed");
+      setError(messages.toggleFailed);
     } finally {
       setPendingId(null);
     }
@@ -196,7 +230,7 @@ export function AlertRuleBuilder({
             <div className="min-w-0">
               <p className="truncate text-[13px]" style={{ color: rule.enabled ? "var(--text-primary)" : "var(--text-tertiary)" }}>{rule.name}</p>
               <p className="mono mt-1 text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-tertiary)" }}>
-                {rule.layer} · {rule.destination} · {Math.round(rule.minConfidence * 100)}%
+                {layerLabel(rule.layer)} · {destinationLabel(rule.destination)} · {Math.round(rule.minConfidence * 100)}%
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -208,7 +242,7 @@ export function AlertRuleBuilder({
                 className={actionClass}
                 style={{ borderColor: rule.enabled ? "var(--evidence)" : "var(--line-soft)", color: rule.enabled ? "var(--evidence)" : "var(--text-tertiary)" }}
               >
-                {rule.enabled ? "On" : "Off"}
+                {rule.enabled ? messages.stateOn : messages.stateOff}
               </button>
               <button
                 type="button"
@@ -232,7 +266,7 @@ export function AlertRuleBuilder({
           </div>
         )) : (
           <p role="status" className="py-5 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
-            No alert rules configured.
+            {messages.empty}
           </p>
         )}
       </div>
@@ -272,7 +306,7 @@ export function AlertRuleBuilder({
                   {messages.labelLayer}
                 </label>
                 <select id="alert-rule-layer" value={form.layer} onChange={(event) => setForm((current) => ({ ...current, layer: event.target.value }))} className={controlClass + " w-full"}>
-                  {LAYER_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  {layerOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
               </div>
               <div>
@@ -280,7 +314,7 @@ export function AlertRuleBuilder({
                   {messages.labelDestination}
                 </label>
                 <select id="alert-rule-destination" value={form.destination} onChange={(event) => setForm((current) => ({ ...current, destination: event.target.value }))} className={controlClass + " w-full"}>
-                  {DESTINATION_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  {destinationOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
               </div>
             </div>
@@ -307,7 +341,7 @@ export function AlertRuleBuilder({
                   {messages.labelPriority}
                 </label>
                 <select id="alert-rule-priority" value={form.priority} onChange={(event) => setForm((current) => ({ ...current, priority: event.target.value }))} className={controlClass + " w-full"}>
-                  {PRIORITY_OPTIONS.map((priority) => <option key={priority} value={priority}>{priority}</option>)}
+                  {PRIORITY_OPTIONS.map((priority) => <option key={priority} value={priority}>{priorityLabels[priority]}</option>)}
                 </select>
               </div>
             </div>
@@ -321,7 +355,7 @@ export function AlertRuleBuilder({
             >
               <span className="mono text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-secondary)" }}>{messages.labelEnabled}</span>
               <span className="mono text-[11px] uppercase tracking-[0.08em]" style={{ color: form.enabled ? "var(--evidence)" : "var(--text-tertiary)" }}>
-                {form.enabled ? "On" : "Off"}
+                {form.enabled ? messages.stateOn : messages.stateOff}
               </span>
             </button>
 
@@ -332,7 +366,7 @@ export function AlertRuleBuilder({
                 {messages.cancel}
               </button>
               <button type="button" onClick={handleSave} disabled={saving} className={actionClass} style={{ borderColor: "var(--signal)", color: "var(--signal)" }}>
-                {saving ? "Working…" : messages.save}
+                {saving ? "…" : messages.save}
               </button>
             </div>
           </div>

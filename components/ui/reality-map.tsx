@@ -408,6 +408,97 @@ export function RealityMap({
   alertOverlayLabel = "Alerts",
   dailyDiff
 }: Props) {
+  // The map route already passes the translated message groups as props. Keep
+  // that contract and use the existing labels to select the few strings that
+  // are owned by this canvas (popups and recovery states).
+  const isJapanese = /[ぁ-んァ-ヶ一-龯]/.test(searchHint)
+    || /[ぁ-んァ-ヶ一-龯]/.test(filterLabels.label)
+    || layerLabels.some((label) => /[ぁ-んァ-ヶ一-龯]/.test(label));
+  const layerDisplay = Object.fromEntries(
+    LAYER_KEYS.map((key, index) => [key, layerLabels[index] ?? LAYER_DISPLAY[key]])
+  ) as Record<LayerKey, string>;
+  const copy = isJapanese
+    ? {
+        workspace: "現実の動きマップ",
+        closeSearch: "検索を閉じる",
+        resetWorkspace: "マップ表示をリセット",
+        fixtureStatus: "検証用データの地図・実データではありません",
+        entitySearchResults: "対象の検索結果",
+        noFixtureMatch: "この検索に一致する検証用の対象はありません。",
+        searchByName: "名前または情報の層で対象を検索",
+        mapScope: "表示範囲",
+        global: "全体",
+        selectedEntity: (name: string) => `選択中の対象: ${name}`,
+        closeSelectedEntity: "選択中の対象を閉じる",
+        fixtureEntity: "検証用の対象・実データではありません",
+        noDescription: "この対象の説明はありません。",
+        score: "スコア",
+        confidence: "信頼度",
+        scope: "範囲",
+        evidencePath: "根拠の流れ",
+        fixtureEvidencePath: "検証用データの根拠の流れ",
+        fixtureData: "検証用データ",
+        notLive: "実データではありません",
+        linkedObjects: (count: number) => `関連対象 ${count}件`,
+        review: "確認",
+        openEntityWorkspace: "対象の分析画面を開く",
+        newFixtureRecord: "新しい検証用記録",
+        fixtureRecord: "検証用記録",
+        inspectEntity: "対象を確認",
+        basemapError: "公開された暗色の地図を読み込めませんでした。",
+        rendererError: "地図表示を開始できませんでした。",
+        basemapUnavailable: "暗色の地図を利用できません",
+        retryMap: "地図を再試行",
+        loadingBasemap: "暗色の地図を読み込み中",
+        popupViewAlerts: "アラートを見る →",
+        popupScore: "スコア",
+        popupConfidence: "信頼度",
+        popupLoading: "読み込み中…",
+        popupCluster: "情報の層クラスター",
+        popupSignals: (count: number) => `${count}件の兆候`,
+        popupZoom: "クリックして拡大"
+      }
+    : {
+        workspace: "Reality map workspace",
+        closeSearch: "Close search",
+        resetWorkspace: "Reset map workspace",
+        fixtureStatus: "Fixture map · not live",
+        entitySearchResults: "Entity search results",
+        noFixtureMatch: "No fixture entities match this search.",
+        searchByName: "Search fixture entities by name or substrate.",
+        mapScope: "Map scope",
+        global: "Global",
+        selectedEntity: (name: string) => `Selected entity: ${name}`,
+        closeSelectedEntity: "Close selected entity",
+        fixtureEntity: "fixture entity · not live",
+        noDescription: "No fixture description is available for this entity.",
+        score: "Score",
+        confidence: "Confidence",
+        scope: "Scope",
+        evidencePath: "Evidence path",
+        fixtureEvidencePath: "Fixture evidence path",
+        fixtureData: "Fixture data",
+        notLive: "not live",
+        linkedObjects: (count: number) => `${count} linked objects`,
+        review: "Review",
+        openEntityWorkspace: "open entity workspace",
+        newFixtureRecord: "New fixture record",
+        fixtureRecord: "Fixture record",
+        inspectEntity: "Inspect entity",
+        basemapError: "The public dark basemap could not be loaded.",
+        rendererError: "The map renderer could not be started.",
+        basemapUnavailable: "Dark basemap unavailable",
+        retryMap: "Retry map",
+        loadingBasemap: "Loading dark basemap",
+        popupViewAlerts: "View alerts →",
+        popupScore: "Score",
+        popupConfidence: "conf.",
+        popupLoading: "Loading…",
+        popupCluster: "Substrate cluster",
+        popupSignals: (count: number) => `${count} signals`,
+        popupZoom: "Click to zoom in"
+      };
+
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapType | null>(null);
   const popupRef = useRef<InstanceType<
@@ -482,8 +573,7 @@ export function RealityMap({
   useEffect(() => { filteredEntitiesRef.current = filteredEntities; }, [filteredEntities]);
   useEffect(() => {
     selectedIdRef.current = selectedId;
-    if (selectedId) animationControllerRef.current?.start();
-    else animationControllerRef.current?.stop();
+    animationControllerRef.current?.start();
   }, [selectedId]);
 
   const toggleLayer = useCallback((key: LayerKey) => {
@@ -567,7 +657,7 @@ export function RealityMap({
 
       const markStyleError = () => {
         if (!styleReady && !cancelled) {
-          setMapError("The public dark basemap could not be loaded.");
+          setMapError(copy.basemapError);
         }
       };
       map.on("error", markStyleError);
@@ -640,7 +730,6 @@ export function RealityMap({
           id: "connection-lines",
           type: "line",
           source: "connections",
-          filter: ["==", ["get", "selected"], true],
           layout: {
             "line-cap": "butt",
             "line-join": "round"
@@ -648,8 +737,38 @@ export function RealityMap({
           paint: {
             "line-color": ["get", "color"],
             "line-width": ["get", "width"],
-            "line-opacity": ["get", "opacity"],
+            "line-opacity": [
+              "*",
+              ["get", "opacity"],
+              ["case", ["get", "selected"], 1, 0.46]
+            ],
             "line-dasharray": [0, 2, 3]
+          }
+        });
+
+        // A static, line-following arrow preserves fromId → toId direction
+        // even when reduced motion disables the selected-path dash animation.
+        map.addLayer({
+          id: "connection-direction-arrows",
+          type: "symbol",
+          source: "connections",
+          layout: {
+            "symbol-placement": "line",
+            "symbol-spacing": 150,
+            "text-field": "→",
+            "text-font": ["Noto Sans Regular"],
+            "text-size": 13,
+            "text-allow-overlap": true,
+            "text-ignore-placement": true,
+            "text-keep-upright": false,
+            "text-rotation-alignment": "map",
+            "text-pitch-alignment": "map"
+          },
+          paint: {
+            "text-color": ["get", "color"],
+            "text-opacity": ["*", ["get", "opacity"], 0.78],
+            "text-halo-color": "#0a1016",
+            "text-halo-width": 1
           }
         });
 
@@ -848,7 +967,7 @@ export function RealityMap({
               `<div style="background:${POPUP_COLORS.bg};border:1px solid ${POPUP_COLORS.borderAlert};border-radius:4px;padding:10px 12px;min-width:200px;">
                 <div style="font-family:monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:${POPUP_COLORS.critical};margin-bottom:4px;">${escapeHtml(props.priority)}</div>
                 <div style="font-size:12px;font-weight:600;color:${POPUP_COLORS.primary};line-height:1.4;">${escapeHtml(props.title)}</div>
-                <a href="/alerts" style="font-family:monospace;font-size:11px;color:${POPUP_COLORS.rune};margin-top:6px;display:block;">View alerts →</a>
+                <a href="/alerts" style="font-family:monospace;font-size:11px;color:${POPUP_COLORS.rune};margin-top:6px;display:block;">${escapeHtml(copy.popupViewAlerts)}</a>
               </div>`
             )
             .addTo(map);
@@ -885,21 +1004,21 @@ export function RealityMap({
         }
 
         function startAnimations() {
-          if (reduceMotion || document.hidden || !selectedIdRef.current || dashIntervalRef.current || pulseFrameRef.current) return;
-          dashIntervalRef.current = setInterval(() => {
-            if (!selectedIdRef.current) {
-              stopAnimations();
-              return;
-            }
-            dashStep = (dashStep + 1) % 24;
-            const t = dashStep / 24;
-            if (map.getLayer("connection-lines")) {
-              map.setPaintProperty("connection-lines", "line-dasharray", [
-                t * 3, 2, (1 - t) * 3
-              ]);
-            }
-          }, 65);
-          pulseFrameRef.current = requestAnimationFrame(animatePulse);
+          if (reduceMotion || document.hidden) return;
+          if (!dashIntervalRef.current) {
+            dashIntervalRef.current = setInterval(() => {
+              dashStep = (dashStep + 1) % 24;
+              const t = dashStep / 24;
+              if (map.getLayer("connection-lines")) {
+                map.setPaintProperty("connection-lines", "line-dasharray", [
+                  t * 3, 2, (1 - t) * 3
+                ]);
+              }
+            }, 65);
+          }
+          if (selectedIdRef.current && !pulseFrameRef.current) {
+            pulseFrameRef.current = requestAnimationFrame(animatePulse);
+          }
         }
 
         function handleVisibilityChange() {
@@ -934,12 +1053,12 @@ export function RealityMap({
                 <div style="font-size:12px;font-weight:600;color:${POPUP_COLORS.primary};letter-spacing:0.01em;line-height:1.4;">${escapeHtml(props.name)}</div>
                 ${props.description ? `<div style="font-size:11px;color:${POPUP_COLORS.secondary};margin-top:5px;line-height:1.5;">${escapeHtml(props.description)}</div>` : ""}
                 <div style="display:flex;align-items:center;gap:10px;margin-top:8px;padding-top:7px;border-top:1px solid ${POPUP_COLORS.divider};">
-                  <span style="font-family:monospace;font-size:11px;font-weight:500;color:${color};">Score ${props.score}</span>
-                  <span style="font-family:monospace;font-size:11px;color:${POPUP_COLORS.secondary};">${Math.round(props.confidence * 100)}% conf.</span>
+                  <span style="font-family:monospace;font-size:11px;font-weight:500;color:${color};">${escapeHtml(copy.popupScore)} ${props.score}</span>
+                  <span style="font-family:monospace;font-size:11px;color:${POPUP_COLORS.secondary};">${Math.round(props.confidence * 100)}% ${escapeHtml(copy.popupConfidence)}</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:5px;margin-top:6px;">
                   <span style="width:6px;height:6px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0;"></span>
-                  <span style="font-family:monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:${POPUP_COLORS.tertiary};">${escapeHtml(props.layer.replace("_", " "))}</span>
+                  <span style="font-family:monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:${POPUP_COLORS.tertiary};">${escapeHtml(layerDisplay[props.layer] ?? props.layer.replace("_", " "))}</span>
                 </div>
               </div>`
             )
@@ -1075,7 +1194,7 @@ export function RealityMap({
                 .sort((a, b) => b[1] - a[1])
                 .map(([key, cnt]) => {
                   const color = LAYER_COLORS[key as LayerKey] ?? "#888";
-                  const label = LAYER_DISPLAY[key as LayerKey] ?? key;
+                  const label = layerDisplay[key as LayerKey] ?? key;
                   return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:5px;">
                     <div style="display:flex;align-items:center;gap:5px;">
                       <span style="width:6px;height:6px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0;"></span>
@@ -1085,13 +1204,13 @@ export function RealityMap({
                   </div>`;
                 })
                 .join("")
-            : `<div style="font-family:monospace;font-size:11px;color:${POPUP_COLORS.tertiary};margin-top:5px;">Loading…</div>`;
+            : `<div style="font-family:monospace;font-size:11px;color:${POPUP_COLORS.tertiary};margin-top:5px;">${escapeHtml(copy.popupLoading)}</div>`;
 
           return `<div style="background:${POPUP_COLORS.bg};border:1px solid ${POPUP_COLORS.border};border-radius:4px;padding:12px 14px;min-width:190px;">
-            <div style="font-family:monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:${POPUP_COLORS.tertiary};margin-bottom:4px;">Substrate Cluster</div>
-            <div style="font-size:16px;font-weight:700;color:${POPUP_COLORS.primary};">${count} signals</div>
+            <div style="font-family:monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:${POPUP_COLORS.tertiary};margin-bottom:4px;">${escapeHtml(copy.popupCluster)}</div>
+            <div style="font-size:16px;font-weight:700;color:${POPUP_COLORS.primary};">${escapeHtml(copy.popupSignals(count))}</div>
             ${layerRows}
-            <div style="font-family:monospace;font-size:11px;color:${POPUP_COLORS.tertiary};margin-top:8px;padding-top:6px;border-top:1px solid ${POPUP_COLORS.divider};">Click to zoom in</div>
+            <div style="font-family:monospace;font-size:11px;color:${POPUP_COLORS.tertiary};margin-top:8px;padding-top:6px;border-top:1px solid ${POPUP_COLORS.divider};">${escapeHtml(copy.popupZoom)}</div>
           </div>`;
         }
 
@@ -1134,7 +1253,7 @@ export function RealityMap({
 
       mapRef.current = map;
     }).catch(() => {
-      if (!cancelled) setMapError("The map renderer could not be started.");
+      if (!cancelled) setMapError(copy.rendererError);
     });
 
     return () => {
@@ -1334,7 +1453,7 @@ export function RealityMap({
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <section className="relative h-full w-full overflow-hidden bg-[var(--field)]" aria-label="Reality map workspace">
+    <section className="relative h-full w-full overflow-hidden bg-[var(--field)]" aria-label={copy.workspace}>
       {/* Map canvas */}
       <div ref={containerRef} className="h-full w-full" />
 
@@ -1370,7 +1489,7 @@ export function RealityMap({
                     type="button"
                     onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
                     className="odim-icon-control min-h-11 min-w-11"
-                    aria-label="Close search"
+                    aria-label={copy.closeSearch}
                   >
                     <X size={16} aria-hidden="true" />
                   </button>
@@ -1393,6 +1512,7 @@ export function RealityMap({
             <label className="odim-control flex min-h-11 items-center px-2 text-[12px]" style={{ background: "var(--field)" }}>
               <span className="sr-only">{filterLabels.timeRange}</span>
               <select
+                name="map-period"
                 value={timeRange}
                 onChange={(event) => setTimeRange(event.target.value as TimeRange)}
                 className="min-h-11 bg-transparent pr-1 outline-none"
@@ -1424,8 +1544,8 @@ export function RealityMap({
               onClick={resetWorkspace}
               className="odim-control odim-icon-control min-h-11 min-w-11"
               style={{ background: "var(--field)" }}
-              aria-label="Reset map workspace"
-              title="Reset map workspace"
+              aria-label={copy.resetWorkspace}
+              title={copy.resetWorkspace}
             >
               <RotateCcw size={16} aria-hidden="true" />
             </button>
@@ -1435,14 +1555,14 @@ export function RealityMap({
               className="mono hidden min-h-11 items-center border px-2 text-[11px] tracking-[0.04em] xl:inline-flex"
               style={{ borderColor: "var(--line-soft)", color: "var(--text-secondary)" }}
             >
-              Fixture map · not live
+              {copy.fixtureStatus}
             </span>
           </div>
 
           {searchOpen ? (
             <div className="border-t" style={{ borderColor: "var(--line-soft)" }}>
               {searchResults.length > 0 ? (
-                <div role="listbox" aria-label="Entity search results" className="divide-y" style={{ borderColor: "var(--line-soft)" }}>
+                <div role="listbox" aria-label={copy.entitySearchResults} className="divide-y" style={{ borderColor: "var(--line-soft)" }}>
                   {searchResults.map((entity) => (
                     <button
                       key={entity.id}
@@ -1454,15 +1574,15 @@ export function RealityMap({
                       <MapPin size={16} aria-hidden="true" style={{ color: "var(--evidence)" }} />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[13px]" style={{ color: "var(--text-primary)" }}>{entity.name}</span>
-                        <span className="mono block text-[11px]" style={{ color: "var(--text-secondary)" }}>{LAYER_DISPLAY[entity.layer]} · score {entity.score}</span>
+                        <span className="mono block text-[11px]" style={{ color: "var(--text-secondary)" }}>{layerDisplay[entity.layer]} · {copy.score.toLowerCase()} {entity.score}</span>
                       </span>
                     </button>
                   ))}
                 </div>
               ) : searchQuery.trim() ? (
-                <p className="px-3 py-3 text-[12px]" style={{ color: "var(--text-secondary)" }}>No fixture entities match this search.</p>
+                <p className="px-3 py-3 text-[12px]" style={{ color: "var(--text-secondary)" }}>{copy.noFixtureMatch}</p>
               ) : (
-                <p className="px-3 py-3 text-[12px]" style={{ color: "var(--text-secondary)" }}>Search fixture entities by name or substrate.</p>
+                <p className="px-3 py-3 text-[12px]" style={{ color: "var(--text-secondary)" }}>{copy.searchByName}</p>
               )}
             </div>
           ) : null}
@@ -1523,8 +1643,8 @@ export function RealityMap({
               </div>
 
               {geoPath.length > 0 ? (
-                <nav aria-label="Map scope" className="mt-3 flex min-h-11 flex-wrap items-center gap-1 border-t pt-3" style={{ borderColor: "var(--line-soft)" }}>
-                  <button type="button" onClick={() => { setGeoPath([]); mapRef.current?.flyTo({ center: [-98.6, 39.8], zoom: 3, duration: mapTransitionDuration(), essential: false }); }} className="mono px-1 text-[11px]" style={{ color: "var(--signal)" }}>Global</button>
+                <nav aria-label={copy.mapScope} className="mt-3 flex min-h-11 flex-wrap items-center gap-1 border-t pt-3" style={{ borderColor: "var(--line-soft)" }}>
+                  <button type="button" onClick={() => { setGeoPath([]); mapRef.current?.flyTo({ center: [-98.6, 39.8], zoom: 3, duration: mapTransitionDuration(), essential: false }); }} className="mono px-1 text-[11px]" style={{ color: "var(--signal)" }}>{copy.global}</button>
                   {geoPath.map((step, index) => (
                     <span key={`${step}-${index}`} className="flex items-center gap-1">
                       <span aria-hidden="true" style={{ color: "var(--text-tertiary)" }}>/</span>
@@ -1541,7 +1661,7 @@ export function RealityMap({
       {dailyDiff ? (
         <div className="pointer-events-none absolute inset-x-3 bottom-[84px] z-20 md:inset-x-auto md:bottom-3 md:left-3 md:w-[340px]">
           <div className="pointer-events-auto">
-            <DailyDiffPanel diff={dailyDiff} selectionActive={Boolean(selectedEntity)} />
+            <DailyDiffPanel diff={dailyDiff} selectionActive={Boolean(selectedEntity)} locale={isJapanese ? "ja" : "en"} />
           </div>
         </div>
       ) : null}
@@ -1549,14 +1669,14 @@ export function RealityMap({
       {selectedEntity ? (
         <aside
           data-testid="map-inspector"
-          aria-label={`Selected entity: ${selectedEntity.name}`}
+          aria-label={copy.selectedEntity(selectedEntity.name)}
           className="absolute inset-x-3 bottom-[84px] z-20 max-h-[44dvh] overflow-y-auto border bg-[var(--surface)] animate-slide-up md:inset-x-auto md:bottom-3 md:right-3 md:top-[148px] md:max-h-none md:w-[360px]"
           style={{ borderColor: "var(--line-soft)" }}
         >
           <header className="flex min-h-11 items-start justify-between gap-3 border-b px-4 py-3" style={{ borderColor: "var(--line-soft)" }}>
             <div className="min-w-0">
               <p className="mono mb-1 text-[11px] tracking-[0.04em]" style={{ color: "var(--evidence)" }}>
-                {LAYER_DISPLAY[selectedEntity.layer]} · fixture entity · not live
+                {layerDisplay[selectedEntity.layer]} · {copy.fixtureEntity}
               </p>
               <h2 className="text-[18px] font-medium leading-6 tracking-[-0.01em]" style={{ color: "var(--text-primary)" }}>{selectedEntity.name}</h2>
             </div>
@@ -1566,7 +1686,7 @@ export function RealityMap({
               onClick={clearSelection}
               className="odim-control odim-icon-control min-h-11 min-w-11 shrink-0"
               style={{ background: "var(--field)" }}
-              aria-label="Close selected entity"
+              aria-label={copy.closeSelectedEntity}
             >
               <X size={16} aria-hidden="true" />
             </button>
@@ -1574,49 +1694,49 @@ export function RealityMap({
 
           <div className="px-4 py-3">
             <p className="text-[13px] leading-5" style={{ color: "var(--text-secondary)" }}>
-              {selectedEntity.description || "No fixture description is available for this entity."}
+              {selectedEntity.description || copy.noDescription}
             </p>
           </div>
 
           <dl className="grid grid-cols-3 border-y" style={{ borderColor: "var(--line-soft)" }}>
             <div className="min-w-0 px-4 py-3">
-              <dt className="mono text-[11px] tracking-[0.04em]" style={{ color: "var(--text-tertiary)" }}>Score</dt>
+              <dt className="mono text-[11px] tracking-[0.04em]" style={{ color: "var(--text-tertiary)" }}>{copy.score}</dt>
               <dd className="mono mt-1 text-[15px]" style={{ color: "var(--text-primary)" }}>{selectedEntity.score}</dd>
             </div>
             <div className="min-w-0 border-l px-4 py-3" style={{ borderColor: "var(--line-soft)" }}>
-              <dt className="mono text-[11px] tracking-[0.04em]" style={{ color: "var(--text-tertiary)" }}>Confidence</dt>
+              <dt className="mono text-[11px] tracking-[0.04em]" style={{ color: "var(--text-tertiary)" }}>{copy.confidence}</dt>
               <dd className="mono mt-1 text-[15px]" style={{ color: "var(--text-primary)" }}>{Math.round(selectedEntity.confidence * 100)}%</dd>
             </div>
             <div className="min-w-0 border-l px-4 py-3" style={{ borderColor: "var(--line-soft)" }}>
-              <dt className="mono text-[11px] tracking-[0.04em]" style={{ color: "var(--text-tertiary)" }}>Scope</dt>
+              <dt className="mono text-[11px] tracking-[0.04em]" style={{ color: "var(--text-tertiary)" }}>{copy.scope}</dt>
               <dd className="mono mt-1 truncate text-[12px]" style={{ color: "var(--text-primary)" }}>{geoZoomLevel}</dd>
             </div>
           </dl>
 
           <div className="border-b px-4 py-3" style={{ borderColor: "var(--line-soft)" }}>
-            <p className="mono mb-3 text-[11px] tracking-[0.05em]" style={{ color: "var(--text-secondary)" }}>Evidence path</p>
+            <p className="mono mb-3 text-[11px] tracking-[0.05em]" style={{ color: "var(--text-secondary)" }}>{copy.evidencePath}</p>
             <EvidenceThread
               activeId="entity"
-              label="Fixture evidence path"
+              label={copy.fixtureEvidencePath}
               steps={[
-                { id: "fixture", label: "Fixture data", detail: "not live" },
-                { id: "entity", label: selectedEntity.name, detail: `${Math.round(selectedEntity.confidence * 100)}% confidence`, verified: true },
-                { id: "links", label: `${relatedConnections.length} linked objects`, detail: "map connections" },
-                { id: "review", label: "Review", detail: "open entity workspace" }
+                { id: "fixture", label: copy.fixtureData, detail: copy.notLive },
+                { id: "entity", label: selectedEntity.name, detail: `${Math.round(selectedEntity.confidence * 100)}% ${copy.confidence.toLowerCase()}`, verified: true },
+                { id: "links", label: copy.linkedObjects(relatedConnections.length), detail: isJapanese ? "マップ上のつながり" : "map connections" },
+                { id: "review", label: copy.review, detail: copy.openEntityWorkspace }
               ]}
             />
           </div>
 
           <div className="flex items-center justify-between gap-3 px-4 py-3">
             <span className="mono text-[11px]" style={{ color: "var(--text-tertiary)" }}>
-              {isNewEntity(selectedEntity) ? "New fixture record" : "Fixture record"}
+              {isNewEntity(selectedEntity) ? copy.newFixtureRecord : copy.fixtureRecord}
             </span>
             <a
               href={`/entity?id=${encodeURIComponent(selectedEntity.id)}`}
               className="odim-control flex min-h-11 items-center gap-2 px-3 text-[12px]"
               style={{ background: "var(--signal-wash)", borderColor: "color-mix(in srgb, var(--signal) 68%, var(--line-strong))" }}
             >
-              Inspect entity
+              {copy.inspectEntity}
               <ExternalLink size={15} aria-hidden="true" />
             </a>
           </div>
@@ -1629,12 +1749,12 @@ export function RealityMap({
             <div className="flex items-start gap-3">
               <AlertTriangle size={18} aria-hidden="true" style={{ color: "var(--critical)" }} />
               <div>
-                <h2 className="text-[16px] font-medium" style={{ color: "var(--text-primary)" }}>Dark basemap unavailable</h2>
+                <h2 className="text-[16px] font-medium" style={{ color: "var(--text-primary)" }}>{copy.basemapUnavailable}</h2>
                 <p className="mt-1 text-[13px] leading-5" style={{ color: "var(--text-secondary)" }}>{mapError}</p>
               </div>
             </div>
             <button type="button" data-testid="map-retry" onClick={retryMap} className="odim-control mt-4 min-h-11 px-3 text-[12px]" style={{ background: "var(--field)" }}>
-              Retry map
+              {copy.retryMap}
             </button>
           </div>
         </div>
@@ -1642,7 +1762,7 @@ export function RealityMap({
         <div data-testid="map-loading" role="status" className="absolute inset-0 z-30 flex items-center justify-center bg-[var(--field)] px-5">
           <div className="flex items-center gap-3 border-l-2 px-4 py-3" style={{ borderColor: "var(--signal)", background: "var(--surface)" }}>
             <span className="h-2 w-2 bg-[var(--signal)]" aria-hidden="true" />
-            <span className="mono text-[11px] tracking-[0.05em]" style={{ color: "var(--text-secondary)" }}>Loading dark basemap</span>
+            <span className="mono text-[11px] tracking-[0.05em]" style={{ color: "var(--text-secondary)" }}>{copy.loadingBasemap}</span>
           </div>
         </div>
       ) : null}

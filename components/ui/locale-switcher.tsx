@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { setLocale } from "@/lib/i18n/actions";
 
-export function LocaleSwitcher({ current }: Readonly<{ current: string }>) {
+export function LocaleSwitcher({ current, label = "Language" }: Readonly<{ current: string; label?: string }>) {
   const [pending, startTransition] = useTransition();
 
   function handleSelect(locale: "en" | "ja") {
@@ -13,7 +13,7 @@ export function LocaleSwitcher({ current }: Readonly<{ current: string }>) {
   }
 
   return (
-    <div className="flex items-center gap-1" aria-label="Language" role="group">
+    <div className="flex items-center gap-1" aria-label={label} role="group">
       {(["en", "ja"] as const).map((locale) => {
         const selected = current === locale;
         return (

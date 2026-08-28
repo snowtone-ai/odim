@@ -25,6 +25,35 @@ Odim is not a generic dashboard builder, a Bloomberg clone, an autonomous tradin
 5. **State is local and explicit.** Saved, read, running, empty, failed, and source coverage feedback appears beside the action that caused it.
 6. **Motion explains continuity.** Transitions connect selections and context; nothing bounces, floats, or animates only for decoration.
 
+## Cognitive-load contract
+
+The Entity and Alerts workspaces apply these rules as acceptance criteria, not as optional styling guidance. They are grounded in Cowan's review of an approximately four-chunk working-memory limit, NN/g guidance on minimizing interface-imposed cognitive load and progressively disclosing secondary detail, and Apple HIG guidance on hierarchy, disclosure, lists, and predictable placement.
+
+1. **One decision per view.** The first viewport answers one question: which entity or alert needs attention next. It exposes at most four competing attention groups: route context, controls, result list, and the selected summary.
+2. **Four facts before detail.** A queue row may expose only identity/title, importance, recency, and one evidence/confidence signal. Descriptions, metrics, provenance records, automation, and traces require selection or disclosure.
+3. **Summary before evidence before operations.** A selected object presents its conclusion and next action first, supporting evidence second, and technical or automation detail last. Position and type weight communicate priority; color never carries it alone.
+4. **Only one detail surface.** Do not show multiple independent inspectors, expanded records, or automation panes at the same time. Opening a new detail closes or replaces the previous one.
+5. **Progressive, reversible navigation.** Desktop may use list/detail split view. Mobile shows list or detail, never both stacked; the detail view has an explicit back action and restores the prior list context.
+6. **Stable scanning.** Repeated rows keep labels, dates, confidence, and actions in fixed columns or positions. Primary prose is constrained to `68ch`; secondary metadata is one line until requested.
+7. **Plain-language actions.** Labels state the user outcome (`Mark as read`, `Review evidence`, `Save changes`). Japanese copy is authored for meaning and task flow, not translated word-for-word.
+8. **No hidden critical state.** Urgency, failed evidence, pending approval, and destructive effects stay visible without expansion; low-priority metadata is hidden first.
+
+Research references:
+
+- Nelson Cowan, *The magical number 4 in short-term memory* (2001): https://pubmed.ncbi.nlm.nih.gov/11515286/
+- Nielsen Norman Group, *Minimize Cognitive Load to Maximize Usability*: https://www.nngroup.com/articles/minimize-cognitive-load/
+- Nielsen Norman Group, *8 Design Guidelines for Complex Applications*: https://www.nngroup.com/articles/complex-application-design/
+- Apple Human Interface Guidelines, *Design principles*: https://developer.apple.com/design/human-interface-guidelines/design-principles
+- Apple Human Interface Guidelines, *Disclosure controls*: https://developer.apple.com/design/human-interface-guidelines/disclosure-controls
+- Apple Human Interface Guidelines, *Lists and tables*: https://developer.apple.com/design/human-interface-guidelines/lists-and-tables
+
+## Japanese product language
+
+- Japanese mode localizes every product-authored visible string, placeholder, title, status, empty/error message, tooltip, and accessible name. Odim, Huginn, Munin, Meta, API, SEC, Slack, organization names, entity names, identifiers, and source-authored titles remain unchanged.
+- Prefer ordinary task language: `entity` becomes `企業・組織` when it means a user-facing object, `source` becomes `情報源`, `trace` becomes `処理経路`, and `fixture` becomes `サンプルデータ`. Preserve a technical loanword only when replacing it would reduce precision.
+- Japanese headings are short noun phrases; actions use direct verbs; errors state what failed and the next recovery action. Do not mix an English fallback into a Japanese sentence.
+- Built-in templates, statuses, and demo content are product-authored and therefore localized. User-entered content and original evidence titles are not translated.
+
 ## Visual direction
 
 The model is Palantir's restrained, precise operational software: dark neutral strata, compact typography, clear object hierarchy, thin dividers, and blue operational focus. Odim does not copy a Palantir screen or component library. Its own signature is the Evidence Thread described below.
@@ -118,6 +147,7 @@ Mobile:
 - Daily changes are a compact rail/ticker on desktop and a collapsible bottom sheet on mobile.
 - Selecting an object opens the inspector without obscuring most of the map.
 - Map style failure shows a dark fallback, explanation, and retry instead of an endless loader.
+- Every relationship preserves `from -> to` coordinate order. A restrained marker travels from the source object to the destination object; reduced-motion mode replaces travel with fixed forward chevrons. Unselected base lines remain quiet so direction motion does not become ambient noise.
 
 ### Entities
 
@@ -142,6 +172,7 @@ Mobile:
 - Composer stays reachable. Loading names the current phase; failures appear as retryable state, not appended answer text.
 - While a request is pending, reserve one compact inline status row in the conversation flow instead of opening a panel or blocking the composer. Pair the Huginn mark with the MIT-licensed SVG Spinners three-dot fade and cycle neutral phrases such as `Preparing analysis`, `Tracing evidence`, and `Checking support`; these phrases describe user-facing progress and must not claim an exact backend stage.
 - Pending status appears within 200ms, keeps a fixed footprint to prevent layout shift, and is announced as a single polite status. Its SVG is decorative, inherits the current text color, and animates only opacity. Reduced-motion mode shows one static phrase and static dots.
+- Follow the learned structure shared by major chat products: a collapsible recent-conversation rail, one centered readable conversation column, a persistent bottom composer, and answer-level disclosures for sources and execution detail. Evidence remains attached to the answer it supports instead of becoming a permanent competing dashboard.
 
 ### Settings
 
