@@ -22,7 +22,7 @@ test("Huginn thinking is a single fixed-height accessible status row", () => {
   assert.match(thinking, /HuginnIcon/);
   assert.match(thinking, /fill="currentColor"/);
   assert.match(consoleSource, /import \{ HuginnThinking \}/);
-  assert.match(consoleSource, /<HuginnThinking \/>/);
+  assert.match(consoleSource, /<HuginnThinking(?: locale=\{locale\})? \/>/);
 });
 
 test("thinking phases are cautious and rotate without asserting completion", () => {

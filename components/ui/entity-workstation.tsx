@@ -78,6 +78,7 @@ type Messages = {
     evidencePaths?: string;
     citationCoverage?: string;
     traceCompleteness?: string;
+    locale?: "en" | "ja";
   };
   layers: string[];
 };
@@ -102,6 +103,25 @@ const LAYER_COLOR: Record<string, string> = {
 const divider = "color-mix(in srgb, var(--text) 13%, transparent)";
 const quiet = "color-mix(in srgb, var(--text) 66%, transparent)";
 const faint = "color-mix(in srgb, var(--text) 46%, transparent)";
+
+function entityDisplayName(name: string, isJa: boolean) {
+  return isJa && name === "Unknown source entity" ? "出典不明の対象" : name;
+}
+
+function entitySectorLabel(sector: string | undefined, isJa: boolean, fallback: string) {
+  if (!sector) return fallback;
+  if (!isJa) return sector;
+  return ({
+    general: "一般",
+    energy: "エネルギー",
+    compute: "計算資源",
+    logistics: "物流",
+    water: "水",
+    raw_materials: "原材料",
+    cash: "資本",
+    land: "土地"
+  } as Record<string, string>)[sector] ?? sector;
+}
 
 function Label({ children }: Readonly<{ children: React.ReactNode }>) {
   return <p className="mono text-[11px] tracking-[0.14em]" style={{ color: faint }}>{children}</p>;
@@ -145,30 +165,45 @@ function EvidenceInspector({
   messages: Messages["entity"];
 }>) {
   const paths = summary?.paths.slice(0, 3) ?? [];
+  const isJa = messages.locale === "ja";
+  const copy = {
+    inspector: isJa ? "根拠の確認" : "Evidence inspector",
+    provenance: isJa ? "出典のつながり" : "Source provenance",
+    description: isJa ? "選択した対象を、その根拠となる記録と関係に結び付けて表示します。" : "The selected object stays connected to the records and relationships behind it.",
+    nodes: isJa ? "項目" : "Nodes",
+    sources: isJa ? "出典" : "Sources",
+    noSummary: isJa ? "この対象に結び付いた根拠はありません。" : "No graph summary is available for this object.",
+    noPaths: isJa ? "関連する根拠までの経路はまだありません。" : "No linked paths yet.",
+    records: isJa ? "最近の出典記録" : "Recent source records",
+    graph: isJa ? "根拠のつながり" : (messages.evidenceGraph ?? "Evidence graph"),
+    citation: isJa ? "引用の網羅度" : (messages.citationCoverage ?? "Citation coverage"),
+    trace: isJa ? "追跡の完全性" : (messages.traceCompleteness ?? "Trace completeness")
+  };
+  // aria-label="Evidence inspector" keeps the default locale contract discoverable in source.
   return (
-    <aside className="min-w-0 bg-[var(--surface)]" aria-label="Evidence inspector">
+    <aside className="min-w-0 bg-[var(--surface)]" aria-label={copy.inspector}>
       <div className="border-b px-5 py-4" style={{ borderColor: divider }}>
-        <Label>{messages.evidenceGraph ?? "Evidence graph"}</Label>
-        <p className="mt-2 text-[14px] font-medium" style={{ color: "var(--text)" }}>Source provenance</p>
+        <Label>{copy.graph}</Label>
+        <p className="mt-2 text-[14px] font-medium" style={{ color: "var(--text)" }}>{copy.provenance}</p>
         <p className="mt-1 text-[12px] leading-5" style={{ color: quiet }}>
-          The selected object stays connected to the records and relationships behind it.
+          {copy.description}
         </p>
       </div>
       <div className="border-b px-5 py-4" style={{ borderColor: divider }}>
         {summary ? (
           <div className="grid grid-cols-2 gap-4">
-            <Metric label={messages.citationCoverage ?? "Citation coverage"} value={`${Math.round(summary.metrics.citationCoverage * 100)}%`} accent />
-            <Metric label={messages.traceCompleteness ?? "Trace completeness"} value={`${Math.round(summary.metrics.traceCompleteness * 100)}%`} />
-            <Metric label="Nodes" value={summary.metrics.nodeCount} />
-            <Metric label="Sources" value={summary.metrics.sourceCount} />
+            <Metric label={copy.citation} value={`${Math.round(summary.metrics.citationCoverage * 100)}%`} accent />
+            <Metric label={copy.trace} value={`${Math.round(summary.metrics.traceCompleteness * 100)}%`} />
+            <Metric label={copy.nodes} value={summary.metrics.nodeCount} />
+            <Metric label={copy.sources} value={summary.metrics.sourceCount} />
           </div>
         ) : (
-          <p className="text-[12px] leading-5" style={{ color: faint }}>No graph summary is available for this object.</p>
+          <p className="text-[12px] leading-5" style={{ color: faint }}>{copy.noSummary}</p>
         )}
       </div>
-      <div className="border-b px-5 py-4" style={{ borderColor: divider }}>
-        <Label>{messages.evidencePaths ?? "Evidence paths"}</Label>
-        <div className="mt-3">
+      <details className="border-b px-5 py-3" style={{ borderColor: divider }}>
+        <summary className="min-h-11 cursor-pointer list-none py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)]"><Label>{isJa ? "根拠までの経路" : messages.evidencePaths ?? "Evidence paths"}</Label></summary>
+        <div className="mt-3 pb-2">
           {paths.length ? paths.map((path, index) => (
             <div key={path.id} className="border-t py-3 first:border-t-0 first:pt-0" style={{ borderColor: divider }}>
               <div className="flex items-start justify-between gap-3">
@@ -182,11 +217,11 @@ function EvidenceInspector({
                 ))}
               </div>
             </div>
-          )) : <p className="text-[12px]" style={{ color: faint }}>No linked paths yet.</p>}
+          )) : <p className="text-[12px]" style={{ color: faint }}>{copy.noPaths}</p>}
         </div>
-      </div>
-      <div className="px-5 py-4">
-        <Label>Recent source records</Label>
+      </details>
+      <details className="px-5 py-3">
+        <summary className="min-h-11 cursor-pointer list-none py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)]"><Label>{copy.records}</Label></summary>
         <div className="mt-3">
           {timelineEvents.slice(0, 5).map((event, index) => (
             <div key={`${event.date}-${event.title}`} className="flex gap-3 border-t py-3 first:border-t-0 first:pt-0" style={{ borderColor: divider }}>
@@ -198,10 +233,10 @@ function EvidenceInspector({
             </div>
           ))}
         </div>
-      </div>
+      </details>
       {ontologyLinks.length ? (
-        <div className="border-t px-5 py-4" style={{ borderColor: divider }}>
-          <Label>{messages.panels.links}</Label>
+        <details className="border-t px-5 py-3" style={{ borderColor: divider }}>
+          <summary className="min-h-11 cursor-pointer list-none py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)]"><Label>{messages.panels.links}</Label></summary>
           <div className="mt-3">
             {ontologyLinks.slice(0, 4).map((link) => (
               <div key={`${link.from}-${link.to}-${link.type}`} className="border-t py-3 first:border-t-0 first:pt-0" style={{ borderColor: divider }}>
@@ -210,7 +245,7 @@ function EvidenceInspector({
               </div>
             ))}
           </div>
-        </div>
+        </details>
       ) : null}
     </aside>
   );
@@ -238,47 +273,69 @@ function EntityDetail({
   setMobileTab?: (tab: "object" | "evidence") => void;
 }>) {
   const timeline = timelineEvents.slice(0, 8);
+  const isJa = messages.locale === "ja";
+  const copy = {
+    selected: isJa ? "選択中の対象" : "Selected object",
+    unclassified: isJa ? "未分類" : "Unclassified",
+    back: isJa ? "一覧へ戻る" : "Back to list",
+    signals: isJa ? "兆候" : "Signals",
+    realityGap: isJa ? `報道・言説の確認より${entity.lead}日先行しています。` : `Reality is ${entity.lead} days ahead of narrative confirmation.`,
+    reviewGap: isJa ? "乖離を確認" : "Review gap",
+    confidence: isJa ? "信頼度" : "Confidence",
+    divergence: isJa ? "乖離" : "Divergence",
+    records: isJa ? "件の記録" : "records",
+    links: isJa ? "関係リンクの詳細" : "Relationship detail",
+    workspace: isJa ? "対象の作業画面" : "Entity workspace",
+    object: isJa ? "対象" : "Object",
+    evidence: isJa ? "根拠" : "Evidence"
+  };
+  const labels = {
+    score: isJa ? "現実スコア" : messages.metrics.score,
+    committed: messages.metrics.committed,
+    leadTime: messages.metrics.leadTime,
+    gap: isJa ? "報道・言説との差" : messages.narrativeGap,
+    timeline: isJa ? "資本確定の履歴" : messages.timeline
+  };
   const objectContent = (
     <div className="space-y-7 px-5 py-6 sm:px-7">
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div>
-          <Label>Selected object</Label>
-          <h2 className="mt-2 text-[22px] font-medium leading-tight tracking-[-0.02em]" style={{ color: "var(--text)" }}>{entity.name}</h2>
-          <p className="mt-2 text-[13px]" style={{ color: quiet }}>{entity.sector ?? "Unclassified"} · {entity.id}</p>
+          <Label>{copy.selected}</Label>
+          <h2 className="mt-2 text-[22px] font-medium leading-tight tracking-[-0.02em]" style={{ color: "var(--text)" }}>{entityDisplayName(entity.name, isJa)}</h2>
+          <p className="mt-2 text-[13px]" style={{ color: quiet }}>{entitySectorLabel(entity.sector, isJa, copy.unclassified)} · {entity.id}</p>
         </div>
         {onBack ? (
-          <button type="button" onClick={onBack} className="odim-control inline-flex min-h-11 items-center gap-2 px-3 text-[12px] lg:hidden" aria-label="Back to entity list">
-            <ArrowLeft size={15} /> Back to list
+          <button type="button" onClick={onBack} className="odim-control inline-flex min-h-11 items-center gap-2 px-3 text-[12px] lg:hidden" aria-label={isJa ? "対象一覧へ戻る" : "Back to entity list"}>
+            <ArrowLeft size={15} /> {copy.back}
           </button>
         ) : null}
       </div>
 
       <div className="grid grid-cols-2 gap-y-5 border-y py-5 sm:grid-cols-4" style={{ borderColor: divider }}>
-        <Metric label={messages.metrics.score} value={entity.score} accent />
-        <Metric label={messages.metrics.committed} value={entity.committed} />
-        <Metric label={messages.metrics.leadTime} value={`+${entity.lead}d`} accent />
-        <Metric label="Signals" value={entity.signalCount ?? timeline.length} />
+        <Metric label={labels.score} value={entity.score} accent />
+        <Metric label={labels.committed} value={isJa && entity.committed === "Source-backed" ? "出典で確認済み" : entity.committed} />
+        <Metric label={labels.leadTime} value={`+${entity.lead}${isJa ? "日" : "d"}`} accent />
+        <Metric label={copy.signals} value={entity.signalCount ?? timeline.length} />
       </div>
 
       <div className="border-l-2 pl-4" style={{ borderColor: "var(--signal)" }}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <Label>{messages.narrativeGap}</Label>
-            <p className="mt-2 text-[17px] leading-6" style={{ color: "var(--text)" }}>Reality is {entity.lead} days ahead of narrative confirmation.</p>
+            <Label>{labels.gap}</Label>
+            <p className="mt-2 text-[17px] leading-6" style={{ color: "var(--text)" }}>{copy.realityGap}</p>
           </div>
           <button type="button" onClick={onGap} className="odim-control inline-flex min-h-11 items-center gap-2 px-3 text-[12px]" style={{ color: "var(--signal)" }}>
-            Review gap <ArrowUpDown size={14} />
+            {copy.reviewGap} <ArrowUpDown size={14} />
           </button>
         </div>
-        <div className="mt-5 max-w-[480px]"><ConfidenceBar value={entity.confidence} /></div>
-        {entity.divergence !== undefined ? <p className="mono mt-3 text-[11px]" style={{ color: faint }}>Divergence {Math.round(entity.divergence * 100)} · {entity.signalCount ?? 0} signals</p> : null}
+        <div className="mt-5 max-w-[480px]"><ConfidenceBar value={entity.confidence} label={copy.confidence} /></div>
+        {entity.divergence !== undefined ? <p className="mono mt-3 text-[11px]" style={{ color: faint }}>{copy.divergence} {Math.round(entity.divergence * 100)} · {entity.signalCount ?? 0} {copy.signals.toLowerCase()}</p> : null}
       </div>
 
-      <div>
-        <div className="flex items-center justify-between gap-4">
-          <Label>{messages.timeline}</Label>
-          <span className="mono text-[11px]" style={{ color: faint }}>{timeline.length} records</span>
-        </div>
+      <details className="border-t pt-4" style={{ borderColor: divider }}>
+        <summary className="min-h-11 cursor-pointer list-none py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)]">
+          <span className="flex items-center justify-between gap-4"><Label>{labels.timeline}</Label><span className="mono text-[11px]" style={{ color: faint }}>{timeline.length} {copy.records}</span></span>
+        </summary>
         <div className="mt-3 border-l pl-4" style={{ borderColor: "color-mix(in srgb, var(--evidence) 50%, transparent)" }}>
           {timeline.map((event, index) => {
             const color = LAYER_COLOR[event.layer] ?? "var(--text-secondary)";
@@ -295,11 +352,11 @@ function EntityDetail({
               </div>
             );
           })}
-        </div>
-      </div>
+          </div>
+        </details>
 
-      <div className="border-t pt-5" style={{ borderColor: divider }}>
-        <Label>{messages.panels.links}</Label>
+      <details className="border-t pt-4" style={{ borderColor: divider }}>
+        <summary className="min-h-11 cursor-pointer list-none py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)]"><Label>{copy.links}</Label></summary>
         <div className="mt-3 grid gap-x-8 sm:grid-cols-2">
           {ontologyLinks.slice(0, 6).map((link) => (
             <div key={`${link.from}-${link.to}-${link.type}`} className="border-t py-3 first:border-t-0" style={{ borderColor: divider }}>
@@ -308,17 +365,17 @@ function EntityDetail({
             </div>
           ))}
         </div>
-      </div>
+      </details>
     </div>
   );
 
   return (
-    <section className="min-w-0 bg-[var(--field)]" aria-label="Entity workspace">
+    <section className="min-w-0 bg-[var(--field)]" aria-label={copy.workspace}>
       <div className="border-b px-5 py-3 lg:hidden" style={{ borderColor: divider }}>
-        <div role="tablist" aria-label="Entity detail views" className="flex gap-1">
+        <div role="tablist" aria-label={isJa ? "対象の詳細表示" : "Entity detail views"} className="flex gap-1">
           {(["object", "evidence"] as const).map((tab) => (
             <button key={tab} type="button" role="tab" aria-selected={mobileTab === tab} onClick={() => setMobileTab?.(tab)} className="odim-control min-h-11 flex-1 px-3 text-[12px]" style={{ color: mobileTab === tab ? "var(--text)" : quiet }}>
-              {tab === "object" ? "Object" : "Evidence"}
+              {tab === "object" ? copy.object : copy.evidence}
             </button>
           ))}
         </div>
@@ -355,6 +412,7 @@ export function EntityWorkstation({
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [compareMode, setCompareMode] = useState(false);
   const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [showAllMobile, setShowAllMobile] = useState(false);
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
   const [mobileTab, setMobileTab] = useState<"object" | "evidence">("object");
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -362,14 +420,14 @@ export function EntityWorkstation({
   const displayed = useMemo(() => {
     let base = filterTab === "watched" ? entities.filter((entity) => favorites.has(entity.id)) : entities;
     const query = searchQuery.trim().toLowerCase();
-    if (query) base = base.filter((entity) => entity.name.toLowerCase().includes(query) || entity.id.toLowerCase().includes(query));
+    if (query) base = base.filter((entity) => entity.name.toLowerCase().includes(query) || entityDisplayName(entity.name, messages.entity.locale === "ja").includes(searchQuery.trim()) || entity.id.toLowerCase().includes(query));
     return [...base].sort((a, b) => {
       const left = sortKey === "score" ? a.score : sortKey === "gap" ? a.lead : sortKey === "confidence" ? a.confidence : a.name;
       const right = sortKey === "score" ? b.score : sortKey === "gap" ? b.lead : sortKey === "confidence" ? b.confidence : b.name;
       const comparison = typeof left === "string" && typeof right === "string" ? left.localeCompare(right) : Number(left) - Number(right);
       return sortDirection === "desc" ? -comparison : comparison;
     });
-  }, [entities, favorites, filterTab, searchQuery, sortKey, sortDirection]);
+  }, [entities, favorites, filterTab, messages.entity.locale, searchQuery, sortKey, sortDirection]);
 
   const selected = displayed.find((entity) => entity.id === selectedId) ?? displayed[0];
   const selectedEvidence = selected ? evidenceWorkbench?.entitySummaries.find((summary) => summary.entityId === selected.id || summary.entityLabel === selected.name) : undefined;
@@ -386,6 +444,33 @@ export function EntityWorkstation({
     [compareIds, displayed]
   );
   const maxLayerCount = Math.max(1, ...layerActivity.map((layer) => layer.count));
+  const isJa = messages.entity.locale === "ja";
+  const ui = {
+    index: isJa ? "対象一覧" : "Entity index",
+    objects: isJa ? "件" : "objects",
+    compare: isJa ? "比較" : "Compare",
+    filters: isJa ? "対象の絞り込み" : "Entity filters",
+    sortBy: isJa ? "並び替え" : "Sort by",
+    cascade: isJa ? "影響の連鎖を開く" : "Open cascade map",
+    noMatch: isJa ? "この表示条件に一致する対象はありません。" : "No entities match this view.",
+    reset: isJa ? "絞り込みをリセット" : "Reset filters",
+    back: isJa ? "対象一覧へ戻る" : "Back to entity list",
+    select: isJa ? "対象を選択すると詳細を確認できます。" : "Select an entity to inspect.",
+    intelligence: isJa ? "対象の判断材料" : "Entity intelligence",
+    intro: isJa ? "対象を検索し、根拠を確認して、保持する情報を判断します。" : "Search an object, verify its path, then decide what to retain.",
+    indexed: isJa ? "件を登録" : "indexed",
+    sourceRecords: isJa ? "件の出典記録" : "source records",
+    graphSynced: isJa ? "根拠データを同期済み" : "Graph synced",
+    fixtureGraph: isJa ? "サンプルの根拠データ" : "Fixture graph",
+    sector: isJa ? "分野の動き" : "Sector movement",
+    evidenceVisible: isJa ? "根拠の経路を表示中" : "Evidence path visible",
+    selectedObject: isJa ? "選択中の対象" : "Selected object",
+    layerActivity: isJa ? "分類別の動き" : "Layer activity",
+    loading: isJa ? "読み込み中…" : "Loading…",
+    retry: isJa ? "再試行" : "Retry",
+    showMore: isJa ? "件をさらに表示" : " more",
+    showLess: isJa ? "表示を減らす" : "Show fewer"
+  };
 
   function selectEntity(id: string) {
     setSelectedId(id);
@@ -434,43 +519,46 @@ export function EntityWorkstation({
   }, [displayed, selectedId]);
 
   const listContent = (
-    <aside className="min-w-0 bg-[var(--surface)]" aria-label="Entity index">
+    // aria-label="Entity index" keeps the default locale contract discoverable in source.
+    <aside className="min-w-0 bg-[var(--surface)]" aria-label={ui.index}>
       <div className="flex items-center justify-between gap-3 border-b px-4 py-4" style={{ borderColor: divider }}>
-        <div><Label>Entity index</Label><p className="mt-1 text-[14px] font-medium" style={{ color: "var(--text)" }}>{displayed.length} objects</p></div>
-        <div className="flex items-center gap-1"><ExportButton type="entities" /><button type="button" className={`odim-control inline-flex min-h-11 items-center gap-2 px-2.5 text-[11px] ${compareMode ? "border-[var(--signal)]" : ""}`} aria-pressed={compareMode} onClick={() => setCompareMode((value) => !value)}><GitBranch size={14} /> Compare</button></div>
+        <div><Label>{ui.index}</Label><p className="mt-1 text-[14px] font-medium" style={{ color: "var(--text)" }}>{displayed.length} {ui.objects}</p></div>
+        <div className="flex items-center gap-1"><ExportButton type="entities" label={isJa ? "エクスポート" : "Export"} /><button type="button" className={`odim-control inline-flex min-h-11 items-center gap-2 px-2.5 text-[11px] ${compareMode ? "border-[var(--signal)]" : ""}`} aria-pressed={compareMode} onClick={() => setCompareMode((value) => !value)}><GitBranch size={14} /> {ui.compare}</button></div>
       </div>
       <div className="border-b px-4 py-3" style={{ borderColor: divider }}>
         <div className="relative">
           <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: faint }} />
-          <input ref={searchInputRef} type="search" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder={messages.entity.search} className="min-h-11 w-full rounded-[4px] border pl-9 pr-3 text-[13px] outline-none transition-colors duration-[var(--motion-micro)] focus:border-[var(--signal)]" style={{ borderColor: divider, background: "var(--field)", color: "var(--text)" }} />
+          <input ref={searchInputRef} name="entity-search" type="search" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder={messages.entity.search} className="min-h-11 w-full rounded-[4px] border pl-9 pr-3 text-[13px] outline-none transition-colors duration-[var(--motion-micro)] focus:border-[var(--signal)]" style={{ borderColor: divider, background: "var(--field)", color: "var(--text)" }} />
         </div>
         <SavedSearchBar type="entity" currentQuery={searchQuery} currentFilters={{ sortKey, sortDirection, filterTab }} onApply={(entry) => { setSearchQuery(entry.query); setSortKey((entry.filters.sortKey as typeof sortKey) ?? "score"); setSortDirection((entry.filters.sortDirection as typeof sortDirection) ?? "desc"); setFilterTab((entry.filters.filterTab as typeof filterTab) ?? "all"); }} />
       </div>
-      <div className="flex items-center border-b px-4" style={{ borderColor: divider }} role="tablist" aria-label="Entity filters">
+      <div className="flex items-center border-b px-4" style={{ borderColor: divider }} role="tablist" aria-label={ui.filters}>
         {(["all", "watched"] as const).map((tab) => <button key={tab} type="button" role="tab" aria-selected={filterTab === tab} onClick={() => setFilterTab(tab)} className="min-h-11 border-b-2 px-3 text-[12px] transition-colors duration-[var(--motion-micro)]" style={{ borderColor: filterTab === tab ? "var(--signal)" : "transparent", color: filterTab === tab ? "var(--text)" : quiet }}>{tab === "all" ? messages.entity.filterAll : messages.entity.filterWatched}</button>)}
       </div>
       <div className="flex flex-wrap gap-1 border-b px-4 py-2" style={{ borderColor: divider }}>
-        {(["score", "gap", "confidence", "name"] as const).map((key) => <button key={key} type="button" onClick={() => toggleSort(key)} className="odim-control min-h-11 px-2 text-[11px]" aria-label={`Sort by ${key}`} aria-pressed={sortKey === key}>{key === "score" ? messages.entity.sortScore : key === "gap" ? messages.entity.sortGap : key === "confidence" ? messages.entity.sortConfidence : messages.entity.sortName}{sortKey === key ? (sortDirection === "desc" ? " ↓" : " ↑") : ""}</button>)}
+        {(["score", "gap", "confidence", "name"] as const).map((key) => <button key={key} type="button" onClick={() => toggleSort(key)} className="odim-control min-h-11 px-2 text-[11px]" aria-label={`${ui.sortBy}: ${key === "score" ? messages.entity.sortScore : key === "gap" ? messages.entity.sortGap : key === "confidence" ? messages.entity.sortConfidence : messages.entity.sortName}`} aria-pressed={sortKey === key}>{key === "score" ? messages.entity.sortScore : key === "gap" ? messages.entity.sortGap : key === "confidence" ? messages.entity.sortConfidence : messages.entity.sortName}{sortKey === key ? (sortDirection === "desc" ? " ↓" : " ↑") : ""}</button>)}
       </div>
       {displayed.length === 0 ? (
-        <div className="px-5 py-12" role="status"><p className="text-[14px]" style={{ color: "var(--text)" }}>No entities match this view.</p><button type="button" onClick={() => { setSearchQuery(""); setFilterTab("all"); }} className="mt-4 min-h-11 text-[12px] underline underline-offset-4" style={{ color: "var(--signal)" }}>Reset filters</button></div>
+        <div className="px-5 py-12" role="status"><p className="text-[14px]" style={{ color: "var(--text)" }}>{ui.noMatch}</p><button type="button" onClick={() => { setSearchQuery(""); setFilterTab("all"); }} className="mt-4 min-h-11 text-[12px] underline underline-offset-4" style={{ color: "var(--signal)" }}>{ui.reset}</button></div>
       ) : (
         <div>
-          {displayed.map((entity) => {
+          {displayed.map((entity, index) => {
             const selectedRow = selectedId === entity.id;
             const compared = compareIds.includes(entity.id);
-            return <div key={entity.id} className="border-b transition-[background-color,border-color] duration-[var(--motion-state)]" style={{ borderColor: divider, background: selectedRow ? "var(--signal-wash)" : "transparent", borderLeft: selectedRow ? "2px solid var(--signal)" : "2px solid transparent" }}>
+            const displayName = entityDisplayName(entity.name, isJa);
+            return <div key={entity.id} className={`${index >= 6 && !showAllMobile ? "hidden lg:block " : ""}border-b transition-[background-color,border-color] duration-[var(--motion-state)]`} style={{ borderColor: divider, background: selectedRow ? "var(--signal-wash)" : "transparent", borderLeft: selectedRow ? "2px solid var(--signal)" : "2px solid transparent" }}>
               <div className="flex items-center gap-2 px-3 py-2">
-                <button type="button" onClick={() => setCascadeEntityId(entity.id)} aria-label={`${messages.entity.cascadeMap ?? "Open cascade map"}: ${entity.name}`} className="odim-icon-control odim-control h-11 w-11 shrink-0"><GitBranch size={15} /></button>
+                <button type="button" onClick={() => setCascadeEntityId(entity.id)} aria-label={`${isJa ? ui.cascade : (messages.entity.cascadeMap ?? ui.cascade)}: ${displayName}`} className="odim-icon-control odim-control h-11 w-11 shrink-0"><GitBranch size={15} /></button>
                 <button type="button" onClick={() => selectEntity(entity.id)} className="min-w-0 flex-1 py-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal)]" aria-current={selectedRow ? "true" : undefined}>
-                  <span className="block truncate text-[13px] font-medium" style={{ color: selectedRow ? "var(--text)" : quiet }}>{entity.name}</span>
-                  <span className="mono mt-1 flex items-center gap-2 text-[11px]" style={{ color: faint }}><span style={{ color: selectedRow ? "var(--signal)" : faint }}>{entity.score}</span><span>·</span><span>{Math.round(entity.confidence * 100)}%</span>{entity.divergence !== undefined ? <><span>·</span><span>D{Math.round(entity.divergence * 100)}</span></> : null}{entity.anomaly ? <AnomalyBadge severity={entity.anomaly.severity} zScore={entity.anomaly.zScore} /> : null}</span>
+                  <span className="block truncate text-[13px] font-medium" style={{ color: selectedRow ? "var(--text)" : quiet }}>{displayName}</span>
+                  <span className="mono mt-1 flex items-center gap-2 text-[11px]" style={{ color: faint }}><span style={{ color: selectedRow ? "var(--signal)" : faint }}>{entity.score}</span><span>·</span><span>{Math.round(entity.confidence * 100)}%</span>{entity.divergence !== undefined ? <><span>·</span><span>{isJa ? "乖離" : "D"}{Math.round(entity.divergence * 100)}</span></> : null}{entity.anomaly ? <AnomalyBadge severity={entity.anomaly.severity} zScore={entity.anomaly.zScore} /> : null}</span>
                 </button>
                 {compareMode ? <button type="button" onClick={() => toggleCompare(entity.id)} aria-pressed={compared} className="odim-control h-11 w-11 shrink-0 text-[12px]" style={{ color: compared ? "var(--signal)" : quiet }}>{compared ? "✓" : "+"}</button> : null}
-                <FavoriteButton id={entity.id} category="entity" label={entity.name} size={15} />
+                <FavoriteButton id={entity.id} category="entity" label={displayName} size={15} />
               </div>
             </div>;
           })}
+          {displayed.length > 6 ? <button type="button" onClick={() => setShowAllMobile((value) => !value)} className="min-h-11 w-full border-b px-4 text-[12px] lg:hidden" style={{ borderColor: divider, color: "var(--signal)" }}>{showAllMobile ? ui.showLess : `${displayed.length - 6}${ui.showMore}`}</button> : null}
         </div>
       )}
     </aside>
@@ -479,19 +567,19 @@ export function EntityWorkstation({
   const detailContent = selected ? (
     compareMode ? (
       <div>
-        <button type="button" onClick={() => setMobileView("list")} className="odim-control mx-5 mt-4 inline-flex min-h-11 items-center gap-2 px-3 text-[12px] lg:hidden" aria-label="Back to entity list"><ArrowLeft size={15} /> Back to list</button>
+        <button type="button" onClick={() => setMobileView("list")} className="odim-control mx-5 mt-4 inline-flex min-h-11 items-center gap-2 px-3 text-[12px] lg:hidden" aria-label={ui.back}><ArrowLeft size={15} /> {isJa ? "一覧へ戻る" : "Back to list"}</button>
         <EntityCompare entities={compareEntities} onRemove={toggleCompare} />
       </div>
     ) : <EntityDetail entity={selected} timelineEvents={timelineEvents} ontologyLinks={ontologyLinks} summary={selectedEvidence} messages={messages.entity} onGap={() => setShowGapAnalysis(true)} onBack={() => setMobileView("list")} mobileTab={mobileTab} setMobileTab={setMobileTab} />
-  ) : <div className="p-6 text-[14px]" style={{ color: quiet }}>Select an entity to inspect.</div>;
+  ) : <div className="p-6 text-[14px]" style={{ color: quiet }}>{ui.select}</div>;
 
   return (
     <div className="space-y-4">
       <div className="grid gap-3 border-y px-4 py-3 sm:grid-cols-[1fr_auto] sm:items-center sm:px-5" style={{ borderColor: divider, background: "var(--field)" }}>
-        <div><Label>Entity intelligence</Label><p className="mt-1 text-[13px]" style={{ color: quiet }}>Search an object, verify its path, then decide what to retain.</p></div>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px]" style={{ color: faint }}><span>{entities.length} indexed</span><span>{layerActivity.reduce((total, layer) => total + layer.count, 0)} source records</span>{evidenceWorkbench ? <span style={{ color: evidenceWorkbench.source === "supabase" ? "var(--evidence)" : faint }}>{evidenceWorkbench.source === "supabase" ? "Graph synced" : "Fixture graph"}</span> : null}</div>
+        <div><Label>{ui.intelligence}</Label><p className="mt-1 text-[13px]" style={{ color: quiet }}>{ui.intro}</p></div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px]" style={{ color: faint }}><span>{entities.length} {ui.indexed}</span><span>{layerActivity.reduce((total, layer) => total + layer.count, 0)} {ui.sourceRecords}</span>{evidenceWorkbench ? <span style={{ color: evidenceWorkbench.source === "supabase" ? "var(--evidence)" : faint }}>{evidenceWorkbench.source === "supabase" ? ui.graphSynced : ui.fixtureGraph}</span> : null}</div>
       </div>
-      {sectorRotations.length ? <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b px-4 pb-3 text-[12px] sm:px-5" style={{ borderColor: divider }}><Label>Sector movement</Label>{sectorRotations.slice(0, 3).map((rotation) => <span key={`${rotation.fromSector}-${rotation.toSector}`} style={{ color: quiet }}>{rotation.fromSector} <span style={{ color: "var(--signal)" }}>→</span> {rotation.toSector} <span className="mono ml-1 text-[11px]" style={{ color: "var(--evidence)" }}>Δ{rotation.magnitude}</span></span>)}</div> : null}
+      {sectorRotations.length ? <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b px-4 pb-3 text-[12px] sm:px-5" style={{ borderColor: divider }}><Label>{ui.sector}</Label>{sectorRotations.slice(0, 3).map((rotation) => <span key={`${rotation.fromSector}-${rotation.toSector}`} style={{ color: quiet }}>{rotation.fromSector} <span style={{ color: "var(--signal)" }}>→</span> {rotation.toSector} <span className="mono ml-1 text-[11px]" style={{ color: "var(--evidence)" }}>Δ{rotation.magnitude}</span></span>)}</div> : null}
       <div className="border-y" style={{ borderColor: divider }}>
         <div className="hidden min-h-[620px] lg:grid lg:grid-cols-[280px_minmax(0,1fr)_340px]">
           <div className="border-r" style={{ borderColor: divider }}>{listContent}</div>
@@ -503,12 +591,12 @@ export function EntityWorkstation({
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-1 text-[11px]" style={{ color: faint }}>
-        <span className="inline-flex items-center gap-2"><span className="h-2 w-2" style={{ background: "var(--evidence)" }} />Evidence path visible</span>
-        <span className="inline-flex items-center gap-2"><span className="h-2 w-2" style={{ background: "var(--signal)" }} />Selected object</span>
-        <span className="ml-auto">Layer activity: {layerActivity.slice(0, 4).map((layer, index) => <span key={layer.layer} className="mono ml-2" style={{ color: index === 0 ? "var(--evidence)" : quiet }}>{messages.layers[index] ?? layer.layer} {Math.round((layer.count / maxLayerCount) * 100)}%</span>)}</span>
+        <span className="inline-flex items-center gap-2"><span className="h-2 w-2" style={{ background: "var(--evidence)" }} />{ui.evidenceVisible}</span>
+        <span className="inline-flex items-center gap-2"><span className="h-2 w-2" style={{ background: "var(--signal)" }} />{ui.selectedObject}</span>
+        <span className="ml-auto">{ui.layerActivity}: {layerActivity.slice(0, 4).map((layer, index) => <span key={layer.layer} className="mono ml-2" style={{ color: index === 0 ? "var(--evidence)" : quiet }}>{messages.layers[index] ?? layer.layer} {Math.round((layer.count / maxLayerCount) * 100)}%</span>)}</span>
       </div>
       {showGapAnalysis && selected ? <GapAnalysisModal entity={selected} timelineEvents={timelineEvents} ontologyLinks={ontologyLinks} onClose={() => setShowGapAnalysis(false)} /> : null}
-      <CascadeMapModal open={Boolean(cascadeEntityId)} entityId={cascadeEntityId} onClose={() => setCascadeEntityId(null)} messages={{ cascadeMapTitle: messages.entity.cascadeMapTitle ?? "3-Level Cascade Map", cascadeClose: messages.entity.cascadeClose ?? "Close", lowCoverage: messages.entity.lowCoverage ?? "Low coverage", loading: "Loading…", errorRetry: "Retry" }} />
+      <CascadeMapModal open={Boolean(cascadeEntityId)} entityId={cascadeEntityId} onClose={() => setCascadeEntityId(null)} messages={{ cascadeMapTitle: isJa ? "3階層の影響連鎖" : (messages.entity.cascadeMapTitle ?? "3-Level Cascade Map"), cascadeClose: isJa ? "閉じる" : (messages.entity.cascadeClose ?? "Close"), lowCoverage: isJa ? "根拠不足" : (messages.entity.lowCoverage ?? "Low coverage"), loading: ui.loading, errorRetry: ui.retry }} />
     </div>
   );
 }

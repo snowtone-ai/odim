@@ -14,6 +14,7 @@ export type ApiKeyManagerLabels = {
   copied: string;
   failed: string;
   empty: string;
+  notice: string;
 };
 
 export type ManagedApiKey = {
@@ -72,8 +73,8 @@ export function ApiKeyManager({
       setIssuedToken(body.token);
       setKeys((current) => [body.apiKey as ManagedApiKey, ...current]);
       setName("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "issue failed");
+    } catch {
+      setError(labels.failed);
     } finally {
       setPending(false);
     }
@@ -90,8 +91,8 @@ export function ApiKeyManager({
       const body = (await res.json().catch(() => ({}))) as { revoked?: boolean; error?: string };
       if (!res.ok || !body.revoked) throw new Error(body.error || "revoke failed");
       setKeys((current) => current.filter((key) => key.id !== id));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "revoke failed");
+    } catch {
+      setError(labels.failed);
     }
   }
 
@@ -108,7 +109,7 @@ export function ApiKeyManager({
   return (
     <div className="min-w-0">
       <div className="mono text-[11px] uppercase tracking-[0.14em]" style={{ color: "var(--text-tertiary)" }}>{labels.heading}</div>
-      <p className="mt-2 max-w-xl text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>Keys are scoped to this organization and the secret is shown once.</p>
+      <p className="mt-2 max-w-xl text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{labels.notice}</p>
 
       {issuedToken ? (
         <div className="mt-4 border-y border-l-2 px-3 py-3" aria-live="polite" style={{ background: "var(--evidence-wash)", borderColor: "var(--evidence)" }}>
@@ -147,7 +148,7 @@ export function ApiKeyManager({
         </div>
       </div>
 
-      {error ? <p className="mt-3 mono text-[12px] uppercase tracking-[0.1em]" aria-live="assertive" style={{ color: "var(--critical)" }}>{labels.failed}: {error}</p> : null}
+      {error ? <p className="mt-3 mono text-[12px] uppercase tracking-[0.1em]" aria-live="assertive" style={{ color: "var(--critical)" }}>{error}</p> : null}
 
       <div className="mt-5 border-y" style={{ borderColor: "var(--line-soft)" }}>
         {keys.length === 0 ? <div className="px-3 py-5 mono text-[12px]" style={{ color: "var(--text-secondary)" }}>{labels.empty}</div> : null}

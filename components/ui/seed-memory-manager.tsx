@@ -23,6 +23,9 @@ type SeedLabels = {
   content: string;
   empty: string;
   error: string;
+  knowledgeType: string;
+  attachFile: string;
+  fileTooLarge: string;
 };
 
 const fieldStyle = {
@@ -53,7 +56,7 @@ export function SeedMemoryManager({
     const file = event.target.files?.[0];
     if (!file) return;
     if (file.size > MAX_SEED_BYTES) {
-      setError("File too large (max " + MAX_SEED_BYTES / 1024 + " KB)");
+      setError(labels.fileTooLarge);
       return;
     }
     const reader = new FileReader();
@@ -123,13 +126,13 @@ export function SeedMemoryManager({
           <textarea className="min-h-28 w-full resize-y border p-3 text-[13px] leading-relaxed outline-none focus-visible:border-[var(--signal)]" onChange={(event) => setNewContent(event.target.value)} placeholder={labels.content} value={newContent} style={fieldStyle} />
         </label>
         <div className="flex flex-wrap items-center gap-2 p-3">
-          <div className="flex min-h-11 items-center gap-1 border p-1" role="group" aria-label="Knowledge type" style={{ borderColor: "var(--line-soft)" }}>
+          <div className="flex min-h-11 items-center gap-1 border p-1" role="group" aria-label={labels.knowledgeType} style={{ borderColor: "var(--line-soft)" }}>
             {(["fact", "opinion"] as const).map((kind) => {
               const selected = newKind === kind;
               return <button key={kind} type="button" aria-pressed={selected} onClick={() => setNewKind(kind)} className="min-h-11 px-3 text-[12px] transition-colors duration-[120ms] focus-visible:outline-2 focus-visible:outline-[var(--signal)] motion-reduce:transition-none" style={{ background: selected ? "var(--evidence-wash)" : "transparent", color: selected ? "var(--evidence)" : "var(--text-tertiary)" }}>{kind === "opinion" ? labels.opinion : labels.fact}</button>;
             })}
           </div>
-          <button type="button" onClick={() => fileInputRef.current?.click()} className="min-h-11 border px-3 text-[12px] transition-colors duration-[120ms] hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-[var(--signal)] motion-reduce:transition-none" style={{ borderColor: "var(--line-soft)", color: "var(--text-secondary)" }}>Attach file</button>
+          <button type="button" onClick={() => fileInputRef.current?.click()} className="min-h-11 border px-3 text-[12px] transition-colors duration-[120ms] hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-[var(--signal)] motion-reduce:transition-none" style={{ borderColor: "var(--line-soft)", color: "var(--text-secondary)" }}>{labels.attachFile}</button>
           <input ref={fileInputRef} type="file" className="hidden" accept={ACCEPTED_SEEDS} onChange={handleFileUpload} />
           <button type="button" disabled={pending || !newContent.trim()} onClick={createSeed} className="min-h-11 border px-4 text-[12px] transition-colors duration-[120ms] hover:bg-[var(--signal-wash)] focus-visible:outline-2 focus-visible:outline-[var(--signal)] disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none" style={{ background: "var(--signal-wash)", borderColor: "var(--signal)", color: "var(--signal)" }}>{labels.create}</button>
         </div>

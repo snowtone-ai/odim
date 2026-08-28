@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-
-export const metadata: Metadata = { title: "Signal Alerts" };
-
 import { AlertsWorkstation } from "@/components/ui/alerts-workstation";
 import { alerts } from "@/lib/data";
 import { getMessages } from "@/lib/i18n/messages";
 import { getLocale } from "@/lib/i18n/locale";
 import { listWatchtowerPlaybooks, listWatchtowerRuns } from "@/lib/repositories/watchtower";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getLocale()) === "ja" ? "通知" : "Signal Alerts" };
+}
 
 // Repository reads must happen per-request, never baked into static HTML at build time.
 export const dynamic = "force-dynamic";
@@ -36,7 +37,7 @@ export default async function AlertsPage() {
   return (
     <AlertsWorkstation
       alerts={alerts}
-      messages={alertMessages}
+      messages={{ ...alertMessages, locale }}
       watchtower={{
         runs: watchtower.runs,
         playbooks: listWatchtowerPlaybooks(),

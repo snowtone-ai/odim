@@ -16,6 +16,8 @@ export type OrgMembersPanelLabels = {
   failed: string;
   noPending: string;
   expires: string;
+  noMembers: string;
+  role: string;
 };
 
 export type PanelMember = {
@@ -73,8 +75,8 @@ export function OrgMembersPanel({
       setInviteLink(window.location.origin + "/invite?token=" + encodeURIComponent(body.token));
       setInvites((current) => [body.invite as PanelInvite, ...current]);
       setEmail("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "invite failed");
+    } catch {
+      setError(labels.failed);
     } finally {
       setPending(false);
     }
@@ -91,8 +93,8 @@ export function OrgMembersPanel({
       const body = (await res.json().catch(() => ({}))) as { revoked?: boolean; error?: string };
       if (!res.ok || !body.revoked) throw new Error(body.error || "revoke failed");
       setInvites((current) => current.filter((invite) => invite.id !== id));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "revoke failed");
+    } catch {
+      setError(labels.failed);
     }
   }
 
@@ -114,9 +116,9 @@ export function OrgMembersPanel({
         {members.length ? members.map((member) => (
           <div className="flex min-h-12 items-center justify-between gap-3 border-b px-3 last:border-b-0" style={{ borderColor: "var(--line-faint)" }} key={member.id}>
             <span className="truncate text-[13px]" style={{ color: "var(--text-primary)" }}>{member.displayName}</span>
-            <span className="mono shrink-0 text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-secondary)" }}>{member.role}</span>
+            <span className="mono shrink-0 text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-secondary)" }}>{member.role === "admin" ? labels.roleAdmin : labels.roleAnalyst}</span>
           </div>
-        )) : <div className="px-3 py-5 text-[13px]" aria-live="polite" style={{ color: "var(--text-secondary)" }}>No members.</div>}
+        )) : <div className="px-3 py-5 text-[13px]" aria-live="polite" style={{ color: "var(--text-secondary)" }}>{labels.noMembers}</div>}
       </div>
 
       {inviteLink ? (
@@ -133,7 +135,7 @@ export function OrgMembersPanel({
         <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
           <label className="sr-only" htmlFor="member-invite-email">{labels.emailPlaceholder}</label>
           <input id="member-invite-email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder={labels.emailPlaceholder} aria-label={labels.emailPlaceholder} type="email" className="min-h-11 min-w-0 border px-3 text-[13px] outline-none focus-visible:border-[var(--signal)]" style={fieldStyle} />
-          <label className="sr-only" htmlFor="member-invite-role">Role</label>
+          <label className="sr-only" htmlFor="member-invite-role">{labels.role}</label>
           <select id="member-invite-role" value={role} onChange={(event) => setRole(event.target.value === "admin" ? "admin" : "analyst")} className="mono min-h-11 border px-3 text-[12px] outline-none focus-visible:border-[var(--signal)]" style={{ ...fieldStyle, color: "var(--text-secondary)" }}>
             <option value="analyst">{labels.roleAnalyst}</option>
             <option value="admin">{labels.roleAdmin}</option>
@@ -141,7 +143,7 @@ export function OrgMembersPanel({
           <button type="button" onClick={createInvite} disabled={pending || !email.trim()} className="mono min-h-11 border px-4 text-[12px] uppercase tracking-[0.1em] transition-colors duration-[120ms] hover:bg-[var(--signal-wash)] focus-visible:outline-2 focus-visible:outline-[var(--signal)] disabled:opacity-45 motion-reduce:transition-none" style={{ background: "var(--signal-wash)", borderColor: "var(--signal)", color: "var(--signal)" }}>{pending ? "…" : labels.invite}</button>
         </div>
       </div>
-      {error ? <div className="mt-3 mono text-[12px] uppercase tracking-[0.1em]" aria-live="assertive" style={{ color: "var(--critical)" }}>{labels.failed}: {error}</div> : null}
+      {error ? <div className="mt-3 mono text-[12px] uppercase tracking-[0.1em]" aria-live="assertive" style={{ color: "var(--critical)" }}>{error}</div> : null}
 
       <div className="mt-5 mono text-[11px] uppercase tracking-[0.14em]" style={{ color: "var(--text-tertiary)" }}>{labels.pending}</div>
       <div className="mt-2 border-y" style={{ borderColor: "var(--line-soft)" }}>
@@ -149,7 +151,7 @@ export function OrgMembersPanel({
         {invites.map((invite) => (
           <div className="grid gap-2 border-b px-3 py-3 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center" style={{ borderColor: "var(--line-faint)" }} key={invite.id}>
             <span className="truncate text-[12px]" style={{ color: "var(--text-primary)" }}>{invite.email}</span>
-            <span className="mono text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-tertiary)" }}>{invite.role} · {labels.expires} {invite.expiresAt.slice(0, 10)}</span>
+            <span className="mono text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-tertiary)" }}>{invite.role === "admin" ? labels.roleAdmin : labels.roleAnalyst} · {labels.expires} {invite.expiresAt.slice(0, 10)}</span>
             <button type="button" onClick={() => revokeInvite(invite.id)} className="min-h-11 justify-self-start px-2 text-[12px] uppercase tracking-[0.1em] text-[var(--critical)] underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-[var(--signal)] sm:justify-self-end">{labels.revoke}</button>
           </div>
         ))}

@@ -60,6 +60,16 @@ export type WatchtowerLabels = {
   trace: string;
   cost: string;
   risks: string;
+  working?: string;
+  noSelection?: string;
+  noPlaybooks?: string;
+  noRuns?: string;
+  executionTrace?: string;
+  noTrace?: string;
+  sourceCoverage?: string;
+  noSources?: string;
+  view?: string;
+  requestFailed?: string;
 };
 
 const STATUS_COLOR: Record<string, string> = {
@@ -81,19 +91,83 @@ function statusColor(status: string) {
   return STATUS_COLOR[status] ?? "var(--text-tertiary)";
 }
 
-function statusLabel(status: string) {
+function statusLabel(status: string, locale: "en" | "ja") {
+  if (locale === "ja") {
+    return ({
+      waiting_approval: "承認待ち",
+      succeeded: "完了",
+      approved: "承認済み",
+      rejected: "却下",
+      failed: "失敗",
+      running: "実行中",
+      queued: "待機中",
+      pending: "未処理",
+      completed: "完了",
+      blocked: "停止"
+    } as Record<string, string>)[status] ?? status;
+  }
   return status.replaceAll("_", " ");
 }
 
-async function postAction(endpoint: string, body: Record<string, unknown>) {
+async function postAction(endpoint: string, body: Record<string, unknown>, requestFailed: string) {
   const response = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body)
   });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(typeof payload.error === "string" ? payload.error : "Request failed");
+  if (!response.ok) throw new Error(requestFailed);
   return payload as { run: WatchtowerRunView };
+}
+
+const PLAYBOOK_JA: Record<string, Pick<WatchtowerPlaybookView, "name" | "description" | "thesis">> = {
+  "ai-data-center-buildout": {
+    name: "AIデータセンター建設",
+    description: "計算資源、電力、用地、送電網接続の動きを追い、複数の根拠が揃った段階で確認します。",
+    thesis: "計算資源、電力、用地、資金の動きが重なる地域で、AI基盤の建設が加速しています。"
+  },
+  "water-rights-stress": {
+    name: "水利用権の逼迫",
+    description: "水利用権、産業需要、干ばつ、許認可の変化を、人の承認を伴う監視手順にまとめます。",
+    thesis: "水の確保が、エネルギー、計算資源、鉱物開発を左右する制約になりつつあります。"
+  },
+  "state-incentive-subsidy-watch": {
+    name: "政府支援策の監視",
+    description: "補助金、税額控除、調達、奨励策を根拠とともに追跡し、承認後に共有します。",
+    thesis: "政府支援の流れから、企業発表に先立つ拡張の兆候を捉えます。"
+  }
+};
+
+const STEP_LABEL_JA: Record<string, string> = {
+  scope: "対象の設定",
+  retrieve_graph: "根拠の収集",
+  contradiction_check: "矛盾の確認",
+  approval_gate: "人による承認",
+  dispatch_report: "報告の送信"
+};
+
+const APPROVAL_LABEL_JA: Record<string, string> = {
+  "Send Slack incident report": "Slackへ報告を送信",
+  "Queue push digest": "プッシュ通知の要約を準備",
+  "Create board briefing": "経営会議向け資料を作成",
+  "Open API webhook dispatch": "API Webhookを送信"
+};
+
+const RISK_LABEL_JA: Record<string, string> = {
+  low_path_redundancy: "根拠となる経路が少ないため要確認",
+  citation_coverage_below_slo: "引用元の網羅率が基準未満",
+  trace_completeness_below_slo: "処理記録の完全性が基準未満",
+  critical_alert_requires_review: "重大アラートのため確認が必要"
+};
+
+function stepSummary(step: WatchtowerStep, locale: "en" | "ja") {
+  if (locale !== "ja") return step.summary;
+  if (step.key === "scope") return "対象と直接参照する情報源を確定しました。";
+  if (step.key === "retrieve_graph") return "関連する根拠と、そのつながりを確認しました。";
+  if (step.key === "contradiction_check") return step.status === "completed" ? "根拠の矛盾と偏りを確認しました。" : "根拠の広がりを人が確認する必要があります。";
+  if (step.key === "approval_gate") return "外部へ共有する前に、人の承認を待っています。";
+  if (step.key === "dispatch_report") return step.status === "completed" ? "承認済みの報告を共有できます。" : "すべての承認が終わるまで共有を保留します。";
+  return "処理結果を確認してください。";
 }
 
 function WorkflowButton({
@@ -122,18 +196,33 @@ export function WatchtowerWorkflows({
   initialRuns,
   playbooks,
   labels,
-  compact = false
+  compact = false,
+  locale = "en"
 }: Readonly<{
   initialRuns: WatchtowerRunView[];
   playbooks: WatchtowerPlaybookView[];
   labels: WatchtowerLabels;
   compact?: boolean;
+  locale?: "en" | "ja";
 }>) {
   const [runs, setRuns] = useState<WatchtowerRunView[]>(initialRuns);
   const [selectedRunId, setSelectedRunId] = useState(initialRuns[0]?.id ?? "");
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState("");
+  const copy = {
+    working: locale === "ja" ? "処理中…" : "Working…",
+    noSelection: locale === "ja" ? "確認する実行結果を選んでください。" : "Select a workflow run to review it.",
+    noPlaybooks: locale === "ja" ? "このワークスペースに監視手順は設定されていません。" : "No playbooks are configured for this workspace.",
+    noRuns: locale === "ja" ? "Watchtowerの実行履歴はまだありません。" : "No Watchtower runs yet.",
+    executionTrace: locale === "ja" ? "処理経路" : "Execution trace",
+    noTrace: locale === "ja" ? "処理経路は記録されていません。" : "No trace steps were returned.",
+    sourceCoverage: locale === "ja" ? "参照した情報源" : "Source coverage",
+    noSources: locale === "ja" ? "この実行結果に紐づく情報源はありません。" : "No source references are attached to this run.",
+    view: locale === "ja" ? "開く" : "View",
+    requestFailed: locale === "ja" ? "Watchtowerの処理を完了できませんでした。" : "The Watchtower request could not be completed.",
+    ...labels
+  };
   const selectedRun = runs.find((run) => run.id === selectedRunId) ?? runs[0];
   const runCounts = useMemo(() => {
     const map = new Map<string, number>();
@@ -151,11 +240,11 @@ export function WatchtowerWorkflows({
     setError(null);
     setFeedback("");
     try {
-      const payload = await postAction("/api/watchtower/runs", { playbookId, actor: "dashboard" });
+      const payload = await postAction("/api/watchtower/runs", { playbookId, actor: "dashboard" }, copy.requestFailed);
       upsertRun(payload.run);
       setFeedback(labels.start + ": " + payload.run.playbookName);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Request failed");
+    } catch {
+      setError(copy.requestFailed);
     } finally {
       setPending(null);
     }
@@ -172,11 +261,11 @@ export function WatchtowerWorkflows({
         approvalId,
         decision,
         actor: "dashboard"
-      });
+      }, copy.requestFailed);
       upsertRun(payload.run);
       setFeedback(decision === "approve" ? labels.approve : labels.reject);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Request failed");
+    } catch {
+      setError(copy.requestFailed);
     } finally {
       setPending(null);
     }
@@ -188,11 +277,11 @@ export function WatchtowerWorkflows({
     setError(null);
     setFeedback("");
     try {
-      const payload = await postAction("/api/watchtower/rerun", { runId: selectedRun.id, actor: "dashboard" });
+      const payload = await postAction("/api/watchtower/rerun", { runId: selectedRun.id, actor: "dashboard" }, copy.requestFailed);
       upsertRun(payload.run);
       setFeedback(labels.rerun);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Request failed");
+    } catch {
+      setError(copy.requestFailed);
     } finally {
       setPending(null);
     }
@@ -207,17 +296,17 @@ export function WatchtowerWorkflows({
           </p>
           {selectedRun ? (
             <p className="mt-2 max-w-3xl text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-              {selectedRun.thesis}
+              {(locale === "ja" ? PLAYBOOK_JA[selectedRun.playbookId]?.thesis : undefined) ?? selectedRun.thesis}
             </p>
           ) : (
             <p className="mt-2 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
-              No workflow run is selected.
+              {copy.noSelection}
             </p>
           )}
         </div>
         {selectedRun ? (
           <WorkflowButton type="button" onClick={handleRerun} disabled={pending !== null}>
-            {pending === "rerun:" + selectedRun.id ? "Working…" : labels.rerun}
+            {pending === "rerun:" + selectedRun.id ? copy.working : labels.rerun}
           </WorkflowButton>
         ) : null}
       </header>
@@ -236,16 +325,17 @@ export function WatchtowerWorkflows({
           </div>
           {playbooks.length ? (
             <ul className="divide-y" style={{ borderColor: "var(--line-soft)" }}>
-              {playbooks.map((playbook) => (
-                <li key={playbook.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+              {playbooks.map((playbook) => {
+                const playbookCopy = locale === "ja" ? PLAYBOOK_JA[playbook.id] : undefined;
+                return <li key={playbook.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                      <h3 className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>{playbook.name}</h3>
+                      <h3 className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>{playbookCopy?.name ?? playbook.name}</h3>
                       <span className="mono text-[11px]" style={{ color: "var(--text-tertiary)" }}>
-                        {runCounts.get(playbook.id) ?? 0} runs · {playbook.cadenceHours}h · {percent(playbook.minConfidence)}
+                        {locale === "ja" ? `${runCounts.get(playbook.id) ?? 0}回 · ${playbook.cadenceHours}時間 · 最低信頼度 ${percent(playbook.minConfidence)}` : `${runCounts.get(playbook.id) ?? 0} runs · ${playbook.cadenceHours}h · ${percent(playbook.minConfidence)}`}
                       </span>
                     </div>
-                    <p className="mt-1 max-w-3xl text-[12px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>{playbook.description}</p>
+                    <p className="mt-1 max-w-3xl text-[12px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>{playbookCopy?.description ?? playbook.description}</p>
                   </div>
                   <WorkflowButton
                     type="button"
@@ -254,14 +344,14 @@ export function WatchtowerWorkflows({
                     className="shrink-0"
                     style={{ borderColor: "var(--signal)", color: "var(--signal)" }}
                   >
-                    {pending === "start:" + playbook.id ? "Working…" : labels.start}
+                    {pending === "start:" + playbook.id ? copy.working : labels.start}
                   </WorkflowButton>
-                </li>
-              ))}
+                </li>;
+              })}
             </ul>
           ) : (
             <p role="status" className="border-y py-4 text-[12px]" style={{ borderColor: "var(--line-soft)", color: "var(--text-tertiary)" }}>
-              No playbooks are configured for this workspace.
+              {copy.noPlaybooks}
             </p>
           )}
         </section>
@@ -289,13 +379,13 @@ export function WatchtowerWorkflows({
                     style={{ borderLeft: "3px solid " + (selected ? "var(--signal)" : "transparent"), background: selected ? "var(--signal-wash)" : "transparent" }}
                   >
                     <span className="flex items-center justify-between gap-2">
-                      <span className="truncate text-[12px]" style={{ color: "var(--text-primary)" }}>{run.playbookName}</span>
+                      <span className="truncate text-[12px]" style={{ color: "var(--text-primary)" }}>{(locale === "ja" ? PLAYBOOK_JA[run.playbookId]?.name : undefined) ?? run.playbookName}</span>
                       <span className="mono shrink-0 text-[11px] uppercase tracking-[0.08em]" style={{ color: statusColor(run.status) }}>
-                        {statusLabel(run.status)}
+                        {statusLabel(run.status, locale)}
                       </span>
                     </span>
                     <span className="mono mt-1 block truncate text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-quaternary)" }}>
-                      r{run.revision} · {run.updatedAt.slice(0, 10)}
+                      {locale === "ja" ? `改訂 ${run.revision}` : `r${run.revision}`} · {run.updatedAt.slice(0, 10)}
                     </span>
                   </button>
                 );
@@ -303,7 +393,7 @@ export function WatchtowerWorkflows({
             </div>
           ) : (
             <div role="status" className="border-y px-3 py-6 text-[12px]" style={{ borderColor: "var(--line-soft)", color: "var(--text-tertiary)" }}>
-              No Watchtower runs yet.
+              {copy.noRuns}
             </div>
           )}
         </div>
@@ -314,10 +404,10 @@ export function WatchtowerWorkflows({
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h3 id="watchtower-run-heading" className="text-[15px] font-medium" style={{ color: "var(--text-primary)" }}>
-                    {selectedRun.alertTitle ?? selectedRun.playbookName}
+                    {selectedRun.alertTitle ?? ((locale === "ja" ? PLAYBOOK_JA[selectedRun.playbookId]?.name : undefined) ?? selectedRun.playbookName)}
                   </h3>
                   <p className="mono mt-1 text-[11px] uppercase tracking-[0.08em]" style={{ color: statusColor(selectedRun.status) }}>
-                    {statusLabel(selectedRun.status)}
+                    {statusLabel(selectedRun.status, locale)}
                   </p>
                 </div>
                 <dl className="grid grid-cols-3 divide-x" style={{ borderColor: "var(--line-soft)" }}>
@@ -337,27 +427,27 @@ export function WatchtowerWorkflows({
 
             <div className="divide-y" style={{ borderColor: "var(--line-soft)" }}>
               <section className="px-3 py-4 sm:px-4">
-                <h4 className="mono mb-2 text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>Execution trace</h4>
+                <h4 className="mono mb-2 text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>{copy.executionTrace}</h4>
                 <ol className="divide-y border-y" style={{ borderColor: "var(--line-soft)" }}>
                   {selectedRun.steps.length ? selectedRun.steps.map((step) => (
                     <li key={step.id} className="grid grid-cols-[minmax(90px,0.25fr)_minmax(0,1fr)_auto] items-start gap-3 py-3">
                       <span className="mono text-[11px] uppercase tracking-[0.06em]" style={{ color: statusColor(step.status) }}>
-                        {statusLabel(step.status)}
+                        {statusLabel(step.status, locale)}
                       </span>
                       <span className="min-w-0 text-[12px]" style={{ color: "var(--text-secondary)" }}>
-                        <strong className="font-medium" style={{ color: "var(--text-primary)" }}>{step.label}</strong>
-                        <span className="ml-2">{step.summary}</span>
+                        <strong className="font-medium" style={{ color: "var(--text-primary)" }}>{locale === "ja" ? STEP_LABEL_JA[step.key] ?? step.label : step.label}</strong>
+                        <span className="ml-2">{stepSummary(step, locale)}</span>
                       </span>
                       <span className="mono text-[11px] tabular-nums" style={{ color: "var(--evidence)" }}>{percent(step.confidence)}</span>
                     </li>
                   )) : (
-                    <li className="py-4 text-[12px]" style={{ color: "var(--text-tertiary)" }}>No trace steps returned.</li>
+                    <li className="py-4 text-[12px]" style={{ color: "var(--text-tertiary)" }}>{copy.noTrace}</li>
                   )}
                 </ol>
               </section>
 
               <section className="px-3 py-4 sm:px-4">
-                <h4 className="mono mb-2 text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>Source coverage</h4>
+                <h4 className="mono mb-2 text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--text-tertiary)" }}>{copy.sourceCoverage}</h4>
                 {selectedRun.sourceRefs.length ? (
                   <ul className="divide-y border-y" style={{ borderColor: "var(--line-soft)" }}>
                     {selectedRun.sourceRefs.map((source) => (
@@ -367,14 +457,14 @@ export function WatchtowerWorkflows({
                           <span className="mono mt-1 block truncate text-[11px] uppercase tracking-[0.08em]" style={{ color: "var(--text-quaternary)" }}>{source.sourceId}</span>
                         </span>
                         <a href={source.url} target="_blank" rel="noreferrer" className="mono flex min-h-11 shrink-0 items-center px-2 text-[11px] uppercase tracking-[0.08em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--evidence)]" style={{ color: "var(--evidence)" }}>
-                          View
+                          {copy.view}
                         </a>
                       </li>
                     ))}
                   </ul>
                 ) : (
                   <p role="status" className="border-y py-4 text-[12px]" style={{ borderColor: "var(--line-soft)", color: "var(--text-tertiary)" }}>
-                    No source references attached to this run.
+                    {copy.noSources}
                   </p>
                 )}
               </section>
@@ -384,7 +474,7 @@ export function WatchtowerWorkflows({
                   <h4 className="mono mb-2 text-[11px] uppercase tracking-[0.1em]" style={{ color: "var(--critical)" }}>{labels.risks}</h4>
                   <ul className="flex flex-wrap gap-x-4 gap-y-2">
                     {selectedRun.riskFlags.map((risk) => (
-                      <li key={risk} className="text-[12px]" style={{ color: "var(--critical)" }}>{risk.replaceAll("_", " ")}</li>
+                      <li key={risk} className="text-[12px]" style={{ color: "var(--critical)" }}>{locale === "ja" ? RISK_LABEL_JA[risk] ?? risk : risk.replaceAll("_", " ")}</li>
                     ))}
                   </ul>
                 </section>
@@ -397,8 +487,8 @@ export function WatchtowerWorkflows({
                     {selectedRun.approvals.map((approval) => (
                       <li key={approval.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                         <span>
-                          <span className="block text-[12px]" style={{ color: "var(--text-primary)" }}>{approval.label}</span>
-                          <span className="mono mt-1 block text-[11px] uppercase tracking-[0.08em]" style={{ color: statusColor(approval.status) }}>{approval.status}</span>
+                          <span className="block text-[12px]" style={{ color: "var(--text-primary)" }}>{locale === "ja" ? APPROVAL_LABEL_JA[approval.label] ?? approval.label : approval.label}</span>
+                          <span className="mono mt-1 block text-[11px] uppercase tracking-[0.08em]" style={{ color: statusColor(approval.status) }}>{statusLabel(approval.status, locale)}</span>
                         </span>
                         {approval.status === "pending" ? (
                           <span className="flex flex-wrap gap-2">
@@ -408,7 +498,7 @@ export function WatchtowerWorkflows({
                               disabled={pending !== null}
                               style={{ borderColor: "var(--evidence)", color: "var(--evidence)" }}
                             >
-                              {pending === "approve:" + approval.id ? "Working…" : labels.approve}
+                              {pending === "approve:" + approval.id ? copy.working : labels.approve}
                             </WorkflowButton>
                             <WorkflowButton
                               type="button"
@@ -416,7 +506,7 @@ export function WatchtowerWorkflows({
                               disabled={pending !== null}
                               style={{ borderColor: "var(--critical)", color: "var(--critical)" }}
                             >
-                              {pending === "reject:" + approval.id ? "Working…" : labels.reject}
+                              {pending === "reject:" + approval.id ? copy.working : labels.reject}
                             </WorkflowButton>
                           </span>
                         ) : null}
@@ -425,7 +515,7 @@ export function WatchtowerWorkflows({
                   </ul>
                 ) : (
                   <p className="border-y py-4 text-[12px]" style={{ borderColor: "var(--line-soft)", color: "var(--text-tertiary)" }}>
-                    No approval steps required.
+                    {locale === "ja" ? "承認が必要な操作はありません。" : "No approval steps required."}
                   </p>
                 )}
               </section>
@@ -433,7 +523,7 @@ export function WatchtowerWorkflows({
           </article>
         ) : (
           <div role="status" className="flex min-h-48 items-center border-y px-4 text-[12px]" style={{ borderColor: "var(--line-soft)", color: "var(--text-tertiary)" }}>
-            Select a run to inspect its trace.
+            {copy.noSelection}
           </div>
         )}
       </section>

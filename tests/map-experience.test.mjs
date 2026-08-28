@@ -24,12 +24,13 @@ test("Reality Map uses the public OpenFreeMap dark style through a single comman
 test("selection owns the only contextual map inspector and provenance remains explicit", () => {
   assert.match(map, /data-testid="map-inspector"/);
   assert.match(map, /<EvidenceThread/);
-  assert.match(map, /label: "Fixture data", detail: "not live"/);
+  assert.match(map, /fixtureData: "Fixture data"/);
+  assert.match(map, /notLive: "not live"/);
   assert.match(map, /dailyDiff\?: DailyDiff/);
   assert.doesNotMatch(map, /backdropFilter|backdrop-filter|#c9a961|glow-pulse/);
 });
 
-test("map failures can be retried and map animation is restricted to selected context", () => {
+test("map failures can be retried and every visible connection shows directional flow", () => {
   assert.match(map, /map\.on\("error", markStyleError\)/);
   assert.match(map, /function createMissingStyleImage/);
   assert.match(map, /circle-11/);
@@ -40,6 +41,11 @@ test("map failures can be retried and map animation is restricted to selected co
   assert.match(map, /data-testid="map-retry"/);
   assert.match(map, /setMapAttempt\(\(attempt\) => attempt \+ 1\)/);
   assert.match(map, /entity-selected-ring/);
+  assert.match(map, /id: "connection-direction-arrows"/);
+  assert.match(map, /if \(!dashIntervalRef\.current\)/);
+  assert.match(map, /"symbol-placement": "line"/);
+  assert.match(map, /"text-field": "→"/);
+  assert.match(map, /"text-keep-upright": false/);
   assert.match(map, /const MAP_TRANSITION_MS = 280/);
   assert.match(map, /function mapTransitionDuration\(\)/);
   assert.match(map, /prefers-reduced-motion: reduce/);

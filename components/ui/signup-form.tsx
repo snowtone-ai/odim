@@ -13,6 +13,8 @@ export type SignupFormLabels = {
   failed: string;
   successTitle: string;
   successBody: string;
+  successEyebrow?: string;
+  trialLabel?: string;
   nextSettings: string;
   nextMap: string;
 };
@@ -62,12 +64,12 @@ export function SignupForm({ labels }: Readonly<{ labels: SignupFormLabels }>) {
     return (
       <div className="border-l pl-4" style={{ borderColor: "var(--evidence)" }} aria-live="polite">
         <p className="mono text-[11px] tracking-[0.14em]" style={{ color: "var(--evidence)" }}>
-          WORKSPACE READY
+          {labels.successEyebrow ?? "WORKSPACE READY"}
         </p>
         <h2 className="mt-4 text-base font-medium" style={{ color: "var(--text)" }}>{labels.successTitle}</h2>
         <p className="mt-2 text-[14px] leading-6" style={{ color: "color-mix(in srgb, var(--text) 68%, transparent)" }}>
           {labels.successBody}
-          {success.trialEndsAt ? ` (trial → ${success.trialEndsAt.slice(0, 10)})` : ""}
+          {success.trialEndsAt ? ` (${labels.trialLabel ?? "trial ends"} → ${success.trialEndsAt.slice(0, 10)})` : ""}
         </p>
         <div className="mt-6 flex flex-wrap gap-x-5 gap-y-3">
           <a

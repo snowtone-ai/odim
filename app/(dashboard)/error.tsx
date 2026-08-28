@@ -1,13 +1,17 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { getMessages } from "@/lib/i18n/messages";
 
 export default function DashboardError({
   error,
   reset
 }: Readonly<{ error: Error & { digest?: string }; reset: () => void }>) {
-  const labels = getMessages().common.errorBoundary;
+  const [labels, setLabels] = useState(() => getMessages().common.errorBoundary);
+
+  useEffect(() => {
+    setLabels(getMessages(document.documentElement.lang).common.errorBoundary);
+  }, []);
 
   useEffect(() => {
     console.error("dashboard render error", error);
@@ -21,7 +25,7 @@ export default function DashboardError({
         style={{ borderColor: "var(--critical, #e2745b)" }}
       >
         <div className="mono text-[11px] uppercase tracking-[0.14em]" style={{ color: "var(--critical, #e2745b)" }}>
-          State / Error
+          {labels.stateError}
         </div>
         <h1 className="mt-3 text-xl font-semibold" style={{ color: "var(--text, var(--text-primary, #e8eff2))" }}>
           {labels.title}

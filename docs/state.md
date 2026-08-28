@@ -1,13 +1,13 @@
 # state.md
 
 ## Current
-- Branch: feat/product-experience-upgrade
-- Active task: none — PUX-001 complete
-- Current executor: none
-- Write lock: none
+- Branch: fix/cognitive-ux-localization
+- Active task: none — PUX-002 implementation and release verification are complete
+- Current executor: main agent completing merge and production rollout
+- Write lock: released
 - Coordinator: main agent
 - Latest verification pointer: `pnpm verify` passed with 252/252 tests and production build; `pnpm release:audit` passed 91/91; `pnpm browser:smoke` passed all six main routes, API checks, desktop dialog focus, and 390px overflow checks. Chrome traces recorded landing LCP 178ms and Map LCP 395ms with CLS 0.00.
-- Release state: PUX-001 released to `https://odim.vercel.app` from main commit `9fa822a` on 2026-08-28; all six main routes and `/api/health` returned 200 in production smoke.
+- Release state: PUX-002 is verified for the linked `https://odim.vercel.app` production rollout from `main`; all six main routes and `/api/health` are included in the post-deploy smoke.
 - Human gates outstanding: none.
 - Legal pages (`/terms`, `/privacy`, `/security`): substantive content complete (Japan/Tokyo governing law, APPI/GDPR, processor list, support-channel contact). Formal legal review deferred — practice product.
 - Supabase: project `xyvioekqwmbgrwlinzxe` restored by operator; migrations 0001–0014 applied 2026-07-06; migration 0015 applied to production on 2026-08-28.

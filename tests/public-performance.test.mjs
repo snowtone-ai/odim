@@ -30,7 +30,7 @@ test("landing high-intent routes use default prefetch while low-intent links sta
   assertLinkUsesDefaultPrefetch(publicShell, "/login", "public shell sign-in CTA");
   assertLinkUsesDefaultPrefetch(publicShell, "/signup", "public shell workspace CTA");
   assert.match(landing, /href="\/docs"[^>]*prefetch=\{false\}/);
-  assert.match(landing, /\["API Docs", "\/docs"\][\s\S]*prefetch=\{false\}/);
+  assert.match(landing, /\[publicLabels\.apiDocs, "\/docs"\][\s\S]*prefetch=\{false\}/);
   assert.match(publicShell, /prefetch=\{false\}/);
 });
 

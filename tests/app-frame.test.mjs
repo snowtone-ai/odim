@@ -24,7 +24,7 @@ test("frame exposes an actionable command trigger and truthful source state", ()
   assert.match(shell, /min-h-11/);
   assert.match(shell, /motion-reduce:transition-none/);
   assert.match(messages, /fixtureStatus: \"Fixture data · not live\"/);
-  assert.match(messages, /fixtureStatus: \"フィクスチャデータ・ライブではありません\"/);
+  assert.match(messages, /fixtureStatus: \"サンプルデータ（実データではありません）\"/);
 });
 
 test("overlays use modal dialogs with initial focus, native inertness, and focus restoration", () => {

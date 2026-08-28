@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { trapDialogFocus } from "@/components/ui/modal-focus";
+import type { Messages } from "@/lib/i18n/messages";
 
 const GO_SHORTCUTS: Record<string, string> = {
   m: "/map",
@@ -19,7 +20,7 @@ function inEditableTarget(target: EventTarget | null) {
   return tag === "input" || tag === "textarea" || element.isContentEditable;
 }
 
-export function KeyboardNav() {
+export function KeyboardNav({ labels }: Readonly<{ labels: Messages["shell"]["keyboard"] }>) {
   const router = useRouter();
   const [pending, setPending] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
@@ -81,24 +82,24 @@ export function KeyboardNav() {
   if (!showHelp) return null;
 
   const shortcuts: Array<{ keys: string[]; desc: string }> = [
-    { keys: ["g", "m"], desc: "Map" },
-    { keys: ["g", "e"], desc: "Entity" },
-    { keys: ["g", "a"], desc: "Alerts" },
-    { keys: ["g", "h"], desc: "Huginn" },
-    { keys: ["g", "s"], desc: "Settings" },
-    { keys: ["⌘", "K"], desc: "Command palette" },
-    { keys: ["/"], desc: "Focus search" },
-    { keys: ["j", "k"], desc: "Navigate list" },
-    { keys: ["↵"], desc: "Open selected" },
-    { keys: ["e"], desc: "Export" },
-    { keys: ["r"], desc: "Refresh" },
-    { keys: ["Esc"], desc: "Close / dismiss" },
+    { keys: ["g", "m"], desc: labels.map },
+    { keys: ["g", "e"], desc: labels.entity },
+    { keys: ["g", "a"], desc: labels.alerts },
+    { keys: ["g", "h"], desc: labels.huginn },
+    { keys: ["g", "s"], desc: labels.settings },
+    { keys: ["⌘", "K"], desc: labels.commandPalette },
+    { keys: ["/"], desc: labels.focusSearch },
+    { keys: ["j", "k"], desc: labels.navigateList },
+    { keys: ["↵"], desc: labels.openSelected },
+    { keys: ["e"], desc: labels.export },
+    { keys: ["r"], desc: labels.refresh },
+    { keys: ["Esc"], desc: labels.dismiss },
   ];
 
   return (
     <dialog
       ref={dialogRef}
-      aria-label="Keyboard shortcuts"
+      aria-label={labels.label}
       className="fixed inset-0 z-[70] m-0 h-dvh max-h-none w-screen max-w-none border-0 bg-transparent p-0"
       style={{ background: "rgba(5,7,9,0.86)" }}
       onKeyDown={trapDialogFocus}
@@ -112,11 +113,11 @@ export function KeyboardNav() {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mono mb-4 flex items-center justify-between text-[11px] uppercase tracking-[0.12em]" style={{ color: "var(--signal, #4c90f0)" }}>
-          <span>Keyboard Shortcuts</span>
+          <span>{labels.label}</span>
           <button
             ref={closeButtonRef}
             type="button"
-            aria-label="Close keyboard shortcuts"
+            aria-label={labels.close}
             className="odim-icon-control h-11 w-11 text-[18px] normal-case tracking-normal"
             style={{ background: "var(--field, var(--ink-700, #1c212b))", color: "var(--text-secondary, #8d97ab)", border: "1px solid var(--line-faint, rgba(255,255,255,.06))" }}
             onClick={() => setShowHelp(false)}

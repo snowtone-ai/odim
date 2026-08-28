@@ -1,9 +1,14 @@
-export default function DashboardLoading() {
+import { getLocale } from "@/lib/i18n/locale";
+import { getMessages } from "@/lib/i18n/messages";
+
+export default async function DashboardLoading() {
+  const messages = getMessages(await getLocale());
+
   return (
     <main
       className="min-h-[calc(100vh-56px)] px-4 py-5 sm:px-6 md:px-8"
       aria-busy="true"
-      aria-label="Loading workspace"
+      aria-label={messages.common.loadingWorkspace}
       data-testid="dashboard-loading"
     >
       <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6">

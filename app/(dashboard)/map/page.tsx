@@ -1,7 +1,4 @@
 import type { Metadata } from "next";
-
-export const metadata: Metadata = { title: "Reality Map" };
-
 import { RealityMap } from "@/components/ui/reality-map";
 
 import { getMessages } from "@/lib/i18n/messages";
@@ -10,6 +7,10 @@ import type { LayerKey } from "@/lib/map/types";
 import { buildFixtureRawSignals } from "@/lib/pipeline/fixtures";
 import { buildIngestionPlan } from "@/lib/pipeline/ontologize";
 import { computeDailyDiff } from "@/lib/pipeline/diff";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getLocale()) === "ja" ? "現実の動き" : "Reality Map" };
+}
 
 const VALID_LAYERS: Set<string> = new Set([
   "energy", "cash", "land", "compute", "water", "raw_materials", "logistics"

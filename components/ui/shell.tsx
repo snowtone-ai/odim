@@ -25,7 +25,7 @@ type NavItem = {
   href: string;
 };
 
-function AlertsBadge({ count }: Readonly<{ count: number }>) {
+function AlertsBadge({ count, unreadLabel }: Readonly<{ count: number; unreadLabel: string }>) {
   if (count === 0) return null;
 
   return (
@@ -36,7 +36,7 @@ function AlertsBadge({ count }: Readonly<{ count: number }>) {
         background: "var(--critical, #e2745b)",
         color: "var(--field, #0a1016)"
       }}
-      aria-label={`${count} unread alerts`}
+      aria-label={`${count} ${unreadLabel}`}
     >
       {count > 99 ? "99+" : count}
     </span>
@@ -47,7 +47,7 @@ function isActivePath(pathname: string, href: string) {
   return pathname === href || (href !== "/map" && pathname.startsWith(`${href}/`));
 }
 
-function RailLink({ item, badge }: Readonly<{ item: NavItem; badge?: number }>) {
+function RailLink({ item, badge, unreadLabel }: Readonly<{ item: NavItem; badge?: number; unreadLabel: string }>) {
   const pathname = usePathname();
   const active = isActivePath(pathname, item.href);
   const Icon = item.icon;
@@ -69,7 +69,7 @@ function RailLink({ item, badge }: Readonly<{ item: NavItem; badge?: number }>) 
     >
       <span className="relative inline-flex shrink-0 items-center justify-center" aria-hidden="true">
         <Icon size={18} strokeWidth={1.7} />
-        {badge !== undefined ? <AlertsBadge count={badge} /> : null}
+        {badge !== undefined ? <AlertsBadge count={badge} unreadLabel={unreadLabel} /> : null}
       </span>
       <span className="hidden text-[13px] leading-5 min-[1200px]:inline">{item.label}</span>
       <span
@@ -86,12 +86,12 @@ function RailLink({ item, badge }: Readonly<{ item: NavItem; badge?: number }>) 
   );
 }
 
-function MobileNav({ nav, alertsUnread }: Readonly<{ nav: NavItem[]; alertsUnread: number }>) {
+function MobileNav({ nav, alertsUnread, unreadLabel, navigationLabel }: Readonly<{ nav: NavItem[]; alertsUnread: number; unreadLabel: string; navigationLabel: string }>) {
   const pathname = usePathname();
 
   return (
     <nav
-      aria-label="Primary navigation"
+      aria-label={navigationLabel}
       data-testid="mobile-bottom-nav"
       className="fixed inset-x-0 bottom-0 z-40 mx-auto flex min-h-[68px] w-full max-w-[390px] border-t px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 md:hidden"
       style={{
@@ -121,7 +121,7 @@ function MobileNav({ nav, alertsUnread }: Readonly<{ nav: NavItem[]; alertsUnrea
           >
             <span className="relative inline-flex" aria-hidden="true">
               <Icon size={17} strokeWidth={1.7} />
-              {badge > 0 ? <AlertsBadge count={badge} /> : null}
+              {badge > 0 ? <AlertsBadge count={badge} unreadLabel={unreadLabel} /> : null}
             </span>
             <span className="truncate text-[11px] leading-4">{item.mobileLabel}</span>
           </Link>
@@ -185,7 +185,7 @@ export function Shell({
         color: "var(--text, var(--text-primary, #e8eff2))"
       }}
     >
-      <KeyboardNav />
+      <KeyboardNav labels={messages.shell.keyboard} />
 
       <aside
         aria-label={messages.shell.frame.railLabel}
@@ -198,7 +198,7 @@ export function Shell({
       >
         <Link
           href="/map"
-          aria-label="Odim — Reality Map"
+          aria-label={`Odim — ${messages.shell.nav.map}`}
           className="flex min-h-11 items-center justify-center px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--signal,#4c90f0)] min-[1200px]:justify-start min-[1200px]:gap-3 min-[1200px]:px-2"
         >
           <OdimLogo size={28} />
@@ -216,6 +216,7 @@ export function Shell({
               item={item}
               key={item.href}
               badge={item.href === "/alerts" ? alertsUnread : undefined}
+              unreadLabel={messages.shell.frame.unreadAlerts}
             />
           ))}
         </nav>
@@ -226,7 +227,7 @@ export function Shell({
             <Languages size={15} aria-hidden="true" style={{ color: "var(--text-secondary, #8d97ab)" }} />
             <span className="sr-only">{messages.shell.frame.languageLabel}</span>
             <div className="ml-2 hidden min-[1200px]:block">
-              <LocaleSwitcher current={locale} />
+              <LocaleSwitcher current={locale} label={messages.shell.frame.languageLabel} />
             </div>
           </div>
         </div>
@@ -288,14 +289,19 @@ export function Shell({
 
           <div className="hidden sm:block">
             <span className="sr-only">{messages.shell.frame.languageLabel}</span>
-            <LocaleSwitcher current={locale} />
+            <LocaleSwitcher current={locale} label={messages.shell.frame.languageLabel} />
           </div>
         </header>
 
         {children}
       </main>
 
-      <MobileNav nav={mobileNav} alertsUnread={alertsUnread} />
+      <MobileNav
+        nav={mobileNav}
+        alertsUnread={alertsUnread}
+        unreadLabel={messages.shell.frame.unreadAlerts}
+        navigationLabel={messages.shell.frame.railNavLabel}
+      />
     </div>
   );
 }

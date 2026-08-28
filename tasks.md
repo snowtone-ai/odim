@@ -1,5 +1,13 @@
 # tasks.md
 
+## Completed Task: PUX-002 — Reduce cognitive load and complete the Japanese product experience
+
+- Owner: main agent (coordination, research, integration); implementation delegated by disjoint UI scope to Luna/xhigh agents
+- Depends On: `DESIGN.md`, D-029–D-032
+- Write Scope: Map relationship motion, Japanese dashboard copy, Settings information architecture and controls, Huginn conversation layout, Entity/Alerts progressive disclosure, focused UI tests, dependency/security warning remediation, and completion ledgers.
+- Acceptance: Map relationships communicate direction through restrained motion with a reduced-motion equivalent; Japanese mode contains natural Japanese except product/domain proper nouns; Settings exposes usable administration grouped by user goal; Huginn follows the familiar history/conversation/composer structure of major chat products while retaining grounded evidence; Entity and Alerts show only the next decision-critical information before explicit drill-down; affected desktop/mobile flows and standard verification pass; actionable GitHub repository warnings are resolved after product changes.
+- Verification: DONE — `pnpm verify` (252/252 tests and production build), `pnpm release:audit` (91 checks), `pnpm browser:smoke`, desktop/mobile production-mode Chrome review, `pnpm audit --audit-level moderate`, `gitleaks git --no-banner --redact`, and `git diff --check` passed.
+
 ## Completed Task: PUX-001 — Rebuild the product experience around a continuous evidence workspace
 
 - Owner: main agent (coordination, decisions, integration); implementation delegated by disjoint write scope
